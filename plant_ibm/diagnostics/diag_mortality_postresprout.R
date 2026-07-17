@@ -57,28 +57,25 @@ source(file.path(.root, "R/mortality.R"))   # all model hazard functions live he
 # Reproduces the per-individual block inside nominate_deaths() using the
 # same model functions, for scalar inputs. Comments mark which model
 # function each line calls. The only piece not a single callable is the
-# rust hazard assembly and the union formula -- both are inline in
-# nominate_deaths() -- so they're reproduced here with matching logic.
-#
 # annual_env_t is used directly as the pathogen vertex, regardless of
 # rust_start_year -- this always computes "what would happen at this
 # rust level" for the purpose of the diagnostic.
-.resprout_components <- function(age, N_total, annual_env_t, params,
+# N_canopy: canopy density for juv_decline_hazard() -- the only channel
+# through which population density enters mortality after removal of the
+# separate density-dependent mortality term.
+.resprout_components <- function(age, N_canopy, annual_env_t, params,
                                   is_resprouting,
                                   resist_score = 0, env_susc = 1) {
   age <- max(age, 0L)
 
   # Background hazards -- direct model function calls
-  p_age <- weibull_hazard(age, params)                # R/mortality.R
-  p_sen <- senescence_hazard(age, params)             # R/mortality.R
-  p_dd  <- dd_hazard(N_total, params) *               # R/mortality.R
-           dd_age_weight(age, params)                  # R/mortality.R
+  p_age <- weibull_hazard(age, params)               # R/mortality.R
+  p_sen <- senescence_hazard(age, params)            # R/mortality.R
 
   # juv_decline: gated by !resprout in nominate_deaths; resprouting
-  # individuals do NOT receive this term regardless of age. N_canopy
-  # approximated as 40% of N_total (typical adult fraction at equilibrium).
+  # individuals do NOT receive this term regardless of age.
   p_jd <- if (!is_resprouting && age < params$age_first_flower_mean)
-    juv_decline_hazard(age, N_total * 0.40, params)   # R/mortality.R
+    juv_decline_hazard(age, N_canopy, params)        # R/mortality.R
   else 0
 
   # Rust -- disease triangle: host x environment x pathogen
@@ -107,10 +104,10 @@ source(file.path(.root, "R/mortality.R"))   # all model hazard functions live he
   p_rust <- p_rust_age + p_rust_resprout
 
   # Probability union -- mirrors nominate_deaths() exactly
-  p_total      <- 1 - (1-p_age)*(1-p_sen)*(1-p_dd)*(1-p_jd)*(1-p_rust)
-  p_background <- 1 - (1-p_age)*(1-p_sen)*(1-p_dd)*(1-p_jd)  # no rust
+  p_total      <- 1 - (1-p_age)*(1-p_sen)*(1-p_jd)*(1-p_rust)
+  p_background <- 1 - (1-p_age)*(1-p_sen)*(1-p_jd)  # no rust
 
-  list(p_age = p_age, p_sen = p_sen, p_dd = p_dd, p_jd = p_jd,
+  list(p_age = p_age, p_sen = p_sen, p_jd = p_jd,
        p_rust_age = p_rust_age, p_rust_resprout = p_rust_resprout,
        p_background = p_background, p_total = p_total)
 }
@@ -120,7 +117,7 @@ source(file.path(.root, "R/mortality.R"))   # all model hazard functions live he
 # =============================================================================
 diag_mortality_postresprout <- function(
     params       = get_default_params(),
-    N_total      = 2000,
+    N_canopy     = 1500,   # canopy density for juv_decline (non-resprouting comparison)
     rust_env_t   = c(0, 0.5, 1.0),
     fire_ages    = c(4, 12),
     age_range_A  = 3:60,
@@ -138,13 +135,13 @@ diag_mortality_postresprout <- function(
   A_df <- do.call(rbind, lapply(age_range_A, function(fa) {
     age <- fa + 1L  # age at mortality check: aging precedes mortality in loop
 
-    bg <- .resprout_components(age, N_total, 0, params, is_resprouting = FALSE)
+    bg <- .resprout_components(age, N_canopy, 0, params, is_resprouting = FALSE)
     rows <- list(data.frame(age_at_fire = fa, p = bg$p_background,
                              label = "Background (no fire/rust)",
                              env_t = NA_real_, stringsAsFactors = FALSE))
 
     for (et in rust_env_t) {
-      cr  <- .resprout_components(age, N_total, et, params, is_resprouting = TRUE)
+      cr  <- .resprout_components(age, N_canopy, et, params, is_resprouting = TRUE)
       lbl <- if (et == 0) "Resprout, no rust" else paste0("Resprout env_t=", et)
       rows[[length(rows) + 1]] <- data.frame(
         age_at_fire = fa, p = cr$p_total,
@@ -160,7 +157,7 @@ diag_mortality_postresprout <- function(
       do.call(rbind, lapply(years, function(yr) {
         age     <- fa + 1L + yr   # age at mortality check each year
         is_resp <- yr >= 0L && yr < wlen
-        cr      <- .resprout_components(age, N_total, et, params, is_resp)
+        cr      <- .resprout_components(age, N_canopy, et, params, is_resp)
         data.frame(
           fire_age        = fa,
           year_since_fire = yr,

@@ -27,7 +27,6 @@ source("R/matrix_model.R")
 make_toy_params <- function(...) {
   p <- get_default_params()
   p$N0               <- 200L
-  p$K                <- 200L
   p$K_half           <- 100L
   p$R_max            <- 60L
   p$n_years          <- 10L
@@ -71,8 +70,6 @@ make_geometric_params <- function() {
   p$seed                  <- 7L
   p$weibull_k             <- 1.0      # constant hazard: h=0.1, s=0.9
   p$weibull_lambda        <- 10.0
-  p$dd_alpha              <- 0        # density independence
-  p$K                     <- 1e10
   p$K_half                <- 1e9      # >> reachable N: keeps bevholt linear
   p$R_max                 <- 0.15 * 1e9   # F = R_max/K_half = 0.15
   p$age_first_flower_mean <- 1
@@ -98,8 +95,6 @@ make_leslie_params <- function() {
   p$seed                  <- 13L
   p$weibull_k             <- 2.0
   p$weibull_lambda        <- 25.0
-  p$dd_alpha              <- 0
-  p$K                     <- 1e10
   p$K_half                <- 1e9
   p$R_max                 <- 0.10 * 1e9   # F = 0.10 per surviving adult
   p$age_first_flower_mean <- 5
@@ -146,8 +141,6 @@ make_lefkovitch_params <- function() {
   p$seed                    <- 42L
   p$weibull_k               <- 1.0     # constant hazard, same s as Level 1
   p$weibull_lambda          <- 10.0
-  p$dd_alpha                <- 0
-  p$K                       <- 1e10
   p$K_half                  <- 1e9
   p$R_max                   <- 0.18 * 1e9   # F = 0.18
   p$age_first_flower_mean   <- 1

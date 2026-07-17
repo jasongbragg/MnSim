@@ -107,22 +107,6 @@ get_default_params <- function() {
     juv_decline_age_half_sat = 3,  # age at which juv-decline hazard halves
     juv_decline_age_hill     = 8,  # Hill coeff (large = sharper early peak)
 
-    # ---- Density-dependent mortality, with Hill age-weighting --------------
-    K        = 5000,           # carrying capacity (total individuals)
-    dd_alpha = 0.01,             # strength of crowding hazard at N = K
-    #
-    # dd_age_half_sat / dd_age_hill: Hill weight applied to the dd
-    # scalar, so crowding hits the youngest/most-shaded individuals
-    # hardest. hill_weight(age, half_sat, hill) = 1 at age 0 (full dd),
-    # declines to 0.5 at age = half_sat, approaches 0 at old age.
-    # Set dd_age_half_sat = Inf (default) to recover completely flat
-    # density dependence -- equivalent to the old single-scalar dd_hazard.
-    # These share the same functional shape as juv_decline but are
-    # SEPARATELY parameterised: different biological claims, can be turned
-    # on or off independently.
-    dd_age_half_sat = Inf,
-    dd_age_hill     = 8,
-
     # ---- Recruitment (Beverton-Holt) ---------------------------------------
     R_max  =  500,              # asymptotic max recruits/year
     K_half = 1000,              # flowering-adult count giving half R_max

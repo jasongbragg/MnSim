@@ -6,7 +6,6 @@ test_that("get_default_params returns a complete parameter set", {
                 "weibull_k", "weibull_lambda",
                 "senescence_dose_response",
                 "juv_decline_dose_response", "juv_decline_age_half_sat", "juv_decline_age_hill",
-                "K", "dd_alpha", "dd_age_half_sat", "dd_age_hill",
                 "R_max", "K_half", "shade_dose_response",
                 "age_first_flower_mean", "age_first_flower_sd",
                 "selfing_rate",
@@ -86,10 +85,6 @@ test_that("fire two-stage model is off by default (legacy mode)", {
   expect_equal(p$fire_p_fimp, 0)
 })
 
-test_that("dd_age_half_sat = Inf by default (no age-weighting of density dependence)", {
-  p <- get_default_params()
-  expect_equal(p$dd_age_half_sat, Inf)
-})
 
 test_that("test suite is using parlib/unittests/params.R, not the working M. nodosa params.R", {
   # The test suite sources parlib/unittests/params.R (conservative baseline,
@@ -106,4 +101,6 @@ test_that("test suite is using parlib/unittests/params.R, not the working M. nod
     label = "test params must have juv_decline off")
   expect_equal(p$shade_dose_response$max_effect, 0,
     label = "test params must have shade suppression off")
+  expect_false("dd_alpha" %in% names(p),
+    label = "test params must NOT contain dd_alpha (dd mortality removed)")
 })

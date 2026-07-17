@@ -9,13 +9,10 @@
 # All hazard components are combined via the proper probability-union
 # formula rather than the additive approximation + clip:
 #
-#   p_death = 1 - (1-p_age) * (1-p_dd) * (1-p_jd) * (1-p_rust)
+#   p_death = 1 - (1-p_age) * (1-p_sen) * (1-p_jd) * (1-p_rust)
 #
 # This is the exact probability of "at least one of these independent
-# causes kills this individual." It never exceeds 1 by construction, so
-# the old pmin(...,1) cap is no longer needed (retained as a defensive
-# assertion only). Unlike the additive sum, it remains correct even when
-# individual hazard terms are large.
+# causes kills this individual." It never exceeds 1 by construction.
 
 #' Age-dependent hazard, Weibull form: (k/lambda) * (age/lambda)^(k-1)
 weibull_hazard <- function(age, params) {
@@ -25,33 +22,14 @@ weibull_hazard <- function(age, params) {
   (k / lambda) * (age_safe / lambda) ^ (k - 1)
 }
 
-#' Density-dependent hazard scalar (flat across ages; age-weighting via
-#' dd_age_weight() is applied separately in nominate_deaths()).
-dd_hazard <- function(N, params) {
-  params$dd_alpha * (N / params$K)
-}
-
 #' Declining Hill-function weight: 1 at x = 0, 0.5 at x = half_sat,
-#' approaching 0 as x → ∞. Used for both the juvenile-decline age-decay
-#' and the density-dependence age-weighting (with independent parameters
-#' for each -- see params.R for why they're kept separate).
-#'
-#' Setting half_sat = Inf recovers a flat weight of 1 everywhere (the
-#' default for dd_age_half_sat, which preserves old flat dd behaviour).
-#' Large hill values produce a sharper, more gate-like transition.
+#' approaching 0 as x → ∞. Used for the juvenile-decline age-decay and
+#' the fire kill/resprout split. Large hill values produce a sharper,
+#' more gate-like transition. Setting half_sat = Inf returns 1 for all
+#' finite x (effectively turns off any age-weighting).
 hill_weight <- function(x, half_sat, hill) {
   x <- pmax(x, 0)
   1 / (1 + (x / half_sat) ^ hill)
-}
-
-#' Age-weighting for the density-dependent hazard. Multiplied onto
-#' dd_hazard() scalar in nominate_deaths() so crowding hits younger,
-#' shorter, more-shaded individuals disproportionately.
-#'
-#' Default parameters (dd_age_half_sat = Inf) give weight = 1 at all
-#' ages -- identical to the old unweighted dd_hazard.
-dd_age_weight <- function(age, params) {
-  hill_weight(age, params$dd_age_half_sat, params$dd_age_hill)
 }
 
 #' Generic dose-response transform, mapping a non-negative pressure
@@ -145,11 +123,10 @@ senescence_hazard <- function(age, params) {
 #' Components, combined via the probability-union formula:
 #'   p_age  = Weibull background hazard (flat when weibull_k = 1)
 #'   p_sen  = senescence hazard, rising Hill function of age (off by
-#'            default; see senescence_hazard() -- intended to REPLACE
-#'            weibull_k > 1, paired with weibull_k = 1 above)
-#'   p_dd   = density hazard × Hill age-weight (youngest bear most)
+#'            default; intended to REPLACE weibull_k > 1, not stack with it)
 #'   p_jd   = juvenile-decline hazard (canopy-dependent height, Hill age-decay;
-#'            juveniles only)
+#'            juveniles only -- this is where population density feeds into
+#'            mortality, via canopy_density() rather than a separate dd term)
 #'   p_rust = rust hazard via disease triangle (continuous Hill age-decay
 #'            with floor; resprout individuals get an additional state bonus)
 #'
@@ -162,7 +139,6 @@ nominate_deaths <- function(pop, t, params, annual_env_t = 0) {
   n_alive   <- length(alive_idx)
   if (n_alive == 0) return(integer(0))
 
-  N        <- n_alive
   N_canopy <- canopy_density(pop)
 
   age_i      <- pop$age[alive_idx]
@@ -181,10 +157,10 @@ nominate_deaths <- function(pop, t, params, annual_env_t = 0) {
   # intended to replace weibull_k > 1, not stack with it.
   p_sen <- senescence_hazard(age_i, params)
 
-  # --- Density-dependent hazard, Hill-weighted by age ---------------------
-  p_dd <- dd_hazard(N, params) * dd_age_weight(age_i, params)
-
   # --- Juvenile-decline hazard (juveniles only) ---------------------------
+  # Canopy density feeds into mortality here: high canopy → high juv_decline
+  # peak, so population density affects mortality through canopy_density()
+  # rather than a separate density-dependent term.
   p_jd <- numeric(n_alive)
   if (any(juv_i)) {
     p_jd[juv_i] <- juv_decline_hazard(age_i[juv_i], N_canopy, params)
@@ -215,7 +191,7 @@ nominate_deaths <- function(pop, t, params, annual_env_t = 0) {
   }
 
   # --- Probability union ---------------------------------------------------
-  p_death <- 1 - (1 - p_age) * (1 - p_sen) * (1 - p_dd) * (1 - p_jd) * (1 - p_rust)
+  p_death <- 1 - (1 - p_age) * (1 - p_sen) * (1 - p_jd) * (1 - p_rust)
   p_death <- pmin(p_death, 1)   # defensive -- union formula should not need this
 
   dead_draw <- rbinom(n_alive, 1, p_death) == 1

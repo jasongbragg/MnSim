@@ -53,12 +53,6 @@ get_default_params <- function() {
     juv_decline_age_half_sat = 2,
     juv_decline_age_hill     = 1,
 
-    # ---- Density-dependent mortality -- flat (no age-weighting) ----------
-    K        = 10000,
-    dd_alpha = 0.4,
-    dd_age_half_sat = Inf,
-    dd_age_hill     = 1,
-
     # ---- Recruitment (Beverton-Holt) --------------------------------------
     R_max  = 4000,
     K_half = 5000,

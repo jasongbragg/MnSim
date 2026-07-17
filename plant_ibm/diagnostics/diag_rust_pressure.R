@@ -104,7 +104,7 @@ representative_resist_scores <- function(params) {
 mortality_vs_pressure <- function(params, pressure_seq = seq(0, 2, by = 0.1),
                                    hazard_type = c("juvenile", "resprout"),
                                    include_baseline = TRUE,
-                                   baseline_age = NULL, baseline_N = NULL) {
+                                   baseline_age = NULL) {
   hazard_type <- match.arg(hazard_type)
   scores <- representative_resist_scores(params)
   stage  <- switch(hazard_type, juvenile = "juv", resprout = "resprout")
@@ -120,8 +120,7 @@ mortality_vs_pressure <- function(params, pressure_seq = seq(0, 2, by = 0.1),
       switch(hazard_type,
         juvenile = 1,
         resprout = round(params$age_first_flower_mean) + 2)
-    N <- if (!is.null(baseline_N)) baseline_N else params$K
-    df$baseline <- weibull_hazard(age, params) + dd_hazard(N, params)
+    df$baseline <- weibull_hazard(age, params)
   } else {
     df$baseline <- 0
   }
@@ -257,7 +256,7 @@ cumulative_resprout_mortality_risk <- function(params, pressure_seq = seq(0, 2, 
   scores <- representative_resist_scores(params)
   age <- if (!is.null(age_for_baseline)) age_for_baseline else
     round(params$age_first_flower_mean) + 2
-  baseline <- weibull_hazard(age, params) + dd_hazard(params$K, params)
+  baseline <- weibull_hazard(age, params)
 
   df <- expand.grid(rust_pressure = pressure_seq,
                      class = factor(names(scores), levels = names(scores)))

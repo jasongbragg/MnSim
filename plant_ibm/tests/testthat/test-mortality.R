@@ -58,72 +58,6 @@ test_that("weibull_hazard is vectorised over age", {
   expect_equal(h, h_scalar)
 })
 
-# --- dd_hazard ------------------------------------------------------------
-
-test_that("dd_hazard is zero when dd_alpha = 0", {
-  p <- make_toy_params(dd_alpha = 0)
-  expect_equal(dd_hazard(500, p), 0)
-})
-
-test_that("dd_hazard equals dd_alpha exactly when N = K", {
-  p <- make_toy_params(K = 1000L, dd_alpha = 0.4)
-  expect_equal(dd_hazard(1000, p), 0.4)
-})
-
-test_that("dd_hazard scales linearly with N/K", {
-  p <- make_toy_params(K = 1000L, dd_alpha = 0.4)
-  expect_equal(dd_hazard(500, p), 0.2)
-  expect_equal(dd_hazard(250, p), 0.1)
-})
-
-# --- hill_weight ----------------------------------------------------------
-
-test_that("hill_weight is exactly 1 at x = 0", {
-  expect_equal(hill_weight(0,  500, 1), 1)
-  expect_equal(hill_weight(0,  500, 3), 1)
-  expect_equal(hill_weight(0, Inf,  1), 1)
-})
-
-test_that("hill_weight is exactly 0.5 at x = half_sat (for any hill)", {
-  expect_equal(hill_weight(5,   5, 1), 0.5)
-  expect_equal(hill_weight(5,   5, 3), 0.5)
-  expect_equal(hill_weight(100, 100, 2), 0.5)
-})
-
-test_that("hill_weight is 1 everywhere when half_sat = Inf (turns off age-weighting)", {
-  expect_equal(hill_weight(0,   Inf, 1), 1)
-  expect_equal(hill_weight(100, Inf, 1), 1)
-  expect_equal(hill_weight(1e6, Inf, 2), 1)
-})
-
-test_that("hill_weight is strictly decreasing in x for any positive half_sat", {
-  w <- hill_weight(0:20, half_sat = 5, hill = 2)
-  expect_true(all(diff(w) < 0))
-})
-
-test_that("hill_weight with large hill is more gate-like than hill = 1", {
-  # At x = 3, half_sat = 5 (below threshold):
-  # hill=1 gives a smooth intermediate value; hill=10 is closer to 1 (less suppressed)
-  # because the steep transition hasn't hit yet (x < half_sat)
-  expect_lt(hill_weight(3, 5, 1), hill_weight(3, 5, 10))
-  # Above half_sat the reverse holds: large hill gives sharper suppression
-  expect_gt(hill_weight(7, 5, 1), hill_weight(7, 5, 10))
-})
-
-# --- dd_age_weight --------------------------------------------------------
-
-test_that("dd_age_weight = 1 at all ages when dd_age_half_sat = Inf (flat dd, backward compat)", {
-  p <- get_default_params()
-  expect_equal(dd_age_weight(0,  p), 1)
-  expect_equal(dd_age_weight(50, p), 1)
-})
-
-test_that("dd_age_weight decreases with age when dd_age_half_sat is finite", {
-  p <- make_toy_params(dd_age_half_sat = 5, dd_age_hill = 1)
-  w <- dd_age_weight(0:20, p)
-  expect_true(all(diff(w) < 0))
-})
-
 # --- rust_modifiers -------------------------------------------------------
 
 test_that("rust_modifiers returns delay_extra = 0 before rust_start_year", {
@@ -271,7 +205,7 @@ test_that("larger hill makes senescence stay lower below half_sat, and closer to
 test_that("nominate_deaths(): senescence_hazard off by default leaves mortality unaffected by age beyond weibull", {
   set.seed(41L)
   n <- 5000
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9)  # near-zero background
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9)  # near-zero background
   pop_young <- make_pop_rows(n, age = 1,   afr = 5)
   pop_old   <- make_pop_rows(n, age = 200, afr = 5)
   rate_young <- length(nominate_deaths(pop_young, t = 1L, p)) / n
@@ -282,7 +216,7 @@ test_that("nominate_deaths(): senescence_hazard off by default leaves mortality 
 test_that("nominate_deaths(): turning on senescence_dose_response elevates old-age mortality, paired with weibull_k=1", {
   set.seed(43L)
   n <- 5000
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9)
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9)
   p$senescence_dose_response <- list(max_effect = 0.7, form = "sigmoid", half_sat = 30, hill = 3)
 
   pop_young <- make_pop_rows(n, age = 1,   afr = 5)
@@ -297,7 +231,7 @@ test_that("nominate_deaths(): senescence_hazard combines with other hazard terms
   # dd off, juv_decline off, rust off, p_death should equal senescence_hazard exactly.
   set.seed(47L)
   n <- 5000
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9)
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9)
   p$senescence_dose_response <- list(max_effect = 0.5, form = "sigmoid", half_sat = 30, hill = 3)
   pop <- make_pop_rows(n, age = 30, afr = 5)   # age = half_sat -> expected p = 0.25
   rate <- length(nominate_deaths(pop, t = 1L, p)) / n
@@ -324,7 +258,7 @@ test_that("nominate_deaths returns only alive row indices", {
 
 test_that("nominate_deaths: hazard = 1 exactly kills everyone (deterministic)", {
   set.seed(42L)
-  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1.0, dd_alpha = 0)
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1.0)
   pop  <- make_toy_pop(1000, p)
   dead <- nominate_deaths(pop, t = 1L, p)
   expect_equal(length(dead), sum(pop$alive))
@@ -332,7 +266,7 @@ test_that("nominate_deaths: hazard = 1 exactly kills everyone (deterministic)", 
 
 test_that("nominate_deaths: zero hazard kills nobody", {
   set.seed(42L)
-  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9, dd_alpha = 0)
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9)
   pop  <- make_toy_pop(500, p)
   dead <- nominate_deaths(pop, t = 1L, p)
   expect_length(dead, 0L)
@@ -344,7 +278,7 @@ test_that("disease triangle: resistant plants (resist_score=1) have zero rust ha
   set.seed(7L)
   n <- 5000
   pop <- make_pop_rows(n, age = 1, afr = 5, resist = 1, env_susc = 1)
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9,
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9,
                         rust_start_year = 1L, rust_pressure = 1.0)
   p$rust_dose_response$age_peak <- 0.9
   # annual_env_t = 1: maximum pathogen; env_susc = 1; but resist = 1 → host=0 → eff_susc=0
@@ -356,7 +290,7 @@ test_that("disease triangle: zero annual_env_t means no rust regardless of genet
   set.seed(9L)
   n <- 5000
   pop <- make_pop_rows(n, age = 1, afr = 5, resist = 0, env_susc = 1)
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9,
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9,
                         rust_start_year = 1L, rust_pressure = 1.0)
   p$rust_dose_response$age_peak <- 0.9
   rate <- length(nominate_deaths(pop, t = 1L, p, annual_env_t = 0)) / n
@@ -367,7 +301,7 @@ test_that("disease triangle: zero env_susceptibility protects even susceptible p
   set.seed(11L)
   n <- 5000
   pop <- make_pop_rows(n, age = 1, afr = 5, resist = 0, env_susc = 0)
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9,
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9,
                         rust_start_year = 1L, rust_pressure = 1.0)
   p$rust_dose_response$age_peak <- 0.9
   rate <- length(nominate_deaths(pop, t = 1L, p, annual_env_t = 1)) / n
@@ -377,7 +311,7 @@ test_that("disease triangle: zero env_susceptibility protects even susceptible p
 test_that("disease triangle: mortality increases with effective_susceptibility", {
   set.seed(13L)
   n <- 8000
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9,
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9,
                         rust_start_year = 1L, rust_pressure = 1.0)
   p$rust_dose_response$age_peak <- 0.8
 
@@ -392,7 +326,7 @@ test_that("disease triangle: mortality increases with effective_susceptibility",
 test_that("rust continuous age-decay: young individuals face higher rust hazard than old ones", {
   set.seed(17L)
   n <- 5000
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9,
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9,
                         rust_start_year = 1L, rust_pressure = 1.0)
   p$rust_dose_response$age_peak     <- 0.7
   p$rust_dose_response$age_floor    <- 0
@@ -410,7 +344,7 @@ test_that("rust continuous age-decay: young individuals face higher rust hazard 
 test_that("rust age_floor gives old plants a non-zero rust hazard", {
   set.seed(19L)
   n <- 5000
-  p_no_floor  <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 1e9,
+  p_no_floor  <- make_toy_params(weibull_k = 1, weibull_lambda = 1e9,
                                    rust_start_year = 1L, rust_pressure = 1.0)
   p_no_floor$rust_dose_response$age_peak  <- 0.5
   p_no_floor$rust_dose_response$age_floor <- 0
@@ -432,7 +366,7 @@ test_that("nominate_deaths(): juv_decline contributes nothing when N_canopy = 0"
   n   <- 5000
   pop <- make_pop_rows(n, age = 1, afr = 5)   # all juveniles, canopy = 0
 
-  p_off <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 30)
+  p_off <- make_toy_params(weibull_k = 1, weibull_lambda = 30)
   p_on  <- p_off
   p_on$juv_decline_dose_response <- list(max_effect = 0.5, form = "saturating",
                                           half_sat = 500, hill = 1)
@@ -446,7 +380,7 @@ test_that("nominate_deaths(): juveniles elevated under mature canopy when juv_de
   n_juv <- 5000; n_adult <- 2000
   pop <- rbind(make_pop_rows(n_juv,  age = 1,  afr = 5),
                make_pop_rows(n_adult, age = 10, afr = 5))
-  p_off <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 30)
+  p_off <- make_toy_params(weibull_k = 1, weibull_lambda = 30)
   p_on  <- p_off
   p_on$juv_decline_dose_response <- list(max_effect = 0.5, form = "saturating",
                                           half_sat = 500, hill = 1)
@@ -458,7 +392,7 @@ test_that("nominate_deaths(): juveniles elevated under mature canopy when juv_de
 test_that("nominate_deaths(): juv_decline does not affect adults or resprouters", {
   set.seed(29L)
   n <- 5000
-  p_off <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 30)
+  p_off <- make_toy_params(weibull_k = 1, weibull_lambda = 30)
   p_on  <- p_off
   p_on$juv_decline_dose_response <- list(max_effect = 0.9, form = "saturating",
                                           half_sat = 1, hill = 1)
@@ -476,7 +410,7 @@ test_that("nominate_deaths(): younger juveniles face higher mortality under matu
   pop <- rbind(make_pop_rows(n_each, age = 0, afr = 5),
                make_pop_rows(n_each, age = 4, afr = 5),
                make_pop_rows(n_adult, age = 10, afr = 5))
-  p <- make_toy_params(dd_alpha = 0, weibull_k = 1, weibull_lambda = 30,
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 30,
                         juv_decline_age_half_sat = 2, juv_decline_age_hill = 1)
   p$juv_decline_dose_response <- list(max_effect = 0.5, form = "saturating",
                                        half_sat = 500, hill = 1)
