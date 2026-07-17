@@ -1,0 +1,27 @@
+source("diagnostics/diag_mortality_by_age.R")
+
+diag_mortality_by_age()                                  # your local params.R
+diag_mortality_by_age(save_path = "outputs/mortality_by_age.png") 
+
+
+source("diagnostics/diag_mortality_postresprout.R")
+
+# Default run (your local params.R)
+diag_mortality_postresprout()
+
+# Save
+diag_mortality_postresprout(save_path = "outputs/resprout_mort.png")
+
+# Once you've read the article -- overlay observed data on Plot B
+diag_mortality_postresprout(
+  fire_ages = c(3, 12),
+  obs_data  = list(
+    data.frame(year_since_fire = 0:3,  # young plants
+               mortality_rate  = c(0.30, 0.18, 0.10, 0.08),
+               mort_lo = c(0.22, 0.12, 0.06, 0.04),   # 95% CI lower
+               mort_hi = c(0.38, 0.25, 0.15, 0.13)),  # 95% CI upper
+    data.frame(year_since_fire = 0:3,  # adult plants
+               mortality_rate  = c(0.12, 0.08, 0.06, 0.05))
+  )
+)
+
