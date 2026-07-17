@@ -1,3 +1,10 @@
+
+### code unit testing
+
+/opt/R/4.3.1/bin/Rscript tests/testthat.R
+
+
+
 source("diagnostics/diag_mortality_by_age.R")
 
 diag_mortality_by_age()                                  # your local params.R

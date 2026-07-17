@@ -8,7 +8,12 @@ proj_root <- normalizePath(file.path("..", ".."))
 setwd(proj_root)
 
 # --- Source all model code -----------------------------------------------
-source("params.R")
+# parlib/unittests/params.R defines get_default_params() with conservative
+# "everything off" values safe for unit tests. The main params.R holds the
+# working M. nodosa calibration and is NOT sourced here -- active mechanisms
+# (senescence, juv_decline, shade, rust) in that file would leak into the
+# matrix-equivalence fixtures and confound model-mechanic validation.
+source("parlib/unittests/params.R")
 source("R/individuals.R")
 source("R/genetics.R")
 source("R/mortality.R")

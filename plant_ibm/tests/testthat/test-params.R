@@ -65,12 +65,7 @@ test_that("new rust suppression mechanisms are off by default (max_effect = 0 fo
   p <- get_default_params()
   expect_equal(p$rust_flower_dose_response$max_effect, 0)
   expect_equal(p$rust_recruit_dose_response$max_effect, 0)
-  # age_floor = 0: no residual adult rust mortality by default
   expect_equal(p$rust_dose_response$age_floor, 0)
-  # Note: age_peak = 0.20 is non-zero, but rust_start_year = Inf means
-  # rust never activates in any default run -- the gate is rust_start_year,
-  # not age_peak. Setting age_peak = 0 only makes sense when you also want
-  # no rust effect after rust_start_year, which is unusual.
   expect_equal(p$rust_start_year, Inf)
 })
 
@@ -94,4 +89,21 @@ test_that("fire two-stage model is off by default (legacy mode)", {
 test_that("dd_age_half_sat = Inf by default (no age-weighting of density dependence)", {
   p <- get_default_params()
   expect_equal(p$dd_age_half_sat, Inf)
+})
+
+test_that("test suite is using parlib/unittests/params.R, not the working M. nodosa params.R", {
+  # The test suite sources parlib/unittests/params.R (conservative baseline,
+  # everything off) NOT params.R (working M. nodosa calibration, active
+  # mechanisms). If someone accidentally swaps them back, this test catches
+  # it immediately rather than having the matrix-equivalence tests fail with
+  # a confusing mismatch.
+  p <- get_default_params()
+  expect_equal(p$rust_start_year, Inf,
+    label = "test params must have rust off (rust_start_year=Inf)")
+  expect_equal(p$senescence_dose_response$max_effect, 0,
+    label = "test params must have senescence off")
+  expect_equal(p$juv_decline_dose_response$max_effect, 0,
+    label = "test params must have juv_decline off")
+  expect_equal(p$shade_dose_response$max_effect, 0,
+    label = "test params must have shade suppression off")
 })
