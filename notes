@@ -1,3 +1,10 @@
+### version control
+git branch -M main
+git remote add origin git@github.com:jasongbragg/MnSim.git
+git push -u origin main
+
+
+
 
 ### code unit testing
 
@@ -32,3 +39,22 @@ diag_mortality_postresprout(
   )
 )
 
+
+
+source("diagnostics/diag_fire_flowering.R")
+
+diag_fire_flowering()
+diag_fire_flowering(save_path = "outputs/fire_flowering.png")
+
+# With observed return-to-flowering data for Panel C
+diag_fire_flowering(
+  fire_ages = c(4, 25),
+  obs_data  = list(
+    data.frame(year_since_fire = 0:5,
+               prop_flower = c(0, 0, 0.08, 0.35, 0.62, 0.81)),
+    data.frame(year_since_fire = 0:5,
+               prop_flower     = c(0, 0.18, 0.55, 0.78, 0.90, 0.96),
+               prop_lo         = c(0, 0.10, 0.43, 0.65, 0.80, 0.88),
+               prop_hi         = c(0, 0.28, 0.67, 0.89, 0.97, 1.00))
+  )
+)
