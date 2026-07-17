@@ -57,4 +57,24 @@ diag_fire_flowering(
                prop_lo         = c(0, 0.10, 0.43, 0.65, 0.80, 0.88),
                prop_hi         = c(0, 0.28, 0.67, 0.89, 0.97, 1.00))
   )
+
 )
+
+
+
+
+source("diagnostics/diag_recruitment.R")
+
+# Default: runs 100-year fire-free equilibration to find operating point
+diag_recruitment()
+diag_recruitment(save_path = "outputs/recruitment.png")
+
+# Skip equilibration; supply reference point from field knowledge
+diag_recruitment(run_equilibration = FALSE,
+                 n_flowering_ref = 800,
+                 N_canopy_ref    = 1200)
+
+# Show what rust fecundity suppression would look like if turned on
+p <- get_default_params()
+p$rust_recruit_dose_response$max_effect <- 0.6
+diag_recruitment(params = p)
