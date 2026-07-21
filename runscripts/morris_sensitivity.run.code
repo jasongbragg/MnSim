@@ -1,0 +1,17 @@
+# Source everything
+source("runner/params_utils.R")
+source("runner/summarise.R")
+source("runner/morris.R")
+source("R/mortality.R"); source("R/genetics.R"); source("R/individuals.R")
+source("R/recruitment.R"); source("R/fire.R"); source("R/census.R")
+source("R/simulate.R")
+
+# Load the no-rust/no-fire scenario
+source("parlib/ensemble/no_rust_no_fire/params_base.R");  base   <- get_default_params()
+source("parlib/ensemble/no_rust_no_fire/param_ranges.R"); ranges <- get_param_ranges()
+
+# Run Morris (200 runs at r=20, 10 params)
+out <- run_morris(base, ranges, r = 20, n_cores = 8,
+                  n_summary_years = 50,
+                  results_dir = "results/morris_no_rust_no_fire/")
+

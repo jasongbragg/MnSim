@@ -27,29 +27,29 @@ get_default_params <- function() {
     weibull_lambda = 60,
 
     senescence_dose_response = list(
-      max_effect = 0.2,
+      max_effect = 0.3,
       form        = "sigmoid",
-      half_sat    = 40,
+      half_sat    = 30,
       hill         = 4
     ),
 
     juv_decline_dose_response = list(
-      max_effect = 0.5,
+      max_effect = 0.99,
       form        = "saturating",
-      half_sat    = 5000,
-      hill         = 2
+      half_sat    = 7000,
+      hill         = 4
     ),
-    juv_decline_age_half_sat = 2,
-    juv_decline_age_hill     = 2,
+    juv_decline_age_half_sat = 3,
+    juv_decline_age_hill     = 8,
 
     # ---- Recruitment -------------------------------------------------------
-    R_max  = 2000,
-    K_half = 6000,
+    R_max  = 500,
+    K_half = 1000,
 
     shade_dose_response = list(
-      max_effect = 0,
+      max_effect = 0.7,
       form        = "saturating",
-      half_sat    = 2500,
+      half_sat    = 3000,
       hill         = 4
     ),
 
@@ -69,7 +69,7 @@ get_default_params <- function() {
     resprout_recovery     = "countdown",
     resprout_prob_recovery = 1 / 3,
     fire_kill_prob        = 0.35,
-    fire_p_fimp           = 0.8,
+    fire_p_fimp           = 0.5,
     fire_kill_scalar      = 0.30,
     fire_kill_half_sat    = 5,
     fire_kill_hill        = 2,
@@ -86,10 +86,10 @@ get_default_params <- function() {
     annual_env_beta    = 1,   # overridden to 1   in rust-ON scenario
 
     rust_dose_response = list(
-      age_peak     = 0.025,
-      age_floor    = 0.025,
-      age_half_sat = 2,
-      age_hill     = 4,
+      age_peak     = 0.60,
+      age_floor    = 0.05,
+      age_half_sat = 3,
+      age_hill     = 8,
       resprout = list(
         max_effect = 0.50,
         form        = "saturating",
@@ -112,7 +112,7 @@ get_default_params <- function() {
     ),
 
     rust_recruit_dose_response = list(
-      max_effect = 0.5,
+      max_effect = 0,
       form        = "saturating",
       half_sat    = 0.5,
       hill         = 2

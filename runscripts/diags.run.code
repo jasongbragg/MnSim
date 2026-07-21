@@ -77,4 +77,24 @@ diag_recruitment(run_equilibration = FALSE,
 # Show what rust fecundity suppression would look like if turned on
 p <- get_default_params()
 p$rust_recruit_dose_response$max_effect <- 0.6
-diag_recruitment(params = p)
+diag_recruitment(params = p
+
+
+
+
+
+
+
+source("diagnostics/diag_demography.R")
+
+# Full run (500-year spin-up, 20 pre-fire, 100 post-fire)
+diag_demography()
+diag_demography(save_path = "outputs/demography.png")
+
+# Quick check with shorter spin-up
+diag_demography(spinup_years = 100L)
+
+# With partial resistance buffering rust impact
+p <- get_default_params()
+p$resist_freq0 <- c(0.05)
+diag_demography(params = p)
