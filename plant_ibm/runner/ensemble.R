@@ -86,6 +86,21 @@ ensemble_run <- function(
   n_runs  <- nrow(params_matrix)
   message(sprintf("Ensemble: %d runs on %d core(s)", n_runs, n_cores))
 
+  # Derive NA fallback stat names from a quick dummy run so the list
+  # stays in sync with summarise_run() automatically.
+  .dummy_names <- tryCatch({
+    dummy <- run_simulation(
+      within(base_params, { n_years <- 5L; N0 <- 50L }),
+      verbose = FALSE
+    )
+    names(summarise_run(dummy, n_summary_years = 1L))
+  }, error = function(e) {
+    c("N_alive_mean","N_alive_cv","N_alive_trend",
+      "N_IUCN_mean","adult_frac_mean","adult_frac_final",
+      "juv_age_mean","adult_age_mean","recruit_rate",
+      "births_mean","extinction")
+  })
+
   run_one <- function(i) {
     vec <- setNames(as.numeric(params_matrix[i, ]), keys)
     p   <- vec_to_params(base_params, vec)
@@ -103,11 +118,8 @@ ensemble_run <- function(
     )
 
     stats <- if (is.null(res)) {
-      s <- rep(NA_real_, 11L)
-      names(s) <- c("N_alive_mean","N_alive_cv","N_alive_trend",
-                     "N_IUCN_mean","adult_frac_mean","adult_frac_final",
-                     "juv_age_mean","adult_age_mean","recruit_rate",
-                     "births_mean","extinction")
+      s <- rep(NA_real_, length(.dummy_names))
+      names(s) <- .dummy_names
       s
     } else {
       summarise_run(res, n_summary_years = n_summary_years)

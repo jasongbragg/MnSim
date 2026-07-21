@@ -74,6 +74,24 @@ run_morris <- function(
   dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 
   # --- Run one parameter set ----------------------------------------------
+  # --- Run one parameter set ----------------------------------------------
+  # stat_names_fallback: used to name the NA vector on failed runs.
+  # Derived by running summarise_run on a dummy result from the base params
+  # so it stays in sync with summarise_run() automatically.
+  .dummy_names <- tryCatch({
+    dummy <- run_simulation(
+      within(base_params, { n_years <- 5L; N0 <- 50L }),
+      verbose = FALSE
+    )
+    names(summarise_run(dummy, n_summary_years = 1L))
+  }, error = function(e) {
+    c("N_alive_mean","N_alive_cv","N_alive_trend",
+      "N_IUCN_mean","adult_frac_mean","adult_frac_final",
+      "juv_age_mean","adult_age_mean","recruit_rate",
+      "births_mean","extinction")
+  })
+  n_stats_expected <- length(.dummy_names)
+
   run_one <- function(i) {
     vec <- setNames(as.numeric(param_mat[i, ]), keys)
     p   <- vec_to_params(base_params, vec)
@@ -93,11 +111,8 @@ run_morris <- function(
     )
 
     stats <- if (is.null(res)) {
-      s <- rep(NA_real_, 11L)
-      names(s) <- c("N_alive_mean","N_alive_cv","N_alive_trend",
-                     "N_IUCN_mean","adult_frac_mean","adult_frac_final",
-                     "juv_age_mean","adult_age_mean","recruit_rate",
-                     "births_mean","extinction")
+      s <- rep(NA_real_, n_stats_expected)
+      names(s) <- .dummy_names
       s
     } else {
       summarise_run(res, n_summary_years = n_summary_years)
@@ -127,9 +142,18 @@ run_morris <- function(
   message("Run-level results: ", runs_csv)
 
   # --- Write morris_ee.csv ------------------------------------------------
-  # Elementary effects: one row per (output statistic × factor)
+  # sensitivity::tell() stores m$ee as a 3D array [r, k, n_stats] when Y
+  # is a matrix (multiple outputs), or a 2D matrix [r, k] for a single
+  # output. Normalise to a list of matrices before extracting effects.
+  ee_raw <- m_design$ee
+  ee_list <- if (length(dim(ee_raw)) == 3L) {
+    lapply(seq_len(dim(ee_raw)[3L]), function(j) ee_raw[, , j])
+  } else {
+    list(ee_raw)   # single output: wrap so the loop below is uniform
+  }
+
   ee_rows <- do.call(rbind, lapply(seq_along(stat_names), function(j) {
-    ee_j <- m_design$ee[[j]]     # r × k matrix of elementary effects
+    ee_j <- ee_list[[j]]    # r × k matrix of elementary effects
     data.frame(
       output  = stat_names[j],
       factor  = keys,
