@@ -62,9 +62,14 @@ test_that("census_year's fire_event and rust_active flags match params exactly",
   pop <- make_toy_pop(30, p)
   gt  <- make_toy_gt(30, p)
 
-  row5 <- census_year(pop, gt, t = 5L, n_rec = 0L, n_dead = 0L, params = p)
-  row7 <- census_year(pop, gt, t = 7L, n_rec = 0L, n_dead = 0L, params = p)
-  row8 <- census_year(pop, gt, t = 8L, n_rec = 0L, n_dead = 0L, params = p)
+  # fire_this_year is now passed by the caller (simulate.R) not recomputed
+  # internally -- so the test must supply it explicitly.
+  row5 <- census_year(pop, gt, t = 5L, n_rec = 0L, n_dead = 0L, params = p,
+                       fire_this_year = TRUE)
+  row7 <- census_year(pop, gt, t = 7L, n_rec = 0L, n_dead = 0L, params = p,
+                       fire_this_year = FALSE)
+  row8 <- census_year(pop, gt, t = 8L, n_rec = 0L, n_dead = 0L, params = p,
+                       fire_this_year = FALSE)
 
   expect_true(row5$fire_event);  expect_false(row5$rust_active)
   expect_false(row7$fire_event); expect_false(row7$rust_active)
