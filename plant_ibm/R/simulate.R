@@ -111,7 +111,8 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
 
     # 7. census
     census_list[[i]] <- census_year(pop, resist_gt, t, rec$n_rec,
-                                     length(dead_idx), params)
+                                     length(dead_idx), params,
+                                     fire_this_year = fire_this_year)
 
     if (verbose && i %% 10 == 0) {
       cat(sprintf("year %d: N=%d  N_IUCN=%d\n",

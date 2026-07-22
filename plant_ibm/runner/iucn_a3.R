@@ -389,6 +389,14 @@ plot_iucn_a3 <- function(result, save_path = NULL,
       fill = "#fdae6b", alpha = 0.5) +
     # Main trajectory
     ggplot2::geom_line(colour = "#333333", linewidth = 0.7) +
+    # Fire events: rug marks along the bottom of the panel
+    { fires <- cen[cen$fire_event, ]
+      if (nrow(fires) > 0)
+        ggplot2::geom_rug(data = fires, aes(x = year),
+                           inherit.aes = FALSE,
+                           colour = "#e08000", linewidth = 0.5,
+                           sides = "b", length = grid::unit(0.04, "npc"))
+    } +
     # Counterfactual if available
     { if (!is.null(result$census_cfact))
         ggplot2::geom_line(data = result$census_cfact,
@@ -436,7 +444,7 @@ plot_iucn_a3 <- function(result, save_path = NULL,
         "IUCN A3 assessment  |  T\u1d33 = %.1f yr  |  assessment period = %.0f yr  |  %s",
         T_g, t_inf, sprintf("%.0f%% projected decline  \u2192  %s", pct, cat)),
       subtitle = sprintf(
-        "Reference: %d\u2013%d (mean = %.0f)   |   Comparison: %d\u2013%d (mean = %.0f)",
+        "Reference: %d\u2013%d (mean = %.0f)   |   Comparison: %d\u2013%d (mean = %.0f)   |   \u25a1 fire events (rug)",
         result$ref_start, result$ref_end, N_ref,
         result$compare_start, result$compare_end, N_compare)
     ) +
@@ -499,6 +507,9 @@ plot_iucn_a3 <- function(result, save_path = NULL,
   rect(result$compare_start, 0, result$compare_end, ymax,
        col = grDevices::adjustcolor("#fdae6b", 0.5), border = NA)
   lines(cen$year, cen$N_IUCN, col = "#333333", lwd = 1.5)
+  fires <- cen[cen$fire_event, ]
+  if (nrow(fires) > 0)
+    rug(fires$year, col = "#e08000", ticksize = 0.04, lwd = 1)
   abline(v = yr_rust, col = "#e34948", lty = 2, lwd = 1.5)
   abline(h = result$N_ref,     col = "#1a7a35", lty = 5, lwd = 1.2)
   abline(h = result$N_compare, col = "#b85c00", lty = 5, lwd = 1.2)

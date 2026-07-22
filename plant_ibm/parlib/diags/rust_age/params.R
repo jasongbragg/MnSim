@@ -1,44 +1,71 @@
-# parlib/diags/rust_age/params.R
+# parlib/diags/demography/params.R
 #
-# Parameters for diag_rust_age.R.
-# Focus: rust age-hazard shape and the resprout bonus.
-# Fire and rust are both active so the Panel C trajectories are meaningful.
-# The key parameters for this diagnostic are annotated.
+# Base parameterisation for the demography diagnostic (diag_demography.R).
+# Starting point: the working M. nodosa calibration from plant_ibm/params.R.
+#
+# The diagnostic runs three phases automatically (no need to edit here):
+#   1. 500-year fire-free spin-up (rust off regardless of rust_start_year)
+#   2. Post-fire rust-ON scenario  (annual_env_t ≈ 1.0, max constant pressure)
+#   3. Post-fire rust-OFF scenario (rust_start_year forced to Inf)
+#
+# Parameters to consider adjusting here:
+#   rust_dose_response  -- determines how hard rust hits each age class
+#   resist_freq0        -- allele frequency of resistance (0 = fully susceptible,
+#                          shows absolute worst-case rust impact)
+#   fire_p_fimp / fire_kill_scalar / fire_kill_half_sat -- fire severity
+#   resprout_yrs_base   -- recovery window length
 
 get_default_params <- function() {
   list(
 
     N0      = 10000,
-    n_years = 200,
+    n_years = 200,    # overridden internally by diag_demography()
     seed    = 42,
 
+    # ---- Background mortality ----------------------------------------------
     weibull_k      = 1.0,
     weibull_lambda = 60,
 
     senescence_dose_response = list(
-      max_effect = 0.2, form = "sigmoid", half_sat = 40, hill = 4
+      max_effect = 0.2,
+      form        = "sigmoid",
+      half_sat    = 30,
+      hill         = 8
     ),
 
     juv_decline_dose_response = list(
-      max_effect = 0.5, form = "saturating", half_sat = 5000, hill = 2
+      max_effect = 0.5,
+      form        = "saturating",
+      half_sat    = 5000,
+      hill         = 2
     ),
     juv_decline_age_half_sat = 2,
     juv_decline_age_hill     = 2,
 
-    R_max  = 500,
-    K_half = 1000,
+    # ---- Recruitment -------------------------------------------------------
+    R_max  = 1000,
+    K_half = 4000,
 
     shade_dose_response = list(
-      max_effect = 0, form = "saturating", half_sat = 2500, hill = 4
+      max_effect = 0,
+      form        = "saturating",
+      half_sat    = 1000,
+      hill         = 4
     ),
 
+    # ---- Flowering ---------------------------------------------------------
     age_first_flower_mean = 5,
     age_first_flower_sd   = 1.5,
-    selfing_rate          = 0.10,
 
-    fire_years            = c(40, 80, 120),
+    # ---- Mating system -----------------------------------------------------
+    selfing_rate = 0.10,
+
+    # ---- Fire --------------------------------------------------------------
+    # fire_years / fire_p_fimp overridden internally for the single fire event.
+    # Edit fire_kill_scalar, fire_kill_half_sat, fire_kill_hill to tune severity.
+    fire_years            = c(40, 80, 120),  # ignored during diagnostic runs
     fire_prob_annual      = 0,
-    resprout_yrs_base     = 3,     # Panel C window length -- change to explore
+    resprout_yrs_base     = 3,
     resprout_recovery     = "countdown",
     resprout_prob_recovery = 1 / 3,
     fire_kill_prob        = 0.35,
@@ -47,56 +74,56 @@ get_default_params <- function() {
     fire_kill_half_sat    = 5,
     fire_kill_hill        = 2,
 
-    # ---- Rust: PRIMARY CALIBRATION TARGETS for this diagnostic ------------
-    rust_start_year = 1,
-    rust_pressure   = 1.0,
+    # ---- Myrtle rust -------------------------------------------------------
+    # rust_start_year and annual_env_alpha/beta are overridden by the
+    # diagnostic for each scenario. Edit rust_dose_response to calibrate
+    # how rust affects each age class and the resprout bonus.
+    rust_start_year    = 1,
+    rust_pressure      = 1.0,
+    microclim_alpha    = 1,
+    microclim_beta     = 1,
+    annual_env_alpha   = 1,   # overridden to ~1e4 in rust-ON scenario
+    annual_env_beta    = 1,   # overridden to 1   in rust-ON scenario
 
     rust_dose_response = list(
-      # age_peak: maximum rust hazard at age 0 for fully susceptible plant
-      # at rust_pressure = 1. Panel A peak.
-      age_peak     = 0.025,
-
-      # age_floor: residual hazard at very old age. Panel A asymptote.
-      # Set > 0 to allow occasional rust-driven adult death.
+      age_peak     = 0.5,
       age_floor    = 0.025,
-
-      # age_half_sat: age at which hazard halves toward floor.
-      # The Panel A inflection point.
       age_half_sat = 2,
-
-      # age_hill: steepness of the Hill decay. Large values = sharper
-      # transition; effectively a gate at age_half_sat.
       age_hill     = 4,
-
-      # resprout: the POST-FIRE rust bonus. max_effect controls the
-      # magnitude of the step-up in Panel C. Calibrate against the
-      # post-fire survival data from the new literature.
       resprout = list(
-        max_effect = 0.5,
+        max_effect = 0.80,
         form        = "saturating",
         half_sat    = 0.5,
         hill         = 1
       ),
-
       delay = list(
-        max_effect = 2, form = "linear", half_sat = 1, hill = 1
+        max_effect = 1,
+        form        = "linear",
+        half_sat    = 1,
+        hill         = 1
       )
     ),
 
-    microclim_alpha = 20,   # env_susc: mean=0.80, tight
-    microclim_beta  = 5,
-    annual_env_alpha = 14,  # annual pressure: mean=0.70
-    annual_env_beta  = 6,
-
     rust_flower_dose_response = list(
-      max_effect = 0, form = "saturating", half_sat = 0.5, hill = 2
-    ),
-    rust_recruit_dose_response = list(
-      max_effect = 0, form = "saturating", half_sat = 0.5, hill = 2
+      max_effect = 0,
+      form        = "saturating",
+      half_sat    = 0.5,
+      hill         = 1
     ),
 
+    rust_recruit_dose_response = list(
+      max_effect = 0,
+      form        = "saturating",
+      half_sat    = 0.5,
+      hill         = 1
+    ),
+
+    # ---- Genetic architecture ----------------------------------------------
+    # resist_freq0 = c(0): fully susceptible population -- shows the
+    # absolute worst-case rust impact (upper bound on demographic damage).
+    # Change to c(0.05) or higher to add resistance buffering.
     resist_locus_effect = c(1.0),
-    resist_dominance    = c(1.0),
-    resist_freq0        = c(0.0)
+    resist_dominance     = c(1.0),
+    resist_freq0         = c(0)
   )
 }

@@ -63,8 +63,8 @@ get_default_params <- function() {
     # ---- Fire --------------------------------------------------------------
     # fire_years / fire_p_fimp overridden internally for the single fire event.
     # Edit fire_kill_scalar, fire_kill_half_sat, fire_kill_hill to tune severity.
-    fire_years            = c(40, 80, 120),  # ignored during diagnostic runs
-    fire_prob_annual      = 0,
+    fire_years            = integer(0),  # ignored during diagnostic runs
+    fire_prob_annual      = 1/50,
     resprout_yrs_base     = 3,
     resprout_recovery     = "countdown",
     resprout_prob_recovery = 1 / 3,
@@ -78,7 +78,7 @@ get_default_params <- function() {
     # rust_start_year and annual_env_alpha/beta are overridden by the
     # diagnostic for each scenario. Edit rust_dose_response to calibrate
     # how rust affects each age class and the resprout bonus.
-    rust_start_year    = 1,
+    rust_start_year    = Inf,
     rust_pressure      = 1.0,
     microclim_alpha    = 1,
     microclim_beta     = 1,
