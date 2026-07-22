@@ -22,6 +22,8 @@ source("R/recruitment.R")
 source("R/census.R")
 source("R/simulate.R")
 source("R/matrix_model.R")
+source("runner/params_utils.R")  # make_run_id(), vec_to_params(), params_to_vec()
+source("runner/iucn_a3.R")       # compute_gen_time(), summarise_iucn_a3()
 
 # --- Minimal-population params for unit tests (fast, small) ---------------
 make_toy_params <- function(...) {
