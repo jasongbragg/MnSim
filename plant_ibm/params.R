@@ -29,8 +29,8 @@ get_default_params <- function() {
     senescence_dose_response = list(
       max_effect = 0.2,
       form        = "sigmoid",
-      half_sat    = 40,
-      hill         = 4
+      half_sat    = 30,
+      hill         = 8
     ),
 
     juv_decline_dose_response = list(
@@ -43,13 +43,13 @@ get_default_params <- function() {
     juv_decline_age_hill     = 2,
 
     # ---- Recruitment -------------------------------------------------------
-    R_max  = 2000,
-    K_half = 6000,
+    R_max  = 1000,
+    K_half = 4000,
 
     shade_dose_response = list(
       max_effect = 0,
       form        = "saturating",
-      half_sat    = 2500,
+      half_sat    = 1000,
       hill         = 4
     ),
 
@@ -86,18 +86,18 @@ get_default_params <- function() {
     annual_env_beta    = 1,   # overridden to 1   in rust-ON scenario
 
     rust_dose_response = list(
-      age_peak     = 0.025,
+      age_peak     = 0.5,
       age_floor    = 0.025,
       age_half_sat = 2,
       age_hill     = 4,
       resprout = list(
-        max_effect = 0.50,
+        max_effect = 0.80,
         form        = "saturating",
         half_sat    = 0.5,
         hill         = 1
       ),
       delay = list(
-        max_effect = 2,
+        max_effect = 1,
         form        = "linear",
         half_sat    = 1,
         hill         = 1
@@ -108,14 +108,14 @@ get_default_params <- function() {
       max_effect = 0,
       form        = "saturating",
       half_sat    = 0.5,
-      hill         = 2
+      hill         = 1
     ),
 
     rust_recruit_dose_response = list(
-      max_effect = 0.5,
+      max_effect = 0,
       form        = "saturating",
       half_sat    = 0.5,
-      hill         = 2
+      hill         = 1
     ),
 
     # ---- Genetic architecture ----------------------------------------------

@@ -1,4 +1,5 @@
 # Source everything
+library(sensitivity)
 source("runner/params_utils.R")
 source("runner/summarise.R")
 source("runner/morris.R")

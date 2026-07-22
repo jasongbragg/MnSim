@@ -27,17 +27,17 @@ diag_mortality_postresprout()
 diag_mortality_postresprout(save_path = "outputs/resprout_mort.png")
 
 # Once you've read the article -- overlay observed data on Plot B
-diag_mortality_postresprout(
-  fire_ages = c(3, 12),
-  obs_data  = list(
-    data.frame(year_since_fire = 0:3,  # young plants
-               mortality_rate  = c(0.30, 0.18, 0.10, 0.08),
-               mort_lo = c(0.22, 0.12, 0.06, 0.04),   # 95% CI lower
-               mort_hi = c(0.38, 0.25, 0.15, 0.13)),  # 95% CI upper
-    data.frame(year_since_fire = 0:3,  # adult plants
-               mortality_rate  = c(0.12, 0.08, 0.06, 0.05))
-  )
-)
+#diag_mortality_postresprout(
+#  fire_ages = c(3, 12),
+#  obs_data  = list(
+#    data.frame(year_since_fire = 0:3,  # young plants
+#               mortality_rate  = c(0.30, 0.18, 0.10, 0.08),
+#               mort_lo = c(0.22, 0.12, 0.06, 0.04),   # 95% CI lower
+#               mort_hi = c(0.38, 0.25, 0.15, 0.13)),  # 95% CI upper
+#    data.frame(year_since_fire = 0:3,  # adult plants
+#               mortality_rate  = c(0.12, 0.08, 0.06, 0.05))
+#  )
+#)
 
 
 
@@ -47,18 +47,17 @@ diag_fire_flowering()
 diag_fire_flowering(save_path = "outputs/fire_flowering.png")
 
 # With observed return-to-flowering data for Panel C
-diag_fire_flowering(
-  fire_ages = c(4, 25),
-  obs_data  = list(
-    data.frame(year_since_fire = 0:5,
-               prop_flower = c(0, 0, 0.08, 0.35, 0.62, 0.81)),
-    data.frame(year_since_fire = 0:5,
-               prop_flower     = c(0, 0.18, 0.55, 0.78, 0.90, 0.96),
-               prop_lo         = c(0, 0.10, 0.43, 0.65, 0.80, 0.88),
-               prop_hi         = c(0, 0.28, 0.67, 0.89, 0.97, 1.00))
-  )
-
-)
+#diag_fire_flowering(
+#  fire_ages = c(4, 25),
+#  obs_data  = list(
+#    data.frame(year_since_fire = 0:5,
+#               prop_flower = c(0, 0, 0.08, 0.35, 0.62, 0.81)),
+#    data.frame(year_since_fire = 0:5,
+#               prop_flower     = c(0, 0.18, 0.55, 0.78, 0.90, 0.96),
+#               prop_lo         = c(0, 0.10, 0.43, 0.65, 0.80, 0.88),
+#               prop_hi         = c(0, 0.28, 0.67, 0.89, 0.97, 1.00))
+#  )
+#)
 
 
 
@@ -70,14 +69,14 @@ diag_recruitment()
 diag_recruitment(save_path = "outputs/recruitment.png")
 
 # Skip equilibration; supply reference point from field knowledge
-diag_recruitment(run_equilibration = FALSE,
-                 n_flowering_ref = 800,
-                 N_canopy_ref    = 1200)
+#diag_recruitment(run_equilibration = FALSE,
+#                 n_flowering_ref = 800,
+#                 N_canopy_ref    = 1200)
 
 # Show what rust fecundity suppression would look like if turned on
-p <- get_default_params()
-p$rust_recruit_dose_response$max_effect <- 0.6
-diag_recruitment(params = p
+#p <- get_default_params()
+#p$rust_recruit_dose_response$max_effect <- 0.6
+#diag_recruitment(params = p
 
 
 
@@ -92,9 +91,26 @@ diag_demography()
 diag_demography(save_path = "outputs/demography.png")
 
 # Quick check with shorter spin-up
-diag_demography(spinup_years = 100L)
+#diag_demography(spinup_years = 100L)
 
 # With partial resistance buffering rust impact
-p <- get_default_params()
-p$resist_freq0 <- c(0.05)
-diag_demography(params = p)
+#p <- get_default_params()
+#p$resist_freq0 <- c(0.05)
+#diag_demography(params = p)
+
+
+
+
+
+source("diagnostics/diag_rust_age.R")
+
+diag_rust_age()
+diag_rust_age(save_path = "outputs/rust_age.png")
+
+# Explore the resprout bonus — the key Panel C parameter
+#p <- get_default_params()
+#p$rust_dose_response$resprout$max_effect <- 0.8
+#diag_rust_age(params = p)
+
+# Change fire reference ages
+#diag_rust_age(fire_ages = c(3, 15), eff_susc_ref = 0.56)
