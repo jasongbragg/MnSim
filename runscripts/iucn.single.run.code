@@ -1,18 +1,31 @@
 
 # /opt/R/4.3.1/bin/R
 # Source everything as usual, then:
+
+source("params.R")
+source("R/individuals.R")
+source("R/genetics.R")
+source("R/mortality.R")
+source("R/fire.R")
+source("R/recruitment.R")
+source("R/census.R")
+source("R/simulate.R")
+
 source("runner/params_utils.R")   # for make_run_id()
 source("runner/iucn_a3.R")
 
-# Single run with figure
-result <- run_iucn_a3(
-  get_default_params(),
+p       <- get_default_params()
+p$seed  <- 13094L          # or any integer
+
+result  <- run_iucn_a3(
+  p,
   year_spinup        = 1700L,
   year_gentime_start = 1810L,
   year_gentime_end   = 1910L,
   year_rust          = 2010L,
   year_end           = 2210L
 )
+
 
 # Extract summary vector (for batch accumulation)
 summarise_iucn_a3(result)

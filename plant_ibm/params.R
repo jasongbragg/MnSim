@@ -69,9 +69,9 @@ get_default_params <- function() {
     resprout_recovery     = "countdown",
     resprout_prob_recovery = 1 / 3,
     fire_kill_prob        = 0.35,
-    fire_p_fimp           = 0.8,
+    fire_p_fimp           = 0.6,
     fire_kill_scalar      = 0.30,
-    fire_kill_half_sat    = 5,
+    fire_kill_half_sat    = 2,
     fire_kill_hill        = 2,
 
     # ---- Myrtle rust -------------------------------------------------------
@@ -79,14 +79,14 @@ get_default_params <- function() {
     # diagnostic for each scenario. Edit rust_dose_response to calibrate
     # how rust affects each age class and the resprout bonus.
     rust_start_year    = Inf,
-    rust_pressure      = 1.0,
+    rust_pressure      = 1,
     microclim_alpha    = 1,
     microclim_beta     = 1,
     annual_env_alpha   = 1,   # overridden to ~1e4 in rust-ON scenario
     annual_env_beta    = 1,   # overridden to 1   in rust-ON scenario
 
     rust_dose_response = list(
-      age_peak     = 0.5,
+      age_peak     = 0.6,
       age_floor    = 0.025,
       age_half_sat = 2,
       age_hill     = 4,
