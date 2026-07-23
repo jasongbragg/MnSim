@@ -27,9 +27,9 @@ get_default_params <- function() {
     weibull_lambda = 60,
 
     senescence_dose_response = list(
-      max_effect = 0.2,
+      max_effect = 0.1,
       form        = "sigmoid",
-      half_sat    = 30,
+      half_sat    = 40,
       hill         = 8
     ),
 
@@ -80,18 +80,22 @@ get_default_params <- function() {
     # how rust affects each age class and the resprout bonus.
     rust_start_year    = Inf,
     rust_pressure      = 1,
-    microclim_alpha    = 1,
-    microclim_beta     = 1,
-    annual_env_alpha   = 1,   # overridden to ~1e4 in rust-ON scenario
-    annual_env_beta    = 1,   # overridden to 1   in rust-ON scenario
+    microclim_alpha    = 20,
+    microclim_beta     = 5,
+    annual_env_alpha   = 14,   # overridden to ~1e4 in rust-ON scenario
+    annual_env_beta    = 6,   # overridden to 1   in rust-ON scenario
+#    microclim_alpha    = 1,
+#    microclim_beta     = 1,
+#    annual_env_alpha   = 1,   # overridden to ~1e4 in rust-ON scenario
+#    annual_env_beta    = 1,   # overridden to 1   in rust-ON scenario
 
     rust_dose_response = list(
-      age_peak     = 0.6,
+      age_peak     = 0.3,
       age_floor    = 0.025,
       age_half_sat = 2,
       age_hill     = 4,
       resprout = list(
-        max_effect = 0.80,
+        max_effect = 0.30,
         form        = "saturating",
         half_sat    = 0.5,
         hill         = 1

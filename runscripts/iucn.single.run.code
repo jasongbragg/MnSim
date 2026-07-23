@@ -15,7 +15,7 @@ source("runner/params_utils.R")   # for make_run_id()
 source("runner/iucn_a3.R")
 
 p       <- get_default_params()
-p$seed  <- 13094L          # or any integer
+p$seed  <- 13038464L          # or any integer
 
 result  <- run_iucn_a3(
   p,
