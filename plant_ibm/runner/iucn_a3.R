@@ -521,3 +521,205 @@ plot_iucn_a3 <- function(result, save_path = NULL,
                        result$T_g, result$n_offspring_gt))
   abline(v = result$T_g, col = "#e34948", lty = 2, lwd = 2)
 }
+
+# ============================================================================
+# run_iucn_seeds()
+# ============================================================================
+# Run the IUCN A3 assessment for a fixed parameterisation across many random
+# seeds. Fire stochasticity means any single run can be substantially affected
+# by whether a fire happens to suppress the population at the start or end of
+# the reference/comparison windows. Running an ensemble across seeds and
+# reporting the distribution of pct_decline is the appropriate way to
+# characterise the assessment under a given parameterisation.
+#
+# Returns a data.frame with one row per seed (same format as
+# collect_iucn_results()). Also writes one .rds per seed to results_dir
+# so the ensemble is restartable: interrupted runs pick up where they left off.
+#
+# USAGE
+# -----
+#   source all model files, then:
+#   df <- run_iucn_seeds(
+#     get_default_params(),
+#     seeds       = 1:50,
+#     results_dir = "results/iucn_seeds/",
+#     n_cores     = 8L,
+#     year_spinup = 1700L, year_gentime_start = 1810L,
+#     year_gentime_end = 1910L, year_rust = 2010L, year_end = 2210L
+#   )
+#   plot_iucn_ensemble(df)
+run_iucn_seeds <- function(
+    params,
+    seeds         = 1:20,
+    results_dir   = "results/iucn_seeds/",
+    n_cores       = max(1L, parallel::detectCores() - 1L),
+    skip_existing = TRUE,
+    verbose       = TRUE,
+    ...           # passed to run_iucn_a3 (year_spinup, year_rust, etc.)
+) {
+  dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
+  n <- length(seeds)
+  if (verbose) message(sprintf("IUCN seed ensemble: %d runs on %d core(s)", n, n_cores))
+
+  parallel::mclapply(seeds, function(s) {
+    p      <- params
+    p$seed <- as.integer(s)
+    id     <- make_run_id(p)
+    out    <- file.path(results_dir, paste0(id, ".rds"))
+    if (skip_existing && file.exists(out)) return(invisible(NULL))
+    tryCatch(
+      run_iucn_a3(p, ..., save_rds = out, plot = FALSE, verbose = FALSE),
+      error = function(e) message(sprintf("  seed %d error: %s", s, conditionMessage(e)))
+    )
+    invisible(NULL)
+  }, mc.cores = n_cores)
+
+  df <- collect_iucn_results(results_dir)
+  if (verbose && nrow(df) > 0) {
+    message(sprintf(
+      "Ensemble summary (%d runs):  median decline = %.1f%%  [%.1f%% - %.1f%%]",
+      nrow(df),
+      median(df$pct_decline, na.rm = TRUE),
+      quantile(df$pct_decline, 0.1, na.rm = TRUE),
+      quantile(df$pct_decline, 0.9, na.rm = TRUE)
+    ))
+  }
+  df
+}
+
+# ============================================================================
+# plot_iucn_ensemble()
+# ============================================================================
+# Summary figure for an ensemble of IUCN seed runs.
+#
+# Panel A: histogram of pct_decline with IUCN category threshold lines
+#   (30% VU, 50% EN, 80% CR). The distribution shows the range of outcomes
+#   attributable to stochastic fire timing rather than parameter uncertainty.
+#
+# Panel B: side-by-side violin/box of N_ref and N_compare across seeds,
+#   showing how much the reference and comparison populations vary between
+#   runs and where the decline comes from.
+#
+# A summary table of % runs falling in each IUCN category is printed to
+# the console and returned invisibly.
+plot_iucn_ensemble <- function(df, save_path = NULL,
+                                width_in = 10, height_in = 5, res = 150) {
+  if (nrow(df) == 0L) stop("No results to plot.")
+
+  # Console summary
+  n    <- nrow(df)
+  cat(sprintf("\n=== IUCN ensemble: %d runs ===\n", n))
+  cat(sprintf("  pct_decline: median=%.1f%%  IQR=[%.1f%%, %.1f%%]  range=[%.1f%%, %.1f%%]\n",
+              median(df$pct_decline, na.rm=TRUE),
+              quantile(df$pct_decline, 0.25, na.rm=TRUE),
+              quantile(df$pct_decline, 0.75, na.rm=TRUE),
+              min(df$pct_decline, na.rm=TRUE),
+              max(df$pct_decline, na.rm=TRUE)))
+  cat(sprintf("  Outcome frequencies:  LC/NT=%d%%  VU=%d%%  EN=%d%%  CR=%d%%\n",
+              round(100*mean(df$pct_decline <  30, na.rm=TRUE)),
+              round(100*mean(df$pct_decline >= 30 & df$pct_decline < 50, na.rm=TRUE)),
+              round(100*mean(df$pct_decline >= 50 & df$pct_decline < 80, na.rm=TRUE)),
+              round(100*mean(df$pct_decline >= 80, na.rm=TRUE))))
+  cat(sprintf("  T_g: median=%.1f yr\n", median(df$T_g, na.rm=TRUE)))
+
+  if (!is.null(save_path)) {
+    grDevices::png(save_path, width=width_in, height=height_in,
+                   units="in", res=res)
+    on.exit(grDevices::dev.off(), add=TRUE)
+  }
+
+  if (requireNamespace("ggplot2", quietly=TRUE)) {
+    .gg_iucn_ensemble(df)
+  } else {
+    .base_iucn_ensemble(df)
+  }
+
+  invisible(list(
+    n          = n,
+    pct_vu     = mean(df$iucn_vu, na.rm=TRUE),
+    pct_en     = mean(df$iucn_en, na.rm=TRUE),
+    pct_cr     = mean(df$iucn_cr, na.rm=TRUE),
+    median_decline = median(df$pct_decline, na.rm=TRUE)
+  ))
+}
+
+.gg_iucn_ensemble <- function(df) {
+  gg <- ggplot2::ggplot; aes <- ggplot2::aes
+  n  <- nrow(df)
+
+  # Panel A: decline histogram
+  pA <- gg(df, aes(x = pct_decline)) +
+    ggplot2::geom_histogram(binwidth = 2, fill = "#2a78d6", colour = "white",
+                             alpha = 0.85) +
+    ggplot2::geom_vline(xintercept = c(30, 50, 80),
+                         colour = c("#eda100","#e34948","#8b0000"),
+                         linetype = "dashed", linewidth = 0.8) +
+    ggplot2::annotate("text", x = c(30, 50, 80),
+                       y = Inf, label = c("VU","EN","CR"),
+                       hjust = -0.1, vjust = 1.4, size = 3,
+                       colour = c("#eda100","#e34948","#8b0000")) +
+    ggplot2::geom_vline(xintercept = median(df$pct_decline, na.rm=TRUE),
+                         colour = "#333333", linewidth = 1, linetype = "solid") +
+    ggplot2::annotate("text",
+                       x = median(df$pct_decline, na.rm=TRUE),
+                       y = Inf,
+                       label = sprintf(" median\n %.1f%%", median(df$pct_decline, na.rm=TRUE)),
+                       hjust = 0, vjust = 1.3, size = 3, colour = "#333333") +
+    ggplot2::scale_x_continuous(limits = c(0, 100)) +
+    ggplot2::labs(x = "Projected decline in reproductive adults (%)",
+                  y = "Number of runs",
+                  title = sprintf("IUCN A3 ensemble  (n = %d seeds)", n),
+                  subtitle = sprintf(
+                    "LC/NT: %d%%   VU: %d%%   EN: %d%%   CR: %d%%",
+                    round(100*mean(df$pct_decline <  30, na.rm=TRUE)),
+                    round(100*mean(df$iucn_vu & !df$iucn_en, na.rm=TRUE)),
+                    round(100*mean(df$iucn_en & !df$iucn_cr, na.rm=TRUE)),
+                    round(100*mean(df$iucn_cr, na.rm=TRUE)))) +
+    ggplot2::theme_minimal(base_size = 11)
+
+  # Panel B: N_ref vs N_compare scatter/violin
+  pop_long <- rbind(
+    data.frame(window = "Reference (pre-rust)", N = df$N_ref,
+               stringsAsFactors = FALSE),
+    data.frame(window = "Comparison (post-rust)", N = df$N_compare,
+               stringsAsFactors = FALSE)
+  )
+  pop_long$window <- factor(pop_long$window,
+                             levels = c("Reference (pre-rust)","Comparison (post-rust)"))
+
+  pB <- gg(pop_long, aes(x = window, y = N, fill = window)) +
+    ggplot2::geom_violin(alpha = 0.6, colour = NA) +
+    ggplot2::geom_boxplot(width = 0.15, fill = "white",
+                           outlier.size = 1, colour = "#333333") +
+    ggplot2::scale_fill_manual(values = c("#a1d99b","#fdae6b"), guide = "none") +
+    ggplot2::labs(x = NULL, y = "Reproductive adults (N_IUCN)",
+                  title = "Population size distribution",
+                  subtitle = "Each point = one seed run") +
+    ggplot2::theme_minimal(base_size = 11)
+
+  if (requireNamespace("patchwork", quietly=TRUE)) {
+    print(patchwork::wrap_plots(pA, pB, ncol=2, widths=c(1.6, 1)))
+  } else if (requireNamespace("gridExtra", quietly=TRUE)) {
+    gridExtra::grid.arrange(pA, pB, ncol=2, widths=c(1.6, 1))
+  } else {
+    print(pA); readline("Enter for Panel B..."); print(pB)
+  }
+}
+
+.base_iucn_ensemble <- function(df) {
+  op <- par(mfrow=c(1,2), mar=c(4,4,3,1), mgp=c(2.3,0.7,0))
+  on.exit(par(op), add=TRUE)
+
+  hist(df$pct_decline, breaks=seq(0,100,by=5),
+       col="#2a78d6", border="white",
+       xlab="Projected decline (%)", ylab="Runs",
+       main=sprintf("IUCN A3 ensemble (n=%d)", nrow(df)), las=1)
+  abline(v=c(30,50,80), col=c("#eda100","#e34948","#8b0000"), lty=2, lwd=1.5)
+  abline(v=median(df$pct_decline, na.rm=TRUE), col="#333333", lwd=2)
+
+  N_both <- c(df$N_ref, df$N_compare)
+  boxplot(list("Reference\n(pre-rust)" = df$N_ref,
+               "Comparison\n(post-rust)" = df$N_compare),
+          col=c("#a1d99b","#fdae6b"), border="#333333",
+          ylab="Reproductive adults", main="Population distribution", las=1)
+}

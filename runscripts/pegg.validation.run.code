@@ -1,0 +1,26 @@
+# /opt/R/4.3.1/bin/R
+# Source everything as usual, then:
+
+source("params.R")
+source("R/individuals.R")
+source("R/genetics.R")
+source("R/mortality.R")
+source("R/fire.R")
+source("R/recruitment.R")
+source("R/census.R")
+source("R/simulate.R")
+
+
+source("runner/params_utils.R")
+source("runner/pegg_validation.R")
+# (plus all model files)
+
+# Single run — quick look
+result <- run_pegg_validation(get_default_params())
+
+df <- run_pegg_seeds(get_default_params(), seeds = 1:100,
+                     results_dir = "results/pegg_seeds/")
+plot_pegg_ensemble(df, observed = 0.48)
+
+
+
