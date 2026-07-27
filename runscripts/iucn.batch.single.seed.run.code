@@ -17,7 +17,7 @@ source("runner/iucn_a3.R")
 # Run 50 seeds in parallel (all other settings same as single run)
 df <- run_iucn_seeds(
   get_default_params(),
-  seeds       = 1:20,
+  seeds       = 1:100,
   results_dir = "results/iucn_seeds/",
   n_cores     = 8L,
   year_spinup        = 1600L,

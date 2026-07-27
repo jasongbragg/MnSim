@@ -1,0 +1,376 @@
+longitude,latitude,year,month,coordinateUncertaintyInMeters,basisOfRecord,datasetName,institutionCode,stateProvince,cell_id
+151.690872,-24.13533,2026,5,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,107
+151.81057,-24.230368,2024,9,205,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,179
+151.9833,-24.4333,1992,10,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,320
+152.021734,-24.492115,2023,10,NA,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,321
+152.2,-24.7667,1977,5,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,532
+152.254117,-24.87732,2025,4,1213,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,603
+151.945183,-24.972316,2019,9,100,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,670
+152.28541,-24.920529,2023,11,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,673
+152.4617,-24.963947,2021,9,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,675
+148.166667,-25.016667,1979,NA,5000,HUMAN_OBSERVATION,NA,UQ,Queensland,702
+152.230438,-25.060336,2022,1,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,743
+152.486892,-25.092303,1996,10,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,745
+152.366913,-25.164625,2022,11,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,814
+152.459392,-25.106748,1971,5,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,815
+152.5392,-25.106469,2022,11,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,816
+152.603036,-25.191119,2023,9,12,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,817
+152.360222,-25.240006,2024,12,84,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,884
+152.576051,-25.273411,1994,8,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,886
+152.650961,-25.266879,2025,5,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,887
+153.129917,-25.241,2022,10,50,PRESERVED_SPECIMEN,NA,BRI,Queensland,892
+148.658029,-25.302873,2016,8,100,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,917
+152.765854,-25.313873,2026,1,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,958
+152.586635,-25.481108,2023,7,7,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1026
+152.051718,-25.574136,1990,9,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,1091
+152.690073,-25.54821,2024,9,50,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1097
+152.794357,-25.545992,2024,5,10,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,1098
+152.817695,-25.592695,2022,4,10,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1099
+152.736655,-25.632208,2022,2,10,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1168
+152.844987,-25.642775,2022,9,10,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1169
+152.855532,-25.71851,2024,9,15,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1239
+152.9833,-25.8667,1980,9,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,1310
+153.06157,-25.896213,2024,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1311
+152.787703,-25.915578,2021,8,20,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1378
+152.836808,-25.995337,2024,12,NA,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1379
+152.95146,-25.94401,2024,6,50,PRESERVED_SPECIMEN,NA,BRI,Queensland,1380
+153.003036,-25.995638,2025,6,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,1381
+152.970663,-26.005136,2024,8,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1450
+153.026383,-26.029947,2024,9,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,1451
+150.341389,-26.136389,2023,11,50,PRESERVED_SPECIMEN,NA,BRI,Queensland,1494
+153.0833,-26.1,1977,9,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,1521
+150.6833,-26.4,1993,10,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,1637
+151.076083,-26.323418,1971,1,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,1641
+153.050378,-26.345168,2025,9,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,1661
+149.991347,-26.419722,2022,3,5,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1700
+150.20095800000001,-26.429942,2025,9,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1703
+150.526092,-26.440087,1971,8,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,1706
+150.692759,-26.406754,1993,10,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,1707
+150.75,-26.4333,1993,10,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,1708
+153.028253,-26.419618,2026,4,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1731
+150.0333,-26.5333,1993,10,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,1771
+153.086656,-26.56065,2024,10,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1801
+149.64639,-26.608704,2003,5,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,1837
+150.192771,-26.64009,1975,10,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,1842
+153.090833,-26.603056,2024,9,NA,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1871
+153.102198,-26.685669,2025,10,11,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,1872
+153.086975,-26.704525,2024,4,2,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,1941
+153.132762,-26.763127,2025,9,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,1942
+152.992561,-26.861039,2025,8,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2010
+153.0029,-26.86017,2024,10,45,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2011
+153.117671,-26.833249,2026,3,8,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2012
+150.253617,-26.952147,2001,8,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,2053
+150.588262,-26.957689,2024,8,370,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2056
+152.964805,-26.919894,2005,9,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,2080
+150.279996,-27.031433,2013,9,244,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2123
+152.959707,-27.070515,2025,12,2,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2150
+153.021514,-27.064622,2026,7,18,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2151
+153.120205,-27.023763,2023,9,7,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2152
+153.4,-27.0667,1973,10,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,2155
+150.473026,-27.143613,1994,9,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,2195
+152.951069,-27.115043,2025,4,7,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2220
+153.005248,-27.129197,2024,9,30,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2221
+153.401561,-27.134023,1977,NA,3000,HUMAN_OBSERVATION,NA,UQ,Queensland,2225
+150.628056,-27.286667,2012,4,50,PRESERVED_SPECIMEN,NA,CANB,Queensland,2267
+150.849056,-27.264583,2024,12,50,PRESERVED_SPECIMEN,NA,BRI,Queensland,2269
+151.836,-27.28,2022,7,50,PRESERVED_SPECIMEN,NA,BRI,Queensland,2279
+152.945187,-27.25266,2025,6,1414,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2290
+153.077952,-27.340951,2023,6,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2361
+151.0333,-27.4167,1996,10,5000,PRESERVED_SPECIMEN,NA,CANB,Queensland,2411
+153.024968,-27.471341,2025,9,24,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2431
+153.166966,-27.42272,2025,9,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2432
+150.990583,-27.547194,2025,12,50,PRESERVED_SPECIMEN,NA,BRI,Queensland,2480
+152.841667,-27.558333,1995,5,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,2499
+152.940537,-27.57525,2022,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2500
+153.052278,-27.540956,2020,9,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2501
+153.184005,-27.50253,2026,7,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2502
+153.20233,-27.524763,2022,9,10,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2503
+150.7,-27.6083,1996,10,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,2547
+152.917237,-27.671712,2022,7,5,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2570
+153.080564,-27.664891,2024,8,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2571
+153.155316,-27.666126,2025,10,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2572
+153.231892,-27.661708,2025,9,230,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2573
+153.427288,-27.625401,2002,9,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,2575
+152.798902,-27.793727,2015,9,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,2638
+152.947813,-27.753162,2025,5,7,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2640
+153.082896,-27.73061,2026,7,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2641
+153.146622,-27.714328,2025,6,5,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2642
+153.372933,-27.788866,2024,9,109,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2644
+153.124222,-27.813292,2024,10,34,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2712
+153.281169,-27.822684,2025,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2713
+153.331111,-27.844167,2018,10,NA,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2714
+153.394395,-27.901583,2024,9,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2784
+151.059749,-28.083408,1992,4,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,2831
+153.29061,-28.015304,2021,8,9,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2853
+153.313212,-28.026378,2022,9,2,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2854
+153.409906,-28.097805,2025,9,5,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2855
+151.638962,-28.177837,2023,4,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,2907
+151.709429,-28.173411,1971,10,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,2908
+153.271005,-28.189789,2013,10,2,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,Queensland,2923
+153.494639,-28.157833,2023,9,50,PRESERVED_SPECIMEN,NA,BRI,Queensland,2925
+151.938056,-28.290278,1975,10,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,2980
+152.0167,-28.2333,1973,9,1000,PRESERVED_SPECIMEN,NA,CANB,Queensland,2981
+151.085278,-28.337222,1992,9,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,3041
+151.101659,-28.300915,2006,10,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,3042
+151.2814473,-28.370013,2006,10,100,PRESERVED_SPECIMEN,NA,NSW,Queensland,3043
+151.088698,-28.454857,2024,7,NA,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,Queensland,3111
+151.213603,-28.463138,1993,10,100,PRESERVED_SPECIMEN,NA,BRI,Queensland,3113
+151.926101,-28.573411,1971,10,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,3190
+152.308295,-28.507149,2007,7,100,HUMAN_OBSERVATION,KT_SRH Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3194
+153.304502,-28.511491,2025,6,NA,HUMAN_OBSERVATION,NE NSW GHFF Site Description and Work Details,Griffith University,New South Wales,3204
+153.5587,-28.570988,2024,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,3206
+151.95,-28.6,1971,10,NA,PRESERVED_SPECIMEN,NA,NA,Queensland,3260
+153.566573,-28.603363,2010,11,10,HUMAN_OBSERVATION,A_VAMP Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3276
+151.192775,-28.723413999999998,1971,10,2000,PRESERVED_SPECIMEN,NA,BRI,Queensland,3322
+153.088091,-28.708511,2018,11,5,HUMAN_OBSERVATION,Koala Likelihood Map update (KLM 2.0),"NSW Dept of Planning, Industry and Environment",New South Wales,3341
+153.592866,-28.766479,2018,2,3,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3346
+153.5667,-28.8667,1982,10,1000,PRESERVED_SPECIMEN,NA,CANB,New South Wales,3416
+153,-28.9667,1993,12,1000,PRESERVED_SPECIMEN,NA,CANB,New South Wales,3481
+153.147461,-28.969622,2001,11,10,HUMAN_OBSERVATION,NCPP Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3482
+153.430611,-28.986894,2016,3,10,HUMAN_OBSERVATION,Andrew Carty vegetation surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,3485
+152.983701,-29.031972,2015,1,1,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3550
+153.020589,-29.033641,1994,3,1,HUMAN_OBSERVATION,State Forests 2002 Supply,"NSW Dept of Planning, Industry and Environment",New South Wales,3551
+153.169072,-29.055153,2001,11,10,HUMAN_OBSERVATION,NCPP Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3552
+153.384343,-29.072509,2016,4,10,HUMAN_OBSERVATION,Andrew Carty vegetation surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,3554
+153.409009,-29.064042,2018,5,3,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3555
+152.950161,-29.157017,2015,1,3,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3620
+153.042359,-29.1938,2015,1,3,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3621
+153.155744,-29.101878,1994,2,1,HUMAN_OBSERVATION,State Forests 2002 Supply,"NSW Dept of Planning, Industry and Environment",New South Wales,3622
+153.207072,-29.176271,1994,2,1,HUMAN_OBSERVATION,State Forests 2002 Supply,"NSW Dept of Planning, Industry and Environment",New South Wales,3623
+153.302167,-29.197389,2023,7,3,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,3624
+153.420187,-29.132603,2018,6,3,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3625
+152.99786,-29.207318,2016,4,10,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3690
+153.049438,-29.229673,1994,2,1,HUMAN_OBSERVATION,State Forests 2002 Supply,"NSW Dept of Planning, Industry and Environment",New South Wales,3691
+153.117843,-29.215822,2015,1,5,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3692
+153.260469,-29.259801,2015,2,5,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3693
+153.369449,-29.245278,2026,3,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,3694
+152.887251,-29.374153,2010,12,100,HUMAN_OBSERVATION,A_VAMP Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3759
+152.922748,-29.386513,1994,8,100,HUMAN_OBSERVATION,NRAC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3760
+153.04241,-29.318859,2015,1,5,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3761
+153.216142,-29.305838,2014,11,10,HUMAN_OBSERVATION,Andrew Carty vegetation surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,3763
+153.300464,-29.318726,2018,5,3,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3764
+152.909944,-29.405019,2010,11,10,HUMAN_OBSERVATION,A_VAMP Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3830
+153.057849,-29.453358,2025,9,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,3831
+153.185964,-29.449171,2017,11,10,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3832
+153.236191,-29.492927,2017,11,10,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3833
+152.97455,-29.558858,2021,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,3900
+153.008218,-29.568335,2016,4,10,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3901
+153.151565,-29.581543,2007,9,10,HUMAN_OBSERVATION,TYNDALE Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3902
+153.224525,-29.587351,2011,2,10,HUMAN_OBSERVATION,A_VAMP Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3903
+153.329865,-29.578248,2025,9,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,3904
+153.183806,-29.61337,2016,2,8,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3972
+153.288227,-29.621782,1993,4,100,HUMAN_OBSERVATION,SFDATA Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,3973
+153.316497,-29.611522,2025,8,9,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,3974
+152.773254,-29.782723,2005,2,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,4038
+153.072979,-29.753014,2017,10,10,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,4041
+153.101132,-29.773689,2017,10,10,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,4042
+153.25368,-29.788213,2020,8,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,4043
+152.862701,-29.800077,1997,5,10,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,4109
+152.995953,-29.838084,2011,2,10,HUMAN_OBSERVATION,A_VAMP Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,4110
+153.049787,-29.850863,2014,12,6,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,4111
+153.186679,-29.878803,2002,3,10,HUMAN_OBSERVATION,NCPP Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,4112
+153.26949,-29.851814,2024,8,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,4113
+152.988378,-29.902719,2018,2,10,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,4180
+153.009231,-29.957563,2022,10,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,4181
+153.192786,-29.978574,2023,9,NA,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,4182
+153.222498,-29.988248,2020,5,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,4183
+153.195473,-30.064887,2020,9,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,4252
+153.213271,-30.006444,2025,9,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,4253
+153.167253,-30.192542,2026,4,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,4322
+153.159003,-30.207024,1996,5,10,HUMAN_OBSERVATION,CHEATH Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,4392
+153.083282,-30.326837,2019,10,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,4461
+153.103681,-30.328007,2026,5,9,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,4462
+152.967499,-30.898845,2023,4,5,HUMAN_OBSERVATION,Scout Ecology,"NSW Dept of Planning, Industry and Environment",New South Wales,4810
+153.034599,-30.895252,2025,1,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,4811
+152.755008,-30.970079,2004,NA,1000,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,4878
+152.857042,-30.999142,2004,NA,1000,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,4879
+152.961329,-30.915726,2023,4,5,HUMAN_OBSERVATION,Scout Ecology,"NSW Dept of Planning, Industry and Environment",New South Wales,4880
+153.024116,-30.99713,2023,4,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,4881
+152.758908,-31.065627,2006,5,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,4948
+152.868515,-31.018323,2016,6,10,HUMAN_OBSERVATION,Kempsey Shire Council Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,4949
+153.007384,-31.09483,2010,1,300,HUMAN_OBSERVATION,DPIE Default Sightings,"NSW Dept of Planning, Industry and Environment",New South Wales,4951
+152.827661,-31.131073,2016,4,10,HUMAN_OBSERVATION,GHD Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,5019
+152.979347,-31.186851,2022,9,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5020
+152.84175,-31.218072,2018,4,3,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5089
+152.950149,-31.227097,2004,5,1,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5090
+152.787202,-31.351801,2016,6,9,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5158
+152.810649,-31.366987,2015,3,7,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5159
+152.960796,-31.307759,1996,3,10,HUMAN_OBSERVATION,CHEATH Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5160
+152.775923,-31.481011,2024,1,20,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5228
+152.859397,-31.435563,2022,12,5,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,5229
+152.900524,-31.499323,2022,10,9,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,5230
+152.786349,-31.524339,2023,8,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5298
+152.845733,-31.599775,2022,10,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,5299
+152.733596,-31.634323,2022,10,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5368
+152.839501,-31.602984,2011,6,1,HUMAN_OBSERVATION,PMH Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,5369
+152.759418,-31.713541,1997,10,100,HUMAN_OBSERVATION,CRA Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5438
+152.430435,-31.83498,2016,6,4,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5505
+152.521038,-31.895627,2023,6,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5506
+152.670266,-31.847553,1996,10,10,HUMAN_OBSERVATION,CHEATH Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5507
+152.730827,-31.815361,2007,10,10,HUMAN_OBSERVATION,HCR_VMP2 Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5508
+152.468315,-31.946455,2017,7,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5575
+152.567748,-31.96991,2025,3,1,HUMAN_OBSERVATION,Accuplan Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,5576
+152.396187,-32.092241,2004,3,100,HUMAN_OBSERVATION,Robert Payne Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,5644
+152.448929,-32.066278,2010,10,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5645
+152.563431,-32.000975,2010,12,3,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5646
+149.230568,-32.112642,2022,6,10,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5683
+151.94443,-32.139956,2014,12,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5710
+152.334814,-32.166815,2011,6,100,HUMAN_OBSERVATION,GHM_RAPID Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5714
+152.443763,-32.126727,2004,11,4.1,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5715
+152.526493,-32.181851,2021,3,10,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5716
+150.008564,-32.269499,2020,9,20,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5761
+150.58942,-32.293845,2014,10,10,HUMAN_OBSERVATION,AHA_ShoalhavenCC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5766
+151.954,-32.2977,2008,NA,10,HUMAN_OBSERVATION,DuralieCoal Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5780
+152.391833,-32.289714,2007,10,10,HUMAN_OBSERVATION,HCR_VMP2 Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5784
+152.423207,-32.241991,2011,5,100,HUMAN_OBSERVATION,GHM_RAPID Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5785
+152.528611,-32.264228,2020,9,5,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,5786
+150.135,-32.3031,2004,11,50,PRESERVED_SPECIMEN,NA,CANB,New South Wales,5832
+150.582474,-32.321108,2014,10,10,HUMAN_OBSERVATION,AHA_ShoalhavenCC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5836
+151.746341,-32.322174,2025,10,196,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,5848
+151.8986212,-32.3624329,1982,10,200,PRESERVED_SPECIMEN,NA,NSW,New South Wales,5849
+151.9423,-32.3046,2007,NA,10,HUMAN_OBSERVATION,DuralieCoal Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5850
+152.184395,-32.380852,2005,11,30,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5852
+152.219004,-32.388921,2009,7,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5853
+152.383948,-32.360569,2020,10,20,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5854
+152.427263,-32.345387,2007,10,10,HUMAN_OBSERVATION,HCR_VMP2 Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5855
+148.962524,-32.496193,2017,10,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5890
+151.027639,-32.437326,2020,8,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5911
+151.19624,-32.422232,1999,9,100,HUMAN_OBSERVATION,HUNTER Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5912
+151.462418,-32.472114,2026,7,24,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,5915
+151.795212,-32.49683,2023,10,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,5918
+151.843223,-32.461914,2025,7,20,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5919
+151.994859,-32.441572,2014,12,3,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5920
+152.005188,-32.441582,2014,12,4,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5921
+152.186766,-32.477065,2019,8,3,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5922
+152.210391,-32.47349,2014,1,5,HUMAN_OBSERVATION,Key Botany Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,5923
+152.397772,-32.47956,2019,7,3,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5924
+152.400737,-32.473588,2022,10,1347,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,5925
+150.8427,-32.535173,1993,10,100,HUMAN_OBSERVATION,ALLWOLL Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5979
+150.908917,-32.513863,2021,4,10,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5980
+151.312268,-32.55184,2008,4,500,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5984
+151.591355,-32.595877,2014,10,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5986
+151.673262,-32.585009,2015,12,3,HUMAN_OBSERVATION,Eastcoast Flora Survey Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,5987
+151.724293,-32.598194,2008,11,10,HUMAN_OBSERVATION,COLUMBEY Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5988
+151.815178,-32.586718,2007,11,10,HUMAN_OBSERVATION,HCR_VMP2 Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5989
+151.914869,-32.57942,2023,7,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5990
+152.00331,-32.55935,2019,4,6,HUMAN_OBSERVATION,Koala Likelihood Map update (KLM 2.0),"NSW Dept of Planning, Industry and Environment",New South Wales,5991
+152.114648,-32.59897,2023,7,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5992
+152.210665,-32.512288,2023,7,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,5993
+152.302289,-32.552424,2026,6,10,HUMAN_OBSERVATION,Ecoplanning Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,5994
+151.001302,-32.650339,2011,5,100,HUMAN_OBSERVATION,GHM_RAPID Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,6051
+151.290325,-32.641918,2024,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6053
+151.36068,-32.69825,2016,9,4,PRESERVED_SPECIMEN,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6054
+151.401892,-32.668455,2022,10,15,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6055
+151.522486,-32.699171,2006,9,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6056
+151.653997,-32.652805,2019,1,5,HUMAN_OBSERVATION,Port Stephens Council Bushland Assessment Program,"NSW Dept of Planning, Industry and Environment",New South Wales,6057
+151.793595,-32.647972,2024,8,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6058
+151.804827,-32.601167,2024,6,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6059
+151.926769,-32.616916,2015,3,3,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,6060
+152.072006,-32.653687,2021,2,3,HUMAN_OBSERVATION,Key Botany Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,6061
+152.151838,-32.64081,2015,3,20,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6062
+152.201662,-32.627425,2024,6,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6063
+151.092976,-32.721814,2011,5,100,HUMAN_OBSERVATION,GHM_RAPID Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,6121
+151.151559,-32.724982,2024,2,10,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6122
+151.24028,-32.754642,2022,5,2,HUMAN_OBSERVATION,Eastcoast Flora Survey Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,6123
+151.385506,-32.771511,1993,5,1,HUMAN_OBSERVATION,State Forests 2002 Supply,"NSW Dept of Planning, Industry and Environment",New South Wales,6124
+151.467667,-32.798844,2005,5,1,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6125
+151.523355,-32.702142,2023,10,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6126
+151.63917,-32.779389,2024,9,10,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6127
+151.772263,-32.751587,2025,10,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6128
+151.869387,-32.719418,2009,6,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6129
+151.962329,-32.760385,2023,10,2,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6130
+152.025538,-32.727477,2021,12,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6131
+152.147536,-32.758092,2023,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6132
+150.966667,-32.883333,1992,3,NA,PRESERVED_SPECIMEN,NA,NSW,New South Wales,6190
+151.288361,-32.887044,2024,5,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6193
+151.379633,-32.871547,1993,5,1,HUMAN_OBSERVATION,State Forests 2002 Supply,"NSW Dept of Planning, Industry and Environment",New South Wales,6194
+151.424581,-32.837939,1993,5,1,HUMAN_OBSERVATION,State Forests 2002 Supply,"NSW Dept of Planning, Industry and Environment",New South Wales,6195
+151.53952,-32.886505,2025,10,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6196
+151.612304,-32.82523,2018,6,5,HUMAN_OBSERVATION,MJD Environmental Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,6197
+151.710173,-32.816348,2023,2,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6198
+151.833349,-32.806087,2019,3,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6199
+151.293103,-32.920923,2012,7,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6263
+151.300301,-32.919704,2012,7,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6264
+151.424372,-32.92843,2016,6,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6265
+151.561647,-32.940413,2017,3,3,HUMAN_OBSERVATION,DPIE Default Sightings,"NSW Dept of Planning, Industry and Environment",New South Wales,6266
+151.6061,-32.9132,2017,8,4,HUMAN_OBSERVATION,MJD Environmental Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,6267
+151.727875,-32.998888,2023,9,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6268
+151.459155,-33.091856,2017,3,4,HUMAN_OBSERVATION,DPIE Default Sightings,"NSW Dept of Planning, Industry and Environment",New South Wales,6335
+151.543706,-33.005161,2017,3,4,HUMAN_OBSERVATION,DPIE Default Sightings,"NSW Dept of Planning, Industry and Environment",New South Wales,6336
+151.680178,-33.023554,2021,3,5,HUMAN_OBSERVATION,MJD Environmental Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,6337
+151.727005,-33.007083,2026,4,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6338
+151.365116,-33.184055,2017,8,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6404
+151.479302,-33.172471,2017,3,3,HUMAN_OBSERVATION,DPIE Default Sightings,"NSW Dept of Planning, Industry and Environment",New South Wales,6405
+151.510768,-33.121641,2017,4,4,HUMAN_OBSERVATION,DPIE Default Sightings,"NSW Dept of Planning, Industry and Environment",New South Wales,6406
+151.637938,-33.138744,2025,9,2,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6407
+151.375287,-33.273093,2000,11,10,HUMAN_OBSERVATION,WYONG SHIR Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,6474
+151.425989,-33.233793,2018,5,1,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6475
+151.525044,-33.209367,2017,3,3,HUMAN_OBSERVATION,DPIE Default Sightings,"NSW Dept of Planning, Industry and Environment",New South Wales,6476
+151.602269,-33.202057,2025,10,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6477
+151.083333,-33.383333,1971,NA,2000,HUMAN_OBSERVATION,NA,UQ,New South Wales,6541
+151.14923,-33.366064,2005,6,100,HUMAN_OBSERVATION,Robert Payne Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,6542
+151.299006,-33.38188,2014,5,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6543
+151.387393,-33.35585,2007,9,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6544
+151.460684,-33.37739,2021,5,3,HUMAN_OBSERVATION,GAP_EAST Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,6545
+151.295267,-33.406539,2024,3,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6613
+151.362174,-33.464218,2003,1,10,HUMAN_OBSERVATION,GOSFORDLGA Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,6614
+151.443268,-33.42396,2017,4,4,HUMAN_OBSERVATION,DPIE Default Sightings,"NSW Dept of Planning, Industry and Environment",New South Wales,6615
+150.806981,-33.549543,2024,10,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6679
+150.935886,-33.597101,2022,10,9,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6680
+151.3875,-33.502419,2008,NA,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6684
+151.412822,-33.518436,2005,7,100,HUMAN_OBSERVATION,CRAHUN Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,6685
+150.276497,-33.622082,2015,8,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6743
+150.590667,-33.699111,2007,9,50,PRESERVED_SPECIMEN,NA,UNSW,New South Wales,6746
+150.695239,-33.691542,2025,8,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6747
+150.726089,-33.612742,2016,10,3,PRESERVED_SPECIMEN,NA,NSW,New South Wales,6748
+150.805761,-33.655714,2026,4,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6749
+150.91658,-33.696617,2024,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6750
+151.029112,-33.643603,2024,11,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6751
+151.190148,-33.674627,2008,11,200,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6752
+151.224,-33.6945,2017,1,10,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6753
+151.309929,-33.693377,2026,2,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6754
+150.687148,-33.796155,2025,10,2,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6817
+150.717453,-33.701317,2024,10,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6818
+150.854209,-33.727681,2022,11,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6819
+150.910421,-33.719488,2024,9,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6820
+151.093718,-33.776498,2017,5,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6821
+151.113279,-33.772305,2022,10,8,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6822
+151.29857,-33.764288,2023,4,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6823
+151.300888,-33.766547,2024,9,4,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6824
+150.592749,-33.873502,2006,2,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6886
+150.616357,-33.866459,2019,12,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6887
+150.71696,-33.823529,2025,1,2,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6888
+150.884822,-33.859849,2022,4,2,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6889
+150.902811,-33.867115,2025,3,2,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6890
+151.01113899999999,-33.805412,2025,9,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6891
+151.167878,-33.879047,2019,9,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6892
+151.27366,-33.810732,2021,9,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6893
+150.794793,-33.924692,2020,9,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6958
+150.87511,-33.961886,2023,7,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6959
+150.927078,-33.904059,2022,4,2,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,6960
+151.044227,-33.990317,2025,9,3,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,6961
+151.151597,-33.922658,2021,8,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6962
+151.230772,-33.904534,2023,10,3,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,6963
+148.56629,-34.06207,2007,6,10,HUMAN_OBSERVATION,COWRA Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,7006
+150.692519,-34.038646,2018,5,200,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,7027
+150.786228,-34.062166,2016,5,50,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,7028
+150.870658,-34.04948,2026,4,1,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,7029
+150.902218,-34.004493,2019,9,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,7030
+151.05019,-34.058136,2023,9,8,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,7031
+151.160117,-34.091361,2022,9,2,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,7032
+151.22555,-34.028768,2023,9,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,7033
+150.701191,-34.198615,2024,10,15,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,7098
+150.809942,-34.107382,2007,6,100,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,7099
+151.074057,-34.160492,2025,10,15,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,7101
+151.114347,-34.137158,2025,10,4,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,7102
+150.575839,-34.207252,2015,6,300,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,7166
+150.717923,-34.22305,2014,10,10,HUMAN_OBSERVATION,NicheEH Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,7168
+150.879526,-34.260469,2026,7,8,HUMAN_OBSERVATION,iNaturalist observations,iNaturalist,New South Wales,7169
+150.83547,-34.385281,1994,2,1000,PRESERVED_SPECIMEN,NA,WOLL,New South Wales,7239
+150.908493,-34.302208,2021,9,19,HUMAN_OBSERVATION,iNaturalist research-grade observations,iNaturalist,New South Wales,7240
+150.902406,-34.40099,2011,9,100,PRESERVED_SPECIMEN,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,7310
+150.834397,-34.558423,2025,5,10,HUMAN_OBSERVATION,GHD Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,7379
+150.316944,-34.658532,2016,2,10,HUMAN_OBSERVATION,Wingecarribee Shire Council Vegetation Surveys,"NSW Dept of Planning, Industry and Environment",New South Wales,7444
+149.6805,-34.7758,2020,4,5,HUMAN_OBSERVATION,DPIE Data from Scientific Licences dataset,"NSW Dept of Planning, Industry and Environment",New South Wales,7507
+150.675206,-34.973365,2015,3,5,HUMAN_OBSERVATION,StateForestsEEC Vegetation Survey,"NSW Dept of Planning, Industry and Environment",New South Wales,7657
+150.111465,-36.089129,1976,NA,1000,HUMAN_OBSERVATION,NA,UQ,New South Wales,8422

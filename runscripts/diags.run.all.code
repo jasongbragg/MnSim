@@ -1,0 +1,54 @@
+### mortality
+
+source("diagnostics/diag_mortality_by_age.R")
+
+diag_mortality_by_age()                                  # your local params.R
+diag_mortality_by_age(save_path = "outputs/mortality_by_age.png") 
+
+
+### resprout
+
+source("diagnostics/diag_mortality_postresprout.R")
+
+# Default run (your local params.R)
+diag_mortality_postresprout()
+
+# Save
+diag_mortality_postresprout(save_path = "outputs/resprout_mort.png")
+
+
+### fire and flowering
+
+source("diagnostics/diag_fire_flowering.R")
+
+diag_fire_flowering()
+diag_fire_flowering(save_path = "outputs/fire_flowering.png")
+
+
+### recruitment
+
+source("diagnostics/diag_recruitment.R")
+
+# Default: runs 100-year fire-free equilibration to find operating point
+diag_recruitment()
+diag_recruitment(save_path = "outputs/recruitment.png")
+
+
+### demography
+
+
+source("diagnostics/diag_demography.R")
+
+# Full run (500-year spin-up, 20 pre-fire, 100 post-fire)
+diag_demography()
+diag_demography(save_path = "outputs/demography.png")
+
+
+### age and rust
+
+source("diagnostics/diag_rust_age.R")
+
+diag_rust_age()
+diag_rust_age(save_path = "outputs/rust_age.png")
+
+

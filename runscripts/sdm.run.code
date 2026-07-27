@@ -1,0 +1,19 @@
+
+### pre-test
+# library(terra)
+# r <- rast("/home/jgb/Downloads/maxent_MR.tiff")
+# ynr <- cbind(lon=153.21967, lat=-29.09357)
+
+# extract(r,ynr)
+
+# library(galah)
+# galah_config(atlas = "Australia", email="jasongbragg@gmail.com")
+
+# galah_call() |>
+#   identify("Melaleuca nodosa") |> 
+#   select(eventDate, decimalLatitude, species) |>
+#   collect()
+
+
+source("spatial/01_get_melaleuca_occurrences.R")
+source("spatial/02_cross_reference_layers.R")

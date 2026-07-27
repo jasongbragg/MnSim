@@ -469,7 +469,7 @@ plot_pegg_ensemble <- function(df, observed = 0.40,
   # Panel A: histogram of fraction_resprout_dead
   pA <- gg(df, aes(x=fraction_resprout_dead)) +
     ggplot2::geom_histogram(binwidth=0.02, fill="#2a78d6",
-                             colour="white", alpha=0.85) +
+                             colour="white", alpha=0.85, na.rm=TRUE) +
     ggplot2::geom_vline(xintercept=observed,
                          colour="#e34948", linewidth=1.2, linetype="dashed") +
     ggplot2::geom_vline(xintercept=median(df$fraction_resprout_dead, na.rm=TRUE),

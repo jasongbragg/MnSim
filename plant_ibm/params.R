@@ -82,8 +82,8 @@ get_default_params <- function() {
     rust_pressure      = 1,
     microclim_alpha    = 20,
     microclim_beta     = 5,
-    annual_env_alpha   = 14,   # overridden to ~1e4 in rust-ON scenario
-    annual_env_beta    = 6,   # overridden to 1   in rust-ON scenario
+    annual_env_alpha   = 40,   # overridden to ~1e4 in rust-ON scenario
+    annual_env_beta    = 8,   # overridden to 1   in rust-ON scenario
 #    microclim_alpha    = 1,
 #    microclim_beta     = 1,
 #    annual_env_alpha   = 1,   # overridden to ~1e4 in rust-ON scenario
@@ -95,7 +95,7 @@ get_default_params <- function() {
       age_half_sat = 2,
       age_hill     = 4,
       resprout = list(
-        max_effect = 1.0,
+        max_effect = 0.55,
         form        = "saturating",
         half_sat    = 0.2,
         hill         = 1
