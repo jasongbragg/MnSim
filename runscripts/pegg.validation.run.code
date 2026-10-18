@@ -19,7 +19,7 @@ source("runner/pegg_validation.R")
 result <- run_pegg_validation(get_default_params())
 
 df <- run_pegg_seeds(get_default_params(), seeds = 1:100,
-                     results_dir = "results/pegg_seeds/")
+                     results_dir = "results/pegg_seeds_v2/")
 plot_pegg_ensemble(df, observed = 0.48)
 
 

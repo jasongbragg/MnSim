@@ -28,6 +28,8 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     pop       <- init_state$individuals
     resist_gt <- init_state$resist_gt
   }
+  # States saved before death_cause existed: add it (causes unknown).
+  if (is.null(pop$death_cause)) pop$death_cause <- NA_character_
 
   n_years     <- params$n_years
   census_list <- vector("list", n_years)
@@ -101,8 +103,9 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     # 5. mortality: union of all hazard components
     dead_idx <- nominate_deaths(pop, t, params, annual_env_t)
     pop$alive[dead_idx]      <- FALSE
-    pop$death_year[dead_idx] <- t
-    pop$flowering[dead_idx]  <- FALSE
+    pop$death_year[dead_idx]  <- t
+    pop$death_cause[dead_idx] <- "mortality"
+    pop$flowering[dead_idx]   <- FALSE
 
     # 6. recruitment: Beverton-Holt, parent sampling, Mendelian inheritance
     rec       <- recruit(pop, resist_gt, t, params, annual_env_t)

@@ -9,7 +9,9 @@
 # Columns:
 #   id, age, alive, birth_year, death_year, mother_id, father_id,
 #   age_first_flower, resprout, resprout_yrs_remain, resprout_total_yrs,
-#   flowering, resist_score, env_susceptibility
+#   flowering, resist_score, env_susceptibility, death_cause
+#   (death_cause: NA while alive; "fire" if killed by apply_fire(),
+#    "mortality" if killed by nominate_deaths())
 
 #' Create the founding population and its genotypes.
 #' Returns list(pop = data.frame, resist_gt = matrix).
@@ -34,6 +36,7 @@ create_population <- function(params) {
     alive                = TRUE,
     birth_year           = -age,
     death_year           = NA_integer_,
+    death_cause          = NA_character_,
     mother_id            = NA_integer_,
     father_id            = NA_integer_,
     age_first_flower     = age_first_flower,
@@ -71,6 +74,7 @@ make_recruit_rows <- function(n_rec, t, mother_idx, father_idx, pop, params) {
     alive               = TRUE,
     birth_year          = t,
     death_year          = NA_integer_,
+    death_cause         = NA_character_,
     mother_id           = pop$id[mother_idx],
     father_id           = pop$id[father_idx],
     age_first_flower    = age_first_flower,

@@ -1,43 +1,64 @@
 # runner/pegg_validation.R
 #
-# Validation of the IBM against Pegg et al. (2025), who measured mortality
-# in resprouting Melaleuca nodosa following the Black Summer fires (Jan 2020)
-# at sites in northern New South Wales. At a Jan 2022 follow-up (~2 yr
-# post-fire), approximately 40% of pre-fire M. nodosa were dead.
+# Validation of the IBM against Pegg et al. (2025), who followed resprouting
+# Melaleuca nodosa after the Black Summer fires (Dec 2019 - Jan 2020) at
+# sites in northern New South Wales. At the Jan 2022 follow-up (~2 yr
+# post-fire), 48% of the trees that had resprouted were dead.
+#
+# TIMING (model year t = one annual step, Jan..Dec of t)
+# ------------------------------------------------------
+# Within a model year the order is: age -> resprout recovery -> FIRE ->
+# flowering -> MORTALITY -> recruitment -> census. So:
+#   year_fire = 2020   the fire step of model year 2020 is the Jan 2020 fire;
+#                      the mortality step of 2020 is the first post-fire year.
+#   year_survey = 2022 the Jan 2022 survey = state at the END of model year
+#                      2021 (= year_survey - 1). Post-fire deaths therefore
+#                      come from two mortality steps (2020 and 2021), matching
+#                      the ~2 yr between fire and survey.
+# The run stops at the end of year_survey - 1, so each plant's final state
+# IS its state at the survey.
 #
 # SIMULATION DESIGN
 # -----------------
-# Spin-up (no fire): year_spinup → year_rust (default 1910→2010, 100 yr)
-# Rust period:       year_rust   → year_fire  (default 2010→2020, 10 yr)
-# Fire:              year_fire                (single deterministic event)
-# Post-fire:         year_fire+1 → year_end  (default 2021→2025)
-#
-# Fire intensity: fire_p_fimp controls what fraction of plants are impacted.
-# For the Black Summer fires (very intense), values near 1.0 are appropriate.
-# This is the primary sensitivity parameter to explore.
+# Spin-up (no fire): year_spinup -> year_rust - 1  (default 1910-2009)
+# Rust period:       year_rust  ->                 (default from 2010)
+# Fire:              year_fire, single deterministic event, fire_p_fimp = 1
+#                    (every tree at the survey sites burned)
+# End of run:        year_survey - 1               (default 2021)
 #
 # PRIMARY STATISTIC
 # -----------------
-# Fraction of pre-fire individuals dead by the assessment date:
+# Fraction of resprouting fire survivors dead at the survey:
 #
-#   fraction_dead = (fire_dead + post_fire_dead) / N_prefire
+#   fraction_resprout_dead = postfire_dead / N_resprouted
 #
-# where N_prefire = individuals alive at END of (year_fire - 1), before fire.
-# fire_dead      = N_prefire individuals with death_year == year_fire
-# post_fire_dead = N_prefire individuals with death_year in
-#                  (year_fire+1):year_assessment
+#   N_prefire      plants alive at the end of year_fire - 1
+#   fire_dead      pre-fire plants with death_cause == "fire" (killed in
+#                  the fire itself)
+#   N_resprouted   N_prefire - fire_dead (fire_p_fimp = 1, so every
+#                  surviving plant was impacted and resprouted)
+#   postfire_dead  pre-fire plants with death_cause == "mortality" and
+#                  death_year in year_fire .. year_survey - 1
 #
-# This directly matches the Pegg et al. measurement (dead pre-fire trees at
-# the follow-up census), without confounding with new post-fire recruits.
+# Using death_cause matters: deaths from rust/background mortality in the
+# fire year itself are post-fire deaths of resprouters, not fire deaths.
+# (Earlier versions classified on death_year == year_fire, which moved those
+# deaths out of both numerator and denominator and biased the statistic low.)
 #
-# FATE BREAKDOWN
-# --------------
-# All N_prefire individuals are assigned one of four fates at year_assessment:
-#   (1) Killed directly by fire (year_fire deaths)
-#   (2) Resprouted then died: rust/background mortality during window
-#   (3) Still resprouting at assessment
-#   (4) Recovered: alive, resprout=FALSE
-# These four are mutually exclusive and sum to N_prefire.
+# OBSERVATION (Pegg et al. 2025, Yarringully NR)
+# ----------------------------------------------
+# 50 fire-affected trees, all resprouting when monitoring began (Mar 2020),
+# assessed to Jul 2021 with a follow-up in Jan 2022: 24 of 50 (48%) dead.
+# The 95% binomial interval for 24/50 is 0.34-0.63; plot_pegg_ensemble()
+# shades it by default (observed_n = 50). The target is to land roughly in
+# that range after two years, not to reproduce the monthly curve.
+#
+# FATES (mutually exclusive, sum to N_prefire)
+# --------------------------------------------
+#   (1) killed by the fire
+#   (2) resprouted, then died before the survey
+#   (3) alive and still resprouting at the survey
+#   (4) alive and recovered (resprout = FALSE) at the survey
 #
 # USAGE
 # -----
@@ -45,39 +66,42 @@
 #   source("runner/params_utils.R")
 #   source("runner/pegg_validation.R")
 #
-#   # Single run with figure
-#   result <- run_pegg_validation(get_default_params())
+#   result <- run_pegg_validation(get_default_params())          # single run
+#   df <- run_pegg_seeds(get_default_params(), seeds = 1:100,
+#                        results_dir = "results/pegg_seeds_v2/")
+#   plot_pegg_ensemble(df, observed = 0.48)
 #
-#   # Ensemble across seeds
-#   df <- run_pegg_seeds(get_default_params(), seeds = 1:50, n_cores = 8L)
-#   plot_pegg_ensemble(df, observed = 0.40)
-#
-#   # Sensitivity to fire intensity
-#   df_hi <- run_pegg_seeds(within(get_default_params(),
-#                                   {fire_p_fimp <- 1.0}), seeds = 1:30)
-#   df_lo <- run_pegg_seeds(within(get_default_params(),
-#                                   {fire_p_fimp <- 0.7}), seeds = 1:30)
+# Seed results are cached by pegg_run_id(), which hashes the params, the
+# scenario years and PEGG_VALIDATION_VERSION, so results from earlier
+# definitions are never silently reused.
+
+PEGG_VALIDATION_VERSION <- "v2-death-cause-survey-timing"
+
+pegg_run_id <- function(params, scenario) {
+  make_run_id(list(params = params, scenario = scenario,
+                   version = PEGG_VALIDATION_VERSION))
+}
 
 # ============================================================================
 # compute_pegg_stats()
 # ============================================================================
-# Extract the primary validation statistic and fate breakdown from a
-# completed run's pop data frame and census.
-# year_spinup is needed to correctly interpret founder birth_year encoding.
-compute_pegg_stats <- function(pop, census, year_fire, year_assessment,
-                                year_spinup) {
+# Primary statistic and fate breakdown from a run that ENDED at the survey
+# (end of year_survey - 1). year_spinup is needed to interpret founder
+# birth_year encoding.
+compute_pegg_stats <- function(pop, census, year_fire, year_survey, year_spinup) {
+
+  if (is.null(pop$death_cause))
+    stop("pop has no death_cause column; rerun with the current model code.")
+  last_year <- year_survey - 1L
 
   # Calendar birth year (founders have birth_year = -(age at spinup))
   cal_birth <- ifelse(pop$birth_year < year_spinup,
                        year_spinup + pop$birth_year,
                        pop$birth_year)
 
-  # Pre-fire cohort: alive at end of (year_fire - 1)
-  # A plant was alive at end of that year if it either:
-  #   (a) is still alive at run end, OR
-  #   (b) died in year_fire or later
-  prefire_year <- year_fire - 1L
-  existed      <- cal_birth <= prefire_year
+  # Pre-fire cohort: alive at the end of year_fire - 1
+  prefire_year  <- year_fire - 1L
+  existed       <- cal_birth <= prefire_year
   alive_prefire <- existed & (pop$alive |
                                (!is.na(pop$death_year) & pop$death_year >= year_fire))
   N_prefire <- sum(alive_prefire)
@@ -85,46 +109,34 @@ compute_pegg_stats <- function(pop, census, year_fire, year_assessment,
   if (N_prefire == 0L) {
     warning("No pre-fire individuals found. Check year_fire and year_spinup.")
     return(list(N_prefire = 0L, fraction_dead = NA_real_,
-                fire_dead = 0L, post_fire_dead = 0L,
-                resprouting_2022 = 0L, recovered_2022 = 0L))
+                fraction_resprout_dead = NA_real_))
   }
 
-  pf_pop <- pop[alive_prefire, ]
+  pf <- pop[alive_prefire, ]
+  if (any(!is.na(pf$death_year) & pf$death_year > last_year))
+    stop("Run continues past the survey; end it at year_survey - 1.")
 
-  # Fate classification at year_assessment
-  fire_dead       <- !is.na(pf_pop$death_year) & pf_pop$death_year == year_fire
-  post_fire_dead  <- !is.na(pf_pop$death_year) &
-                     pf_pop$death_year >  year_fire &
-                     pf_pop$death_year <= year_assessment
-  resprouting_now <- pf_pop$alive & pf_pop$resprout
-  recovered       <- pf_pop$alive & !pf_pop$resprout
+  fire_dead       <- !pf$alive & pf$death_cause %in% "fire"
+  post_fire_dead  <- !pf$alive & pf$death_cause %in% "mortality"
+  resprouting_now <- pf$alive & pf$resprout
+  recovered       <- pf$alive & !pf$resprout
 
-  n_fire_dead      <- sum(fire_dead)
-  n_postfire_dead  <- sum(post_fire_dead)
-  n_resprouting    <- sum(resprouting_now)
-  n_recovered      <- sum(recovered)
+  n_fire_dead     <- sum(fire_dead)
+  n_postfire_dead <- sum(post_fire_dead)
+  n_resprouting   <- sum(resprouting_now)
+  n_recovered     <- sum(recovered)
+  if (n_fire_dead + n_postfire_dead + n_resprouting + n_recovered != N_prefire)
+    stop("Pegg fate categories do not partition the pre-fire cohort.")
 
-  fraction_dead    <- (n_fire_dead + n_postfire_dead) / N_prefire
-  fraction_fire    <- n_fire_dead     / N_prefire
-  fraction_postfire<- n_postfire_dead / N_prefire
-  fraction_resprout<- n_resprouting   / N_prefire
-  fraction_recover <- n_recovered     / N_prefire
-
-  # Primary validation statistic: fraction of RESPROUTING SURVIVORS that died
-  # by year_assessment. Denominator = trees that survived fire and entered
-  # resprout (= N_prefire - fire_dead). This matches the Pegg et al. metric:
-  # of the trees that showed resprouting during the survey, 48% were dead
-  # at Jan 2022. Trees killed outright by fire are excluded from both
-  # numerator and denominator.
   N_resprouted           <- N_prefire - n_fire_dead
   fraction_resprout_dead <- if (N_resprouted > 0L)
     n_postfire_dead / N_resprouted else NA_real_
 
-  # N_IUCN (mature individuals) from census at prefire_year and assessment
-  N_iucn_prefire  <- census$N_IUCN[census$year == prefire_year]
-  N_iucn_assess   <- census$N_IUCN[census$year == year_assessment]
+
+  N_iucn_prefire <- census$N_IUCN[census$year == prefire_year]
+  N_iucn_survey  <- census$N_IUCN[census$year == last_year]
   if (length(N_iucn_prefire) == 0L) N_iucn_prefire <- NA_real_
-  if (length(N_iucn_assess)  == 0L) N_iucn_assess  <- NA_real_
+  if (length(N_iucn_survey)  == 0L) N_iucn_survey  <- NA_real_
 
   list(
     N_prefire              = N_prefire,
@@ -133,14 +145,14 @@ compute_pegg_stats <- function(pop, census, year_fire, year_assessment,
     n_postfire_dead        = n_postfire_dead,
     n_resprouting          = n_resprouting,
     n_recovered            = n_recovered,
-    fraction_dead          = fraction_dead,          # of all pre-fire trees
-    fraction_fire          = fraction_fire,
-    fraction_postfire      = fraction_postfire,
-    fraction_resprout      = fraction_resprout,
-    fraction_recover       = fraction_recover,
-    fraction_resprout_dead = fraction_resprout_dead, # PRIMARY: of resprouters
+    fraction_dead          = (n_fire_dead + n_postfire_dead) / N_prefire,
+    fraction_fire          = n_fire_dead     / N_prefire,
+    fraction_postfire      = n_postfire_dead / N_prefire,
+    fraction_resprout      = n_resprouting   / N_prefire,
+    fraction_recover       = n_recovered     / N_prefire,
+    fraction_resprout_dead = fraction_resprout_dead,   # PRIMARY: of resprouters
     N_iucn_prefire         = N_iucn_prefire,
-    N_iucn_assess          = N_iucn_assess
+    N_iucn_assess          = N_iucn_survey
   )
 }
 
@@ -149,34 +161,37 @@ compute_pegg_stats <- function(pop, census, year_fire, year_assessment,
 # ============================================================================
 run_pegg_validation <- function(
     params,
-    year_spinup     = 1910L,
-    year_rust       = 2010L,
-    year_fire       = 2020L,
-    year_assessment = 2022L,
-    year_end        = 2025L,
-    observed        = 0.48,     # Pegg et al.: 48% of resprouting trees dead by Jan 2022
-    save_rds        = NULL,
-    plot            = TRUE,
-    verbose         = TRUE
+    year_spinup = 1910L,
+    year_rust   = 2010L,
+    year_fire   = 2020L,
+    year_survey = 2022L,   # Jan 2022 survey = end of model year 2021
+    observed    = 0.48,    # Pegg et al.: 48% of resprouting trees dead by Jan 2022
+    save_rds    = NULL,
+    plot        = TRUE,
+    verbose     = TRUE
 ) {
-  p                    <- params
-  p$rust_start_year    <- year_rust
-  p$fire_years         <- as.integer(year_fire)
-  p$fire_prob_annual   <- 0
-  p$n_years            <- year_end - year_spinup
+  scenario <- list(year_spinup = as.integer(year_spinup),
+                   year_rust   = as.integer(year_rust),
+                   year_fire   = as.integer(year_fire),
+                   year_survey = as.integer(year_survey))
 
-  # All trees at the survey site were impacted by the Black Summer fires.
-  # fire_p_fimp = 1 is fixed for this validation (not a free parameter).
-  p$fire_p_fimp        <- 1.0
+  p                  <- params
+  p$rust_start_year  <- year_rust
+  p$fire_years       <- as.integer(year_fire)
+  p$fire_prob_annual <- 0
+  # Run ends at the end of year_survey - 1 (last t = year0 + n_years - 1).
+  p$n_years          <- as.integer(year_survey - year_spinup)
+  # All trees at the survey sites burned: fire_p_fimp = 1 (not a free parameter).
+  p$fire_p_fimp      <- 1.0
 
   if (verbose) message(sprintf(
-    "Pegg validation: spin=%d  rust=%d  fire=%d  assess=%d  p_fimp=1 (fixed)",
-    year_spinup, year_rust, year_fire, year_assessment))
+    "Pegg validation: spin=%d  rust=%d  fire=%d  survey=Jan %d (end of %d)  p_fimp=1",
+    year_spinup, year_rust, year_fire, year_survey, year_survey - 1L))
 
   res <- run_simulation(p, year0 = year_spinup, verbose = FALSE)
 
   stats <- compute_pegg_stats(res$individuals, res$census,
-                               year_fire, year_assessment, year_spinup)
+                               year_fire, year_survey, year_spinup)
 
   if (verbose) message(sprintf(
     "  fraction_resprout_dead=%.3f (observed=%.2f)  |  N_resprouted=%d  fire_dead=%.3f",
@@ -188,12 +203,13 @@ run_pegg_validation <- function(
       year_spinup     = year_spinup,
       year_rust       = year_rust,
       year_fire       = year_fire,
-      year_assessment = year_assessment,
-      year_end        = year_end,
+      year_survey     = year_survey,
+      year_assessment = year_survey - 1L,   # last model year (for plots)
       observed        = observed,
       census          = res$census,
       fire_p_fimp     = p$fire_p_fimp,
-      run_id          = make_run_id(p),
+      version         = PEGG_VALIDATION_VERSION,
+      run_id          = pegg_run_id(params, scenario),
       params          = params
     ),
     stats
@@ -242,13 +258,19 @@ collect_pegg_results <- function(results_dirs) {
   rows <- lapply(files, function(f) {
     x <- tryCatch(readRDS(f), error = function(e) NULL)
     if (is.null(x) || is.null(x$fraction_dead)) return(NULL)
+    if (!identical(x$version, PEGG_VALIDATION_VERSION)) return(NULL)
     summarise_pegg(x)
   })
   rows <- rows[!sapply(rows, is.null)]
+  if (length(rows) == 0L) {
+    warning("No results from the current Pegg validation version found.")
+    return(data.frame())
+  }
   out  <- do.call(rbind, rows)
   out  <- out[!duplicated(out$run_id), ]
   rownames(out) <- NULL
-  message(sprintf("Collected %d Pegg validation runs.", nrow(out)))
+  message(sprintf("Collected %d Pegg validation runs (%s).",
+                  nrow(out), PEGG_VALIDATION_VERSION))
   out
 }
 
@@ -265,13 +287,18 @@ run_pegg_seeds <- function(
     ...           # passed to run_pegg_validation
 ) {
   dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
+  extra    <- list(...)
+  defaults <- formals(run_pegg_validation)
+  pick     <- function(nm) as.integer(if (!is.null(extra[[nm]])) extra[[nm]] else eval(defaults[[nm]]))
+  scenario <- list(year_spinup = pick("year_spinup"), year_rust = pick("year_rust"),
+                   year_fire   = pick("year_fire"),   year_survey = pick("year_survey"))
   n <- length(seeds)
   if (verbose) message(sprintf("Pegg ensemble: %d runs on %d core(s)", n, n_cores))
 
   parallel::mclapply(seeds, function(s) {
     p      <- params
     p$seed <- as.integer(s)
-    id     <- make_run_id(p)
+    id     <- pegg_run_id(p, scenario)
     out    <- file.path(results_dir, paste0(id, ".rds"))
     if (skip_existing && file.exists(out)) return(invisible(NULL))
     tryCatch(
@@ -339,7 +366,7 @@ plot_pegg_validation <- function(result, save_path = NULL,
                        label="fire\n(Black\nSummer)", colour="#e08000",
                        hjust=0, size=2.8) +
     ggplot2::annotate("text", x=ya+0.3, y=ymax*0.5,
-                       label="assessment\n(Jan 2022)", colour="#2a78d6",
+                       label=sprintf("survey\n(Jan %d)", result$year_survey), colour="#2a78d6",
                        hjust=0, size=2.8) +
     ggplot2::scale_y_continuous(limits=c(0,ymax),
                                   expand=ggplot2::expansion(mult=c(0,0))) +
@@ -378,8 +405,8 @@ plot_pegg_validation <- function(result, save_path = NULL,
     ggplot2::scale_y_continuous(limits=c(0,1),
                                   expand=ggplot2::expansion(mult=c(0,0.05))) +
     ggplot2::labs(x=NULL, y="Fraction of resprouting survivors",
-                  title=sprintf("Fate of resprouters at %d  (N=%d)",
-                                result$year_assessment, N_resp),
+                  title=sprintf("Fate of resprouters at survey, Jan %d  (N=%d)",
+                                result$year_survey, N_resp),
                   subtitle="Denominator = trees that survived fire and resprouted") +
     ggplot2::theme_minimal(base_size=11) +
     ggplot2::theme(axis.text.x=ggplot2::element_text(size=9))
@@ -417,8 +444,8 @@ plot_pegg_validation <- function(result, save_path = NULL,
   bp <- barplot(frac, col=cols, border="white", ylim=c(0,1),
                 names.arg=c("Post-fire\ndead","Resprouting","Recovered"),
                 ylab="Fraction of resprouting survivors",
-                main=sprintf("Fate of resprouters at %d (N=%d)",
-                             result$year_assessment, N_resp),
+                main=sprintf("Fate of resprouters, Jan %d (N=%d)",
+                             result$year_survey, N_resp),
                 las=1, cex.names=0.8)
   abline(h=result$observed, lty=2, lwd=1.5, col="#e34948")
   text(bp[1], result$observed+0.03,
@@ -428,7 +455,11 @@ plot_pegg_validation <- function(result, save_path = NULL,
 # ============================================================================
 # plot_pegg_ensemble()  -- across seeds
 # ============================================================================
-plot_pegg_ensemble <- function(df, observed = 0.40,
+# Panel B shows the MEAN fate composition across runs (means of shares sum
+# to 1; medians of each share need not). Panel A shades the 95% binomial
+# interval of the observation (observed_n = 50 trees in Pegg et al.; set
+# observed_n = NULL to omit it).
+plot_pegg_ensemble <- function(df, observed = 0.48, observed_n = 50L,
                                 save_path = NULL,
                                 width_in = 10, height_in = 5, res = 150) {
   if (nrow(df) == 0L) stop("No results to plot.")
@@ -441,12 +472,15 @@ plot_pegg_ensemble <- function(df, observed = 0.40,
               quantile(df$fraction_resprout_dead, 0.75, na.rm=TRUE),
               min(df$fraction_resprout_dead, na.rm=TRUE),
               max(df$fraction_resprout_dead, na.rm=TRUE)))
-  cat(sprintf("  Runs within 5%% of observed: %d%%\n",
-              round(100*mean(abs(df$fraction_resprout_dead - observed) <= 0.05, na.rm=TRUE))))
-  cat(sprintf("  median fate breakdown (of resprouting survivors): post-fire=%.3f  resprout=%.3f  recovered=%.3f\n",
-              median(df$fraction_postfire / (1-df$fraction_fire), na.rm=TRUE),
-              median(df$fraction_resprout / (1-df$fraction_fire), na.rm=TRUE),
-              median(df$fraction_recover  / (1-df$fraction_fire), na.rm=TRUE)))
+  fm <- .pegg_fate_means(df)
+  cat(sprintf("  mean fate of resprouters at survey: died=%.3f  still resprouting=%.3f  recovered=%.3f  (sum=%.3f)\n",
+              fm[1], fm[2], fm[3], sum(fm)))
+  ci <- .pegg_obs_ci(observed, observed_n)
+  if (!is.null(ci))
+    cat(sprintf("  observed 95%% binomial interval (n=%d): [%.3f, %.3f]; runs inside: %d%%\n",
+                as.integer(observed_n), ci[1], ci[2],
+                round(100*mean(df$fraction_resprout_dead >= ci[1] &
+                               df$fraction_resprout_dead <= ci[2], na.rm=TRUE))))
 
   if (!is.null(save_path)) {
     grDevices::png(save_path, width=width_in, height=height_in,
@@ -455,19 +489,36 @@ plot_pegg_ensemble <- function(df, observed = 0.40,
   }
 
   if (requireNamespace("ggplot2", quietly=TRUE)) {
-    .gg_pegg_ensemble(df, observed)
+    .gg_pegg_ensemble(df, observed, ci)
   } else {
     .base_pegg_ensemble(df, observed)
   }
   invisible(NULL)
 }
 
-.gg_pegg_ensemble <- function(df, observed) {
+# Mean share of resprouters in each fate (died / still resprouting / recovered).
+.pegg_fate_means <- function(df) {
+  denom <- 1 - df$fraction_fire
+  denom[denom <= 0] <- NA_real_
+  c(mean(df$fraction_postfire / denom, na.rm=TRUE),
+    mean(df$fraction_resprout / denom, na.rm=TRUE),
+    mean(df$fraction_recover  / denom, na.rm=TRUE))
+}
+
+.pegg_obs_ci <- function(observed, n) {
+  if (is.null(n)) return(NULL)
+  as.numeric(stats::binom.test(round(observed * n), n)$conf.int)
+}
+
+.gg_pegg_ensemble <- function(df, observed, ci = NULL) {
   gg <- ggplot2::ggplot; aes <- ggplot2::aes
   n  <- nrow(df)
 
   # Panel A: histogram of fraction_resprout_dead
   pA <- gg(df, aes(x=fraction_resprout_dead)) +
+    { if (!is.null(ci))
+        ggplot2::annotate("rect", xmin=ci[1], xmax=ci[2], ymin=-Inf, ymax=Inf,
+                          fill="#e34948", alpha=0.12) } +
     ggplot2::geom_histogram(binwidth=0.02, fill="#2a78d6",
                              colour="white", alpha=0.85, na.rm=TRUE) +
     ggplot2::geom_vline(xintercept=observed,
@@ -483,22 +534,17 @@ plot_pegg_ensemble <- function(df, observed = 0.40,
                                       100*median(df$fraction_resprout_dead, na.rm=TRUE)),
                        hjust=0, vjust=1.3, size=3, colour="#333333") +
     ggplot2::scale_x_continuous(limits=c(0,1)) +
-    ggplot2::labs(x="Fraction of resprouting survivors dead by assessment",
+    ggplot2::labs(x="Fraction of resprouting survivors dead at survey",
                   y="Number of runs",
                   title=sprintf("Pegg et al. validation ensemble  (n=%d seeds)", n),
-                  subtitle="Denominator = trees that survived fire and resprouted  |  fire_p_fimp = 1 (fixed)") +
+                  subtitle=paste0("Denominator = fire survivors that resprouted",
+                                  if (!is.null(ci)) "  |  shaded = 95% CI of observation" else "")) +
     ggplot2::theme_minimal(base_size=11)
 
   # Panel B: fate breakdown of resprouting survivors (matched to observed denominator)
   # Guard against division by zero (runs where all trees killed by fire)
-  denom <- 1 - df$fraction_fire
-  denom[denom <= 0] <- NA_real_
-  fate_medians <- c(
-    "Died\npost-fire"    = median(df$fraction_postfire / denom, na.rm=TRUE),
-    "Still\nresprouting" = median(df$fraction_resprout / denom, na.rm=TRUE),
-    "Recovered\n& alive" = median(df$fraction_recover  / denom, na.rm=TRUE)
-  )
-  fate_medians <- pmin(pmax(fate_medians, 0), 1)  # safety clamp
+  fate_medians <- stats::setNames(.pegg_fate_means(df),
+    c("Died\npost-fire", "Still\nresprouting", "Recovered\n& alive"))
   fate_df <- data.frame(
     fate = factor(names(fate_medians), levels=names(fate_medians)),
     frac = as.numeric(fate_medians),
@@ -517,8 +563,8 @@ plot_pegg_ensemble <- function(df, observed = 0.40,
     ggplot2::scale_y_continuous(limits=c(0,1),
                                   expand=ggplot2::expansion(mult=c(0,0.05))) +
     ggplot2::labs(x=NULL, y="Fraction of resprouting survivors",
-                  title="Median fate breakdown",
-                  subtitle="Denominator = resprouting survivors (excl. fire-direct deaths)") +
+                  title="Fate of resprouters at survey (mean over runs)",
+                  subtitle="Shares sum to 1; fire-killed trees excluded") +
     ggplot2::theme_minimal(base_size=11)
 
   if (requireNamespace("patchwork", quietly=TRUE)) {
@@ -541,12 +587,7 @@ plot_pegg_ensemble <- function(df, observed = 0.40,
   legend("topright", bty="n", lwd=2, col=c("#e34948","#333333"),
          legend=c(sprintf("Pegg %.0f%%", observed*100), "median"))
 
-  denom <- 1 - df$fraction_fire
-  denom[denom <= 0] <- NA_real_
-  fate_m <- c(median(df$fraction_postfire / denom, na.rm=TRUE),
-              median(df$fraction_resprout / denom, na.rm=TRUE),
-              median(df$fraction_recover  / denom, na.rm=TRUE))
-  fate_m <- pmin(pmax(fate_m, 0), 1)
+  fate_m <- .pegg_fate_means(df)
   bp <- barplot(fate_m, col=c("#fdae6b","#2a78d6","#a1d99b"),
                 border="white", ylim=c(0,1),
                 names.arg=c("Post-fire\ndead","Resprouting","Recovered"),

@@ -56,8 +56,9 @@ apply_fire <- function(pop, params, t) {
   }
 
   # Dead
-  pop$alive[dead_idx]      <- FALSE
-  pop$death_year[dead_idx] <- t
+  pop$alive[dead_idx]       <- FALSE
+  pop$death_year[dead_idx]  <- t
+  if (!is.null(pop$death_cause)) pop$death_cause[dead_idx] <- "fire"
 
   # Survivors → resprout
   n_surv <- length(surv_idx)
