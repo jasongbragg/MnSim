@@ -25,15 +25,15 @@ source("R/individuals.R"); source("R/genetics.R"); source("R/mortality.R")
 source("R/fire.R"); source("R/recruitment.R"); source("R/census.R")
 source("R/simulate.R")
 source("runner/params_utils.R")
-source("runner/iucn_a3.R")
+source("runner/iucn_a4.R")
 source("runner/summarise.R")
 source("spatial/03_range_wide_iucn.R")
 library(dplyr); library(readr); library(ozmaps)
 
 # Quick run (200 runs, ~10 min on 8 cores)
 df <- run_range_wide_iucn(n_runs=200, n_cores=8,
-                           results_dir="results/range_wide_iucn/")
-plot_range_wide_iucn(df, save_path="outputs/range_wide_iucn.png")
+                           results_dir="results/range_wide_iucn_a4/")
+plot_range_wide_iucn(df, save_path="outputs/range_wide_iucn_a4.png")
 
 Three design notes worth flagging:
 

@@ -12,25 +12,26 @@ source("R/census.R")
 source("R/simulate.R")
 
 source("runner/params_utils.R")   # for make_run_id()
-source("runner/iucn_a3.R")
+source("runner/iucn_a4.R")
 
 p       <- get_default_params()
 p$seed  <- 13038464L          # or any integer
 
-result  <- run_iucn_a3(
+result  <- run_iucn_a4(
   p,
-  year_spinup        = 1700L,
+  year_spinup        = 1600L,
   year_gentime_start = 1810L,
   year_gentime_end   = 1910L,
   year_rust          = 2010L,
+  year_assess        = 2026L,
   year_end           = 2210L
 )
 
 
 # Extract summary vector (for batch accumulation)
-summarise_iucn_a3(result)
+summarise_iucn_a4(result)
 
 # Batch: save .rds per run, collect later
-run_iucn_a3(p, save_rds = "results/iucn/abc123def456.rds", plot = FALSE)
-df <- collect_iucn_results("results/iucn/")
-write.csv(df, "results/iucn_summary.csv", row.names = FALSE)
+run_iucn_a4(p, save_rds = file.path("results/iucn_a4", paste0(iucn_run_id(p), ".rds")), plot = FALSE)
+df <- collect_iucn_results("results/iucn_a4/")
+write.csv(df, "results/iucn_a4_summary.csv", row.names = FALSE)

@@ -211,7 +211,7 @@ run_pegg_validation <- function(
 # ============================================================================
 # summarise_pegg()
 # ============================================================================
-# Single-row data.frame for batch collection (same pattern as summarise_iucn_a3).
+# Single-row data.frame for batch collection (same pattern as summarise_iucn_a4).
 summarise_pegg <- function(result) {
   data.frame(
     run_id                 = result$run_id,

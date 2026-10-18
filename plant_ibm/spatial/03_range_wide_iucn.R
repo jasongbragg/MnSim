@@ -1,10 +1,11 @@
 # spatial/03_range_wide_iucn.R
 #
-# Range-wide IUCN Criterion A3 assessment for Melaleuca nodosa.
+# Range-wide IUCN Criterion A4 assessment for Melaleuca nodosa.
 #
 # Samples N site-seed pairs (Option X: site drawn ∝ weight_n_raw, seed
-# uniformly random), runs run_iucn_a3() for each, and compiles the
-# distribution of projected decline across the species' range.
+# uniformly random), runs run_iucn_a4() for each, and compiles the
+# distribution of A4 decline (worst 3-generation window spanning the
+# present) across the species' range.
 #
 # DESIGN
 # ------
@@ -31,7 +32,8 @@
 #
 # USAGE
 # -----
-# Source all model and runner files first, then:
+# Source all model and runner files first (runner/iucn_a4.R must be
+# sourced before this file: ASSESS is built with iucn_assess_spec()), then:
 #   source("spatial/03_range_wide_iucn.R")
 #   df <- run_range_wide_iucn(n_runs=200, n_cores=8)
 #   plot_range_wide_iucn(df)
@@ -47,7 +49,15 @@ YEAR_SPINUP          <- 1600L   # 200-yr spin-up
 YEAR_GENTIME_START   <- 1810L
 YEAR_GENTIME_END     <- 1910L
 YEAR_RUST            <- 2010L
-YEAR_END             <- 2210L
+YEAR_ASSESS          <- 2026L   # the present; A4 windows straddle this
+YEAR_END             <- 2210L   # >= YEAR_ASSESS + 100 + SMOOTH_HALF
+SMOOTH_HALF          <- 5L      # running-mean half width for N(y)
+
+# Assessment settings in one object: used for the run AND its cache ID
+ASSESS <- iucn_assess_spec(
+  year_spinup = YEAR_SPINUP, year_gentime_start = YEAR_GENTIME_START,
+  year_gentime_end = YEAR_GENTIME_END, year_rust = YEAR_RUST,
+  year_assess = YEAR_ASSESS, year_end = YEAR_END, smooth_half = SMOOTH_HALF)
 
 # ============================================================================
 # build_site_params(): override base params for one site
@@ -95,7 +105,7 @@ run_range_wide_iucn <- function(
 
   # Load base params (params.R must already be sourced)
   base_params <- get_default_params()
-  base_params$rust_start_year <- YEAR_RUST    # overridden inside run_iucn_a3 anyway
+  base_params$rust_start_year <- YEAR_RUST    # overridden inside run_iucn_a4 anyway
   base_params$fire_years      <- integer(0)   # stochastic fire throughout
 
   # Sample N site-seed pairs: site ∝ weight_n_raw, seed uniform
@@ -113,18 +123,20 @@ run_range_wide_iucn <- function(
     p        <- build_site_params(base_params, site_row)
     p$seed   <- seeds[i]
 
-    id  <- make_run_id(p)
+    id  <- iucn_run_id(p, ASSESS)
     out <- file.path(results_dir, paste0(id, ".rds"))
     if (skip_existing && file.exists(out)) return(invisible(NULL))
 
     tryCatch(
-      run_iucn_a3(
+      run_iucn_a4(
         p,
         year_spinup        = YEAR_SPINUP,
         year_gentime_start = YEAR_GENTIME_START,
         year_gentime_end   = YEAR_GENTIME_END,
         year_rust          = YEAR_RUST,
+        year_assess        = YEAR_ASSESS,
         year_end           = YEAR_END,
+        smooth_half        = SMOOTH_HALF,
         save_rds           = out,
         plot               = FALSE,
         verbose            = FALSE
@@ -152,7 +164,7 @@ run_range_wide_iucn <- function(
     p        <- build_site_params(base_params, site_row)
     p$seed   <- seeds2[i]
     data.frame(
-      run_id            = make_run_id(p),
+      run_id            = iucn_run_id(p, ASSESS),
       lon_centre        = site_row$lon_centre,
       lat_centre        = site_row$lat_centre,
       site_fire_prob    = site_row$fire_prob_annual,
@@ -227,9 +239,9 @@ plot_range_wide_iucn <- function(df, save_path=NULL,
     ggplot2::geom_vline(xintercept=median(df$pct_decline, na.rm=TRUE),
                          colour="#333333", linewidth=1) +
     ggplot2::scale_x_continuous(limits=c(0,100)) +
-    ggplot2::labs(x="Projected decline in reproductive adults (%)",
+    ggplot2::labs(x="Decline in reproductive adults over worst A4 window (%)",
                   y="Number of runs",
-                  title=sprintf("Range-wide IUCN A3 ensemble  (n=%d)", n),
+                  title=sprintf("Range-wide IUCN A4 ensemble  (n=%d)", n),
                   subtitle=sprintf(
                     "LC/NT: %d%%   VU: %d%%   EN: %d%%   CR: %d%%   |   median = %.0f%%",
                     round(100*mean(df$pct_decline <  30, na.rm=TRUE)),
@@ -252,7 +264,7 @@ plot_range_wide_iucn <- function(df, save_path=NULL,
     ggplot2::scale_colour_gradient2(low="#2a78d6", mid="#fdae6b", high="#e34948",
                                      midpoint=50, name="Median\ndecline (%)") +
     ggplot2::scale_size_continuous(name="Runs", range=c(1.5,5)) +
-    ggplot2::labs(title="Median projected decline by site",
+    ggplot2::labs(title="Median A4 decline by site",
                   x=NULL, y=NULL)
 
   # Panel C: fire × rust interaction
@@ -291,7 +303,7 @@ plot_range_wide_iucn <- function(df, save_path=NULL,
   if (requireNamespace("patchwork", quietly=TRUE)) {
     print(patchwork::wrap_plots(pA, pB, pC, pD, ncol=2L) +
       patchwork::plot_annotation(
-        title="M. nodosa range-wide IUCN Criterion A3 assessment",
+        title="M. nodosa range-wide IUCN Criterion A4 assessment",
         theme=ggplot2::theme(plot.title=ggplot2::element_text(size=12, face="bold"))))
   } else {
     for (p in list(pA,pB,pC,pD)) { print(p); readline("Enter...") }
