@@ -1,14 +1,35 @@
 # tests/testthat/test-census.R
 
-test_that("census_year reports N_IUCN as exactly the alive & flowering count", {
+test_that("census_year reports N_flowering as exactly the alive & flowering count", {
   p   <- make_toy_params()
   pop <- make_toy_pop(50, p)
   pop$flowering <- c(rep(TRUE, 10), rep(FALSE, 40))
   gt  <- matrix(0L, nrow = 50L, ncol = 1L)
 
   row <- census_year(pop, gt, t = 1L, n_rec = 3L, n_dead = 2L, params = p)
-  expect_equal(row$N_IUCN, 10L)
+  expect_equal(row$N_flowering, 10L)
   expect_equal(row$N_alive, sum(pop$alive))
+})
+
+test_that("census_year N_IUCN counts reproductive-age plants, flowering or not", {
+  p   <- make_toy_params()
+  pop <- make_toy_pop(40, p)
+  pop$alive            <- TRUE
+  pop$age_first_flower <- 5L
+  pop$age              <- rep(c(2L, 10L), each = 20)    # 20 juveniles, 20 adults
+  pop$resprout         <- rep(c(FALSE, TRUE), 20)       # half the adults resprouting
+  pop$flowering        <- pop$age >= 5L & !pop$resprout # resprouters suppressed
+  pop$flowering[21:24] <- FALSE                         # and some rust-suppressed
+  gt  <- matrix(0L, nrow = 40L, ncol = 1L)
+
+  row <- census_year(pop, gt, t = 1L, n_rec = 0L, n_dead = 0L, params = p)
+  expect_equal(row$N_IUCN, 20L)
+  expect_lt(row$N_flowering, row$N_IUCN)
+  expect_equal(row$N_flowering, sum(pop$flowering))
+
+  pop$alive[40] <- FALSE
+  row <- census_year(pop, gt, t = 1L, n_rec = 0L, n_dead = 0L, params = p)
+  expect_equal(row$N_IUCN, 19L)
 })
 
 test_that("census_year's N_juvenile and N_resprout match pop columns directly", {

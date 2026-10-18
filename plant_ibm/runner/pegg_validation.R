@@ -120,7 +120,7 @@ compute_pegg_stats <- function(pop, census, year_fire, year_assessment,
   fraction_resprout_dead <- if (N_resprouted > 0L)
     n_postfire_dead / N_resprouted else NA_real_
 
-  # N_IUCN (reproductive adults) from census at prefire_year and assessment
+  # N_IUCN (mature individuals) from census at prefire_year and assessment
   N_iucn_prefire  <- census$N_IUCN[census$year == prefire_year]
   N_iucn_assess   <- census$N_IUCN[census$year == year_assessment]
   if (length(N_iucn_prefire) == 0L) N_iucn_prefire <- NA_real_

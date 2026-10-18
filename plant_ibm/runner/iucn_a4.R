@@ -1,9 +1,17 @@
 # runner/iucn_a4.R
 #
-# IUCN Criterion A4 assessment: the largest decline in reproductive adults
-# (N_IUCN) over ANY window of 10 years or three generations, whichever is
-# longer, where the window must include both the past and the future and
-# may extend at most 100 years into the future.
+# IUCN Criterion A4 assessment: the decline in mature individuals (N_IUCN)
+# over a window of 10 years or three generations, whichever is longer, that
+# includes both the past and the future (reaching at most 100 years ahead).
+# Here the window is fixed: it starts at the arrival of rust.
+#
+# MATURE INDIVIDUALS
+# ------------------
+# N_IUCN = alive plants of reproductive age (age >= age_first_flower),
+# including plants kept from flowering in a given year by fire (resprouting)
+# or rust; they remain capable of reproduction (IUCN Guidelines v16 s4.3).
+# The stricter flowering-only count (census$N_flowering) is assessed over the
+# same window in every run and stored alongside as pct_decline_flowering.
 #
 # WHY A4
 # ------
@@ -15,27 +23,26 @@
 #
 # WINDOW DEFINITION (implemented in assess_a4())
 # ----------------------------------------------
-#   L           = max(10, 3 * T_g) years, rounded to whole years
-#   year_assess = the present (assessment year)
-#   Candidate windows [s, s + L] with
-#       s     <  year_assess          (window includes the past)
-#       s + L >  year_assess          (window includes the future)
-#       s + L <= year_assess + 100    (at most 100 years into the future)
-#   N(y)      = centred running mean of N_IUCN over [y - h, y + h]
-#               (h = smooth_half; dampens single-year fire dips)
-#   decline(s) = 100 * (N(s) - N(s + L)) / N(s)
-#   A4 decline = max over candidate s.
+# One fixed window per run, anchored on the arrival of rust:
+#   L          = max(10, 3 * T_g) years, rounded to whole years
+#   t0         = year_rust - 1             (last pre-rust year)
+#   reference  = mean N_IUCN over the avg_years (11) years ending at t0
+#   comparison = mean N_IUCN over the avg_years years ending at t0 + L
+#   decline    = 100 * (N_ref - N_compare) / N_ref
+# The window starts in the past (2010) and ends in the future, as A4
+# requires. If t0 + L would fall more than max_future (100) years after
+# year_assess, the comparison end is capped there (with a warning).
 # If the population goes extinct, years after the last census row count
-# as N = 0, so windows ending after extinction score 100% decline.
+# as N = 0.
 #
-# NOTE ON MAXIMISING OVER WINDOWS
-# -------------------------------
-# Taking the maximum over many overlapping windows of a noisy trajectory
-# selects windows that start on a high point and end on a low point, which
-# biases a single-run decline upward. The running mean (smooth_half) limits
-# this. The full decline-by-start-year curve is returned (decline_curve)
-# so the sensitivity can be inspected, and ensembles should be summarised
-# across seeds rather than read from one run.
+# T_g, and hence L, is estimated within each run from that run's own
+# pre-rust dynamics, then applied to the same run's post-rust trajectory.
+#
+# The assessment is one decline per run. Ensembles over seeds, sites and
+# parameter draws are summarised as the frequency distribution of runs across
+# the IUCN categories (LC/NT, VU, EN, CR), with the median and quantiles as
+# the central tendency -- see run_iucn_seeds() / plot_iucn_ensemble() and
+# spatial/03_range_wide_iucn.R.
 #
 # GENERATION TIME
 # ---------------
@@ -48,9 +55,9 @@
 #   year_spinup        start of run (e.g. 1600)  ─┐ spin-up: discard
 #   year_gentime_start                            ─┤ gen-time window
 #   year_gentime_end                              ─┤ pre-rust equilibrium
-#   year_rust          rust arrives (2010)        ─┤
-#   year_assess        the present (2026)         ─┤ A4 windows straddle this
-#   year_end           end of run                 ─┘ must be >= year_assess + 100 + h
+#   year_rust          rust arrives (2010)        ─┤ reference: 11 yr ending 2009
+#   year_assess        the present (2026)         ─┤ window must straddle this
+#   year_end           end of run                 ─┘ must be >= 2009 + 3*T_g
 #
 # FIRE NOTE
 # ---------
@@ -59,7 +66,7 @@
 # CACHING / RUN IDs
 # -----------------
 # iucn_run_id(params, assess) hashes the params AND the assessment settings
-# (years, smoothing, criterion). Cached .rds files therefore never get
+# (years, averaging window, criterion). Cached .rds files therefore never get
 # reused when the assessment settings change, and old A3 results in a
 # results directory are not mistaken for A4 results.
 #
@@ -165,7 +172,7 @@ iucn_assess_spec <- function(year_spinup        = 1600L,
                              year_rust          = 2010L,
                              year_assess        = 2026L,
                              year_end           = 2210L,
-                             smooth_half        = 5L,
+                             avg_years          = 11L,
                              max_future         = 100L) {
   list(criterion          = IUCN_CRITERION,
        year_spinup        = as.integer(year_spinup),
@@ -174,7 +181,7 @@ iucn_assess_spec <- function(year_spinup        = 1600L,
        year_rust          = as.integer(year_rust),
        year_assess        = as.integer(year_assess),
        year_end           = as.integer(year_end),
-       smooth_half        = as.integer(smooth_half),
+       avg_years          = as.integer(avg_years),
        max_future         = as.integer(max_future))
 }
 
@@ -195,11 +202,24 @@ iucn_category <- function(pct_decline) {
 # ============================================================================
 # assess_a4()
 # ============================================================================
-# Pure function: census + generation time -> A4 decline. No simulation.
-# Returns list(window_len, win_start, win_end, N_start, N_end, pct_decline,
-#              iucn_cat, decline_curve).
-assess_a4 <- function(census, T_g, year_assess,
-                      smooth_half = 5L, max_future = 100L) {
+# Pure function: census + generation time -> A4 decline over the fixed
+# window anchored on rust arrival. No simulation.
+#
+# n_col picks the census count: "N_IUCN" (mature individuals: alive plants of
+# reproductive age, including those suppressed from flowering by fire or
+# rust; the headline metric) or "N_flowering" (plants flowering that year).
+assess_a4 <- function(census, T_g, year_rust, year_assess,
+                      avg_years = 11L, max_future = 100L, n_col = "N_IUCN") {
+
+  na_out <- function(L, ...) {
+    list(window_len = L, ref_start = NA_integer_, ref_end = NA_integer_,
+         cmp_start = NA_integer_, cmp_end = NA_integer_,
+         N_ref = NA_real_, N_compare = NA_real_,
+         pct_decline = NA_real_, iucn_cat = NA_character_)
+  }
+
+  if (!n_col %in% names(census))
+    stop(sprintf("census has no column '%s'.", n_col))
 
   if (is.na(T_g)) {
     warning("T_g is NA; using a 100-year window.")
@@ -207,60 +227,60 @@ assess_a4 <- function(census, T_g, year_assess,
   } else {
     L <- as.integer(round(max(10, 3 * T_g)))
   }
-  h <- as.integer(smooth_half)
+  a  <- as.integer(avg_years)
+  t0 <- as.integer(year_rust) - 1L
+
+  cmp_end <- t0 + L
+  if (cmp_end > year_assess + max_future) {
+    warning(sprintf(
+      "3*T_g window would end in %d, more than %d yr after %d; capping at %d.",
+      cmp_end, max_future, year_assess, year_assess + max_future))
+    cmp_end <- as.integer(year_assess + max_future)
+    L       <- cmp_end - t0
+  }
+  if (cmp_end <= year_assess)
+    warning(sprintf("Window ends in %d, not after the present (%d): ",
+                    cmp_end, year_assess),
+            "this is not an A4 window (it does not include the future).")
+
+  ref_start <- t0 - a + 1L
+  cmp_start <- cmp_end - a + 1L
 
   yrs <- census$year
-  N   <- census$N_IUCN
+  N   <- census[[n_col]]
 
   # After extinction run_simulation() stops writing census rows. Treat the
-  # missing years as N = 0 so post-extinction windows score 100% decline.
-  if (nrow(census) > 0 && isTRUE(census$extinct[nrow(census)])) {
-    pad_to <- year_assess + max_future + h
-    if (max(yrs) < pad_to) {
-      extra <- seq(max(yrs) + 1L, pad_to)
-      yrs   <- c(yrs, extra)
-      N     <- c(N, rep(0, length(extra)))
-    }
+  # missing years as N = 0.
+  if (nrow(census) > 0 && isTRUE(census$extinct[nrow(census)]) &&
+      max(yrs) < cmp_end) {
+    extra <- seq(max(yrs) + 1L, cmp_end)
+    yrs   <- c(yrs, extra)
+    N     <- c(N, rep(0, length(extra)))
   }
 
-  # Centred running mean; NA unless the full (2h + 1)-year window exists.
-  n_bar <- function(y) {
-    sel <- yrs >= y - h & yrs <= y + h
-    if (sum(sel) < 2L * h + 1L) return(NA_real_)
+  win_mean <- function(y0, y1) {
+    sel <- yrs >= y0 & yrs <= y1
+    if (sum(sel) < (y1 - y0 + 1L)) return(NA_real_)
     mean(N[sel])
   }
+  N_ref <- win_mean(ref_start, t0)
+  N_cmp <- win_mean(cmp_start, cmp_end)
 
-  s_min <- year_assess - L + 1L
-  s_max <- min(year_assess - 1L, year_assess + max_future - L)
-  s     <- seq(s_min, s_max)
-
-  N_s <- vapply(s,     n_bar, numeric(1))
-  N_e <- vapply(s + L, n_bar, numeric(1))
-  pct <- ifelse(!is.na(N_s) & N_s > 0, 100 * (N_s - N_e) / N_s, NA_real_)
-
-  curve <- data.frame(win_start = s, win_end = s + L,
-                      N_start = N_s, N_end = N_e, pct_decline = pct)
-
-  if (all(is.na(pct))) {
-    warning("No A4 window could be evaluated: census does not cover ",
-            s_min - h, "-", s_max + L + h, ". Extend year_spinup / year_end.")
-    return(list(window_len = L, win_start = NA_integer_, win_end = NA_integer_,
-                N_start = NA_real_, N_end = NA_real_, pct_decline = NA_real_,
-                iucn_cat = NA_character_, decline_curve = curve))
+  if (is.na(N_ref) || is.na(N_cmp)) {
+    warning(sprintf("Census does not cover %d-%d and %d-%d. ",
+                    ref_start, t0, cmp_start, cmp_end),
+            "Extend year_spinup / year_end.")
+    return(na_out(L))
   }
-  if (any(is.na(pct)))
-    warning(sum(is.na(pct)), " of ", length(pct),
-            " candidate A4 windows could not be evaluated (census too short).")
 
-  k <- which.max(pct)
-  list(window_len    = L,
-       win_start     = curve$win_start[k],
-       win_end       = curve$win_end[k],
-       N_start       = curve$N_start[k],
-       N_end         = curve$N_end[k],
-       pct_decline   = curve$pct_decline[k],
-       iucn_cat      = iucn_category(curve$pct_decline[k]),
-       decline_curve = curve)
+  pct <- if (N_ref > 0) 100 * (N_ref - N_cmp) / N_ref else NA_real_
+
+  list(window_len  = L,
+       ref_start   = ref_start, ref_end = t0,
+       cmp_start   = cmp_start, cmp_end = cmp_end,
+       N_ref       = N_ref,     N_compare = N_cmp,
+       pct_decline = pct,
+       iucn_cat    = iucn_category(pct))
 }
 
 # ============================================================================
@@ -274,7 +294,7 @@ run_iucn_a4 <- function(
     year_rust            = 2010L,
     year_assess          = 2026L,
     year_end             = 2210L,
-    smooth_half          = 5L,    # running-mean half width for N(y)
+    avg_years            = 11L,   # years averaged at each end of the window
     max_future           = 100L,  # A4: window may reach at most this far ahead
     run_counterfactual   = FALSE, # also run with rust disabled (slower)
     save_rds             = NULL,  # path to save .rds; NULL = don't save
@@ -283,13 +303,9 @@ run_iucn_a4 <- function(
 ) {
   assess <- iucn_assess_spec(year_spinup, year_gentime_start, year_gentime_end,
                              year_rust, year_assess, year_end,
-                             smooth_half, max_future)
+                             avg_years, max_future)
 
   # --- Validate settings ---------------------------------------------------
-  if (year_end < year_assess + max_future + smooth_half)
-    warning("year_end (", year_end, ") < year_assess + max_future + smooth_half (",
-            year_assess + max_future + smooth_half,
-            "): some A4 windows cannot be evaluated.")
   if (params$fire_prob_annual == 0 &&
       length(params$fire_years) > 0 &&
       max(params$fire_years) < (year_end - year_spinup) * 0.4) {
@@ -330,18 +346,35 @@ run_iucn_a4 <- function(
   T_g <- gt$T_g
 
   # --- A4 assessment -----------------------------------------------------
-  a4 <- assess_a4(res_rust$census, T_g, year_assess,
-                  smooth_half = smooth_half, max_future = max_future)
+  # The window length comes from THIS run's own T_g, estimated above from
+  # its pre-rust maternal ages, and is then applied to its own trajectory.
+  a4 <- assess_a4(res_rust$census, T_g, year_rust, year_assess,
+                  avg_years = avg_years, max_future = max_future)
+  # Same window, flowering plants only (kept for comparison).
+  a4_flw <- if ("N_flowering" %in% names(res_rust$census))
+    suppressWarnings(assess_a4(res_rust$census, T_g, year_rust, year_assess,
+                               avg_years = avg_years, max_future = max_future,
+                               n_col = "N_flowering"))
+  else list(N_ref = NA_real_, N_compare = NA_real_,
+            pct_decline = NA_real_, iucn_cat = NA_character_)
+  a4_flw <- stats::setNames(a4_flw[c("N_ref", "N_compare", "pct_decline", "iucn_cat")],
+                            c("N_ref_flowering", "N_compare_flowering",
+                              "pct_decline_flowering", "iucn_cat_flowering"))
 
   if (verbose) message(sprintf(
-    "T_g = %.1f yr | window = %d yr | worst window %d-%d | N %.0f -> %.0f | decline = %.1f%% [%s]",
-    T_g, a4$window_len, a4$win_start, a4$win_end,
-    a4$N_start, a4$N_end, a4$pct_decline, a4$iucn_cat))
+    "T_g = %.1f yr | window = %d yr | N_ref (%d-%d) = %.0f -> N_compare (%d-%d) = %.0f | decline = %.1f%% [%s]",
+    T_g, a4$window_len, a4$ref_start, a4$ref_end, a4$N_ref,
+    a4$cmp_start, a4$cmp_end, a4$N_compare, a4$pct_decline, a4$iucn_cat))
+  if (verbose) message(sprintf(
+    "  (flowering plants only: %.0f -> %.0f | decline = %.1f%% [%s])",
+    a4_flw$N_ref_flowering, a4_flw$N_compare_flowering,
+    a4_flw$pct_decline_flowering, a4_flw$iucn_cat_flowering))
 
   # --- Assemble result ---------------------------------------------------
   result <- c(
     list(criterion = IUCN_CRITERION, T_g = T_g),
     a4,
+    a4_flw,
     assess[setdiff(names(assess), "criterion")],
     list(
       mother_ages    = gt$mother_ages,
@@ -370,6 +403,8 @@ run_iucn_a4 <- function(
 # ============================================================================
 # One-row data.frame of the key scalars, for batch accumulation.
 # Threshold flags (1 = met): iucn_vu >= 30%, iucn_en >= 50%, iucn_cr >= 80%.
+.or_na <- function(x) if (is.null(x)) NA_real_ else x
+
 summarise_iucn_a4 <- function(result) {
   data.frame(
     run_id         = result$run_id,
@@ -377,15 +412,20 @@ summarise_iucn_a4 <- function(result) {
     T_g            = result$T_g,
     window_len     = result$window_len,
     year_assess    = result$year_assess,
-    win_start      = result$win_start,
-    win_end        = result$win_end,
-    N_start        = result$N_start,
-    N_end          = result$N_end,
+    ref_start      = result$ref_start,
+    ref_end        = result$ref_end,
+    cmp_start      = result$cmp_start,
+    cmp_end        = result$cmp_end,
+    N_ref          = result$N_ref,
+    N_compare      = result$N_compare,
     pct_decline    = result$pct_decline,
     iucn_vu        = as.integer(result$pct_decline >= 30),
     iucn_en        = as.integer(result$pct_decline >= 50),
     iucn_cr        = as.integer(result$pct_decline >= 80),
     n_offspring_gt = result$n_offspring_gt,
+    N_ref_flowering       = .or_na(result$N_ref_flowering),
+    N_compare_flowering   = .or_na(result$N_compare_flowering),
+    pct_decline_flowering = .or_na(result$pct_decline_flowering),
     stringsAsFactors = FALSE
   )
 }
@@ -434,8 +474,13 @@ collect_iucn_results <- function(results_dirs) {
 # ============================================================================
 # plot_iucn_a4()
 # ============================================================================
+# Two panels:
+#   1. N_IUCN through time, with the reference window (green, 11 yr ending
+#      the year before rust) and the comparison window (orange, 11 yr ending
+#      3 generations later), their means as dashed lines, and the decline.
+#   2. Maternal-age histogram used to estimate the generation time.
 plot_iucn_a4 <- function(result, save_path = NULL,
-                         width_in = 12, height_in = 10, res = 150) {
+                         width_in = 12, height_in = 8, res = 150) {
 
   if (!is.null(save_path)) {
     grDevices::png(save_path, width = width_in, height = height_in,
@@ -450,12 +495,13 @@ plot_iucn_a4 <- function(result, save_path = NULL,
   }
 }
 
+.fmt_span <- function(a, b) if (is.na(a)) "NA" else sprintf("%d-%d", a, b)
+
 # --- ggplot2 rendering ------------------------------------------------------
 .gg_iucn <- function(result) {
   gg <- ggplot2::ggplot; aes <- ggplot2::aes
 
   cen     <- result$census
-  h       <- result$smooth_half
   yr_rust <- result$year_rust
   yr_now  <- result$year_assess
   T_g     <- result$T_g
@@ -463,7 +509,7 @@ plot_iucn_a4 <- function(result, save_path = NULL,
   cat     <- result$iucn_cat
   ymax    <- max(cen$N_IUCN, na.rm = TRUE) * 1.15
 
-  # --- Panel 1: N_IUCN time series with the worst A4 window ---------------
+  # --- Panel 1: N_IUCN with reference and comparison windows ---------------
   p1 <- gg(cen, aes(x = year, y = N_IUCN)) +
     ggplot2::annotate("rect",
       xmin = result$year_spinup, xmax = result$year_gentime_start,
@@ -478,25 +524,23 @@ plot_iucn_a4 <- function(result, save_path = NULL,
     ggplot2::annotate("text",
       x = (result$year_gentime_start + result$year_gentime_end) / 2,
       y = ymax * 0.97,
-      label = paste0("gen-time\nwindow\nTᴳ=", round(T_g, 1), " yr"),
+      label = paste0("gen-time\nwindow\nT_g=", round(T_g, 1), " yr"),
       size = 2.8, colour = "#2a78d6", vjust = 1)
 
-  if (!is.na(result$win_start)) {
+  if (!is.na(result$ref_start)) {
     p1 <- p1 +
-      # Worst A4 window
       ggplot2::annotate("rect",
-        xmin = result$win_start, xmax = result$win_end,
-        ymin = 0, ymax = ymax, fill = "#fee6ce", alpha = 0.5) +
-      # Averaging bands at each end of the window
-      ggplot2::annotate("rect",
-        xmin = result$win_start - h, xmax = result$win_start + h,
+        xmin = result$ref_start, xmax = result$ref_end,
         ymin = 0, ymax = ymax, fill = "#a1d99b", alpha = 0.5) +
       ggplot2::annotate("rect",
-        xmin = result$win_end - h, xmax = result$win_end + h,
+        xmin = result$cmp_start, xmax = result$cmp_end,
         ymin = 0, ymax = ymax, fill = "#fdae6b", alpha = 0.5)
   }
 
   p1 <- p1 +
+    { if ("N_flowering" %in% names(cen))
+        ggplot2::geom_line(aes(y = N_flowering), colour = "#7f7f7f",
+                           linewidth = 0.3, alpha = 0.7) } +
     ggplot2::geom_line(colour = "#333333", linewidth = 0.7) +
     { fires <- cen[cen$fire_event, ]
       if (nrow(fires) > 0)
@@ -521,17 +565,19 @@ plot_iucn_a4 <- function(result, save_path = NULL,
                       label = paste0("Present\n", yr_now),
                       colour = "#4a3aa7", hjust = 0, size = 3)
 
-  if (!is.na(result$win_start)) {
+  if (!is.na(result$ref_start) && !is.na(pct)) {
     p1 <- p1 +
+      ggplot2::geom_hline(yintercept = result$N_ref, colour = "#1a7a35",
+                          linewidth = 0.6, linetype = "longdash") +
+      ggplot2::geom_hline(yintercept = result$N_compare, colour = "#b85c00",
+                          linewidth = 0.6, linetype = "longdash") +
       ggplot2::annotate("segment",
-        x = result$win_start, xend = result$win_end,
-        y = result$N_start, yend = result$N_end,
-        colour = "#888780", linewidth = 0.6, linetype = "dotted") +
-      ggplot2::annotate("point", x = c(result$win_start, result$win_end),
-                        y = c(result$N_start, result$N_end),
-                        colour = c("#1a7a35", "#b85c00"), size = 2.5) +
+        x = result$cmp_end, xend = result$cmp_end,
+        y = result$N_ref, yend = result$N_compare,
+        colour = "#555555", linewidth = 0.6,
+        arrow = grid::arrow(length = grid::unit(0.08, "inches"))) +
       ggplot2::annotate("text",
-        x = result$win_end + 2, y = (result$N_start + result$N_end) / 2,
+        x = result$cmp_end + 2, y = (result$N_ref + result$N_compare) / 2,
         label = sprintf("%.0f%% decline\n[%s]", pct, cat),
         hjust = 0, size = 3.5, colour = "#333333")
   }
@@ -540,108 +586,75 @@ plot_iucn_a4 <- function(result, save_path = NULL,
     ggplot2::scale_y_continuous(limits = c(0, ymax),
                                 expand = ggplot2::expansion(mult = c(0, 0))) +
     ggplot2::labs(
-      x = "Year", y = "Reproductive adults (N_IUCN)",
+      x = "Year", y = "Mature individuals (N_IUCN)",
       title = sprintf(
-        "IUCN A4  |  Tᴳ = %.1f yr  |  window = %d yr  |  worst window %s  |  %.0f%% decline → %s",
-        T_g, result$window_len,
-        if (is.na(result$win_start)) "NA"
-        else sprintf("%d–%d", result$win_start, result$win_end),
-        pct, cat),
+        "IUCN A4  |  T_g = %.1f yr  |  3*T_g = %d yr  |  %.0f%% decline -> %s",
+        T_g, result$window_len, pct, cat),
       subtitle = sprintf(
-        "Window start/end values are %d-yr running means (green / orange bands)   |   rug = fire events",
-        2L * h + 1L)) +
+        "Reference %s (mean %.0f, green)   vs   comparison %s (mean %.0f, orange)   |   thin grey = flowering only   |   rug = fires",
+        .fmt_span(result$ref_start, result$ref_end), result$N_ref,
+        .fmt_span(result$cmp_start, result$cmp_end), result$N_compare)) +
     ggplot2::theme_minimal(base_size = 11)
 
-  # --- Panel 2: decline for every candidate window -------------------------
-  dc <- result$decline_curve
-  p2 <- gg(dc, aes(x = win_start, y = pct_decline)) +
-    ggplot2::geom_hline(yintercept = c(30, 50, 80),
-                        colour = c("#eda100", "#e34948", "#8b0000"),
-                        linetype = "dashed", linewidth = 0.6) +
-    ggplot2::geom_line(colour = "#333333", linewidth = 0.7, na.rm = TRUE) +
-    { if (!is.na(result$win_start))
-        ggplot2::annotate("point", x = result$win_start, y = pct,
-                          colour = "#e34948", size = 2.5) } +
-    ggplot2::geom_vline(xintercept = yr_rust, colour = "#e34948",
-                        linetype = "dashed", linewidth = 0.6) +
-    # Windows starting in a post-fire trough can show large negative
-    # "declines"; clip the display so the threshold region stays readable.
-    ggplot2::coord_cartesian(ylim = c(-100, 100)) +
-    ggplot2::labs(x = "Window start year",
-                  y = "Decline over window (%)",
-                  title = "Decline for each A4 window (all straddle the present)",
-                  subtitle = "Red point = maximum, used for the assessment") +
-    ggplot2::theme_minimal(base_size = 11)
-
-  # --- Panel 3: maternal age histogram (gen time) --------------------------
+  # --- Panel 2: maternal age histogram (gen time) --------------------------
   ma_df <- data.frame(age = result$mother_ages)
-  p3 <- gg(ma_df, aes(x = age)) +
+  p2 <- gg(ma_df, aes(x = age)) +
     ggplot2::geom_histogram(binwidth = 1, fill = "#2a78d6", alpha = 0.7,
                             colour = "white") +
     ggplot2::geom_vline(xintercept = T_g, colour = "#e34948",
                         linewidth = 1, linetype = "dashed") +
     ggplot2::annotate("text", x = T_g + 0.5, y = Inf,
-                      label = sprintf("Tᴳ = %.1f yr", T_g),
+                      label = sprintf("T_g = %.1f yr", T_g),
                       hjust = 0, vjust = 1.4, size = 3.5, colour = "#e34948") +
     ggplot2::labs(
       x = "Maternal age at offspring birth (years)", y = "Count",
       title = "Generation time",
-      subtitle = sprintf("n = %d offspring  |  window %d–%d",
+      subtitle = sprintf("n = %d offspring  |  window %d-%d",
                          result$n_offspring_gt,
                          result$year_gentime_start, result$year_gentime_end)) +
     ggplot2::theme_minimal(base_size = 11)
 
   if (requireNamespace("patchwork", quietly = TRUE)) {
-    print(patchwork::wrap_plots(p1, p2, p3, nrow = 3, heights = c(2.5, 1, 1)))
+    print(patchwork::wrap_plots(p1, p2, nrow = 2, heights = c(2.5, 1)))
   } else if (requireNamespace("gridExtra", quietly = TRUE)) {
-    gridExtra::grid.arrange(p1, p2, p3, nrow = 3, heights = c(2.5, 1, 1))
+    gridExtra::grid.arrange(p1, p2, nrow = 2, heights = c(2.5, 1))
   } else {
-    print(p1); readline("Enter for next panel..."); print(p2)
-    readline("Enter for next panel..."); print(p3)
+    print(p1); readline("Enter for gen-time panel..."); print(p2)
   }
 }
 
 # --- base R fallback --------------------------------------------------------
 .base_iucn <- function(result) {
-  op <- par(mfrow = c(3, 1), mar = c(4, 4, 3, 2), mgp = c(2.3, 0.7, 0))
+  op <- par(mfrow = c(2, 1), mar = c(4, 4, 3, 2), mgp = c(2.3, 0.7, 0))
   on.exit(par(op), add = TRUE)
 
-  cen <- result$census
-  h   <- result$smooth_half
+  cen  <- result$census
   ymax <- max(cen$N_IUCN, na.rm = TRUE) * 1.15
   plot(cen$year, cen$N_IUCN, type = "l", lwd = 1.5, col = "#333333",
        ylim = c(0, ymax), xlab = "Year",
-       ylab = "Reproductive adults (N_IUCN)",
-       main = sprintf("IUCN A4: %.0f%% decline [%s]  window %s  T_g=%.1f yr",
+       ylab = "Mature individuals (N_IUCN)",
+       main = sprintf("IUCN A4: %.0f%% decline [%s]  ref %s vs %s  T_g=%.1f yr",
                       result$pct_decline, result$iucn_cat,
-                      if (is.na(result$win_start)) "NA"
-                      else paste0(result$win_start, "-", result$win_end),
+                      .fmt_span(result$ref_start, result$ref_end),
+                      .fmt_span(result$cmp_start, result$cmp_end),
                       result$T_g), las = 1)
   rect(result$year_spinup, 0, result$year_gentime_start, ymax,
        col = grDevices::adjustcolor("#dddddd", 0.4), border = NA)
   rect(result$year_gentime_start, 0, result$year_gentime_end, ymax,
        col = grDevices::adjustcolor("#c6dbef", 0.4), border = NA)
-  if (!is.na(result$win_start)) {
-    rect(result$win_start, 0, result$win_end, ymax,
-         col = grDevices::adjustcolor("#fee6ce", 0.5), border = NA)
-    rect(result$win_start - h, 0, result$win_start + h, ymax,
+  if (!is.na(result$ref_start)) {
+    rect(result$ref_start, 0, result$ref_end, ymax,
          col = grDevices::adjustcolor("#a1d99b", 0.5), border = NA)
-    rect(result$win_end - h, 0, result$win_end + h, ymax,
+    rect(result$cmp_start, 0, result$cmp_end, ymax,
          col = grDevices::adjustcolor("#fdae6b", 0.5), border = NA)
+    abline(h = result$N_ref,     col = "#1a7a35", lty = 5)
+    abline(h = result$N_compare, col = "#b85c00", lty = 5)
   }
   lines(cen$year, cen$N_IUCN, col = "#333333", lwd = 1.5)
   fires <- cen[cen$fire_event, ]
   if (nrow(fires) > 0) rug(fires$year, col = "#e08000", ticksize = 0.04, lwd = 1)
   abline(v = result$year_rust,   col = "#e34948", lty = 2, lwd = 1.5)
   abline(v = result$year_assess, col = "#4a3aa7", lwd = 1.5)
-
-  dc <- result$decline_curve
-  plot(dc$win_start, dc$pct_decline, type = "l", lwd = 1.5, ylim = c(-100, 100),
-       xlab = "Window start year", ylab = "Decline (%)",
-       main = "Decline for each A4 window", las = 1)
-  abline(h = c(30, 50, 80), col = c("#eda100", "#e34948", "#8b0000"), lty = 2)
-  if (!is.na(result$win_start))
-    points(result$win_start, result$pct_decline, col = "#e34948", pch = 19)
 
   hist(result$mother_ages, breaks = 30, col = "#2a78d6", border = "white",
        xlab = "Maternal age at offspring birth (years)",
@@ -654,9 +667,9 @@ plot_iucn_a4 <- function(result, save_path = NULL,
 # run_iucn_seeds()
 # ============================================================================
 # Run the A4 assessment for a fixed parameterisation across many seeds.
-# Fire timing is stochastic, so a single run's decline depends partly on
-# where fires fall relative to the window ends; report the distribution
-# across seeds. One .rds per seed is written to results_dir, named by
+# Each run gives one decline (reference vs comparison window). Fire timing
+# is stochastic, so report the central tendency (median) and spread across
+# seeds. One .rds per seed is written to results_dir, named by
 # iucn_run_id(), so the ensemble is restartable and extendable.
 #
 # USAGE
@@ -697,7 +710,7 @@ run_iucn_seeds <- function(
   df <- collect_iucn_results(results_dir)
   if (verbose && nrow(df) > 0) {
     message(sprintf(
-      "Ensemble summary (%d runs):  median decline = %.1f%%  [%.1f%% - %.1f%%]",
+      "Ensemble summary (%d runs):  median decline = %.1f%%  [10-90%%: %.1f%% - %.1f%%]",
       nrow(df),
       median(df$pct_decline, na.rm = TRUE),
       quantile(df$pct_decline, 0.1, na.rm = TRUE),
@@ -709,16 +722,18 @@ run_iucn_seeds <- function(
 # ============================================================================
 # plot_iucn_ensemble()
 # ============================================================================
-# Panel A: histogram of A4 decline with VU/EN/CR thresholds.
-# Panel B: N at the start and end of each run's worst window.
+# Panel A: histogram of A4 decline across runs, with VU/EN/CR thresholds and
+#          the median (the central tendency used for the assessment).
+# Panel B: N_ref and N_compare across runs.
 plot_iucn_ensemble <- function(df, save_path = NULL,
                                width_in = 10, height_in = 5, res = 150) {
   if (nrow(df) == 0L) stop("No results to plot.")
 
-  n <- nrow(df)
+  n   <- nrow(df)
+  med <- median(df$pct_decline, na.rm = TRUE)
   cat(sprintf("\n=== IUCN %s ensemble: %d runs ===\n", IUCN_CRITERION, n))
-  cat(sprintf("  pct_decline: median=%.1f%%  IQR=[%.1f%%, %.1f%%]  range=[%.1f%%, %.1f%%]\n",
-              median(df$pct_decline, na.rm = TRUE),
+  cat(sprintf("  pct_decline: median=%.1f%% [%s]  IQR=[%.1f%%, %.1f%%]  range=[%.1f%%, %.1f%%]\n",
+              med, iucn_category(med),
               quantile(df$pct_decline, 0.25, na.rm = TRUE),
               quantile(df$pct_decline, 0.75, na.rm = TRUE),
               min(df$pct_decline, na.rm = TRUE),
@@ -728,8 +743,8 @@ plot_iucn_ensemble <- function(df, save_path = NULL,
               round(100 * mean(df$pct_decline >= 30 & df$pct_decline < 50, na.rm = TRUE)),
               round(100 * mean(df$pct_decline >= 50 & df$pct_decline < 80, na.rm = TRUE)),
               round(100 * mean(df$pct_decline >= 80, na.rm = TRUE))))
-  cat(sprintf("  T_g: median=%.1f yr   worst-window start: median=%.0f\n",
-              median(df$T_g, na.rm = TRUE), median(df$win_start, na.rm = TRUE)))
+  cat(sprintf("  T_g: median=%.1f yr   3*T_g window: median=%.0f yr\n",
+              median(df$T_g, na.rm = TRUE), median(df$window_len, na.rm = TRUE)))
 
   if (!is.null(save_path)) {
     grDevices::png(save_path, width = width_in, height = height_in,
@@ -743,22 +758,36 @@ plot_iucn_ensemble <- function(df, save_path = NULL,
     .base_iucn_ensemble(df)
   }
 
+  cats <- factor(vapply(df$pct_decline, iucn_category, ""),
+                 levels = c("LC/NT", "VU", "EN", "CR"))
   invisible(list(
     n              = n,
+    category_share = as.list(prop.table(table(cats))),
+    median_decline = med,
+    median_cat     = iucn_category(med),
+    q10            = unname(quantile(df$pct_decline, 0.1, na.rm = TRUE)),
+    q90            = unname(quantile(df$pct_decline, 0.9, na.rm = TRUE)),
     pct_vu         = mean(df$iucn_vu, na.rm = TRUE),
     pct_en         = mean(df$iucn_en, na.rm = TRUE),
-    pct_cr         = mean(df$iucn_cr, na.rm = TRUE),
-    median_decline = median(df$pct_decline, na.rm = TRUE)
+    pct_cr         = mean(df$iucn_cr, na.rm = TRUE)
   ))
 }
 
 .gg_iucn_ensemble <- function(df) {
-  gg <- ggplot2::ggplot; aes <- ggplot2::aes
-  n  <- nrow(df)
+  gg  <- ggplot2::ggplot; aes <- ggplot2::aes
+  n   <- nrow(df)
+  med <- median(df$pct_decline, na.rm = TRUE)
 
-  pA <- gg(df, aes(x = pct_decline)) +
-    ggplot2::geom_histogram(binwidth = 2, fill = "#2a78d6", colour = "white",
-                            alpha = 0.85, na.rm = TRUE) +
+  cat_lv  <- c("LC/NT", "VU", "EN", "CR")
+  cat_col <- c("LC/NT" = "#9ecae1", VU = "#eda100", EN = "#e34948", CR = "#8b0000")
+  df$cat  <- factor(vapply(df$pct_decline, iucn_category, ""), levels = cat_lv)
+  shares  <- as.integer(round(100 * table(df$cat) / max(1, sum(!is.na(df$cat)))))
+
+  pA <- gg(df, aes(x = pct_decline, fill = cat)) +
+    ggplot2::geom_histogram(binwidth = 2, boundary = 0, colour = "white",
+                            alpha = 0.9, na.rm = TRUE) +
+    ggplot2::scale_fill_manual(values = cat_col, drop = FALSE, name = NULL,
+                               labels = sprintf("%s  %d%%", cat_lv, shares)) +
     ggplot2::geom_vline(xintercept = c(30, 50, 80),
                         colour = c("#eda100", "#e34948", "#8b0000"),
                         linetype = "dashed", linewidth = 0.8) +
@@ -766,38 +795,37 @@ plot_iucn_ensemble <- function(df, save_path = NULL,
                       label = c("VU", "EN", "CR"),
                       hjust = -0.1, vjust = 1.4, size = 3,
                       colour = c("#eda100", "#e34948", "#8b0000")) +
-    ggplot2::geom_vline(xintercept = median(df$pct_decline, na.rm = TRUE),
-                        colour = "#333333", linewidth = 1) +
-    ggplot2::annotate("text",
-                      x = median(df$pct_decline, na.rm = TRUE), y = Inf,
-                      label = sprintf(" median\n %.1f%%",
-                                      median(df$pct_decline, na.rm = TRUE)),
+    ggplot2::geom_vline(xintercept = med, colour = "#333333", linewidth = 1) +
+    ggplot2::annotate("text", x = med, y = Inf,
+                      label = sprintf(" median\n %.1f%%", med),
                       hjust = 0, vjust = 1.3, size = 3, colour = "#333333") +
-    ggplot2::scale_x_continuous(limits = c(0, 100)) +
-    ggplot2::labs(x = "Decline in reproductive adults over worst A4 window (%)",
+    # Declines can be negative (N grew); keep those runs on the axis.
+    ggplot2::scale_x_continuous(
+      limits = c(min(0, 10 * floor(min(df$pct_decline, na.rm = TRUE) / 10)), 100)) +
+    ggplot2::labs(x = "Decline in mature individuals, reference -> comparison (%)",
                   y = "Number of runs",
-                  title = sprintf("IUCN A4 ensemble  (n = %d seeds)", n),
-                  subtitle = sprintf(
-                    "LC/NT: %d%%   VU: %d%%   EN: %d%%   CR: %d%%",
-                    round(100 * mean(df$pct_decline <  30, na.rm = TRUE)),
-                    round(100 * mean(df$iucn_vu & !df$iucn_en, na.rm = TRUE)),
-                    round(100 * mean(df$iucn_en & !df$iucn_cr, na.rm = TRUE)),
-                    round(100 * mean(df$iucn_cr, na.rm = TRUE)))) +
-    ggplot2::theme_minimal(base_size = 11)
+                  title = sprintf(
+                    "IUCN A4 ensemble (n = %d)  |  LC/NT %d%%  VU %d%%  EN %d%%  CR %d%%",
+                    n, shares[1], shares[2], shares[3], shares[4]),
+                  subtitle = sprintf("Share of runs by category; median decline %.0f%% (%s)",
+                                     med, iucn_category(med))) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(legend.position = "bottom")
 
+  lv <- c("Reference (pre-rust)", "Comparison (3 gen on)")
   pop_long <- rbind(
-    data.frame(window = "Window start", N = df$N_start, stringsAsFactors = FALSE),
-    data.frame(window = "Window end",   N = df$N_end,   stringsAsFactors = FALSE))
-  pop_long$window <- factor(pop_long$window, levels = c("Window start", "Window end"))
+    data.frame(window = lv[1], N = df$N_ref,     stringsAsFactors = FALSE),
+    data.frame(window = lv[2], N = df$N_compare, stringsAsFactors = FALSE))
+  pop_long$window <- factor(pop_long$window, levels = lv)
 
   pB <- gg(pop_long, aes(x = window, y = N, fill = window)) +
     ggplot2::geom_violin(alpha = 0.6, colour = NA, na.rm = TRUE) +
     ggplot2::geom_boxplot(width = 0.15, fill = "white", outlier.size = 1,
                           colour = "#333333", na.rm = TRUE) +
     ggplot2::scale_fill_manual(values = c("#a1d99b", "#fdae6b"), guide = "none") +
-    ggplot2::labs(x = NULL, y = "Reproductive adults (N_IUCN)",
-                  title = "N at ends of the worst window",
-                  subtitle = "Each point = one seed run") +
+    ggplot2::labs(x = NULL, y = "Mature individuals (N_IUCN, 11-yr mean)",
+                  title = "Reference vs comparison",
+                  subtitle = "One value per run") +
     ggplot2::theme_minimal(base_size = 11)
 
   if (requireNamespace("patchwork", quietly = TRUE)) {
@@ -813,14 +841,16 @@ plot_iucn_ensemble <- function(df, save_path = NULL,
   op <- par(mfrow = c(1, 2), mar = c(4, 4, 3, 1), mgp = c(2.3, 0.7, 0))
   on.exit(par(op), add = TRUE)
 
-  hist(df$pct_decline, breaks = seq(0, 100, by = 5),
+  med <- median(df$pct_decline, na.rm = TRUE)
+  lo  <- min(0, 5 * floor(min(df$pct_decline, na.rm = TRUE) / 5))
+  hist(df$pct_decline, breaks = seq(lo, 100, by = 5),
        col = "#2a78d6", border = "white",
-       xlab = "Decline over worst A4 window (%)", ylab = "Runs",
-       main = sprintf("IUCN A4 ensemble (n=%d)", nrow(df)), las = 1)
+       xlab = "Decline, reference to comparison (%)", ylab = "Runs",
+       main = sprintf("IUCN A4 ensemble (n=%d), median %.0f%%", nrow(df), med), las = 1)
   abline(v = c(30, 50, 80), col = c("#eda100", "#e34948", "#8b0000"), lty = 2, lwd = 1.5)
-  abline(v = median(df$pct_decline, na.rm = TRUE), col = "#333333", lwd = 2)
+  abline(v = med, col = "#333333", lwd = 2)
 
-  boxplot(list("Window\nstart" = df$N_start, "Window\nend" = df$N_end),
+  boxplot(list("Reference\n(pre-rust)" = df$N_ref, "Comparison\n(3 gen on)" = df$N_compare),
           col = c("#a1d99b", "#fdae6b"), border = "#333333",
-          ylab = "Reproductive adults", main = "N at window ends", las = 1)
+          ylab = "Mature individuals", main = "Reference vs comparison", las = 1)
 }

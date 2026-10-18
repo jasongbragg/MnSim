@@ -2,8 +2,17 @@
 #
 # One row per simulated year, with everything an IUCN Criterion A
 # assessment and an evolutionary-rescue analysis both need:
-# N_IUCN is reproductive (flowering) adults ONLY, per the stated
-# IUCN counting rule -- never total abundance.
+#
+# N_IUCN       mature individuals in the IUCN sense (Guidelines v16 s4.3):
+#              alive plants that have reached reproductive age
+#              (age >= age_first_flower), INCLUDING those whose flowering is
+#              suppressed this year by fire (resprouting) or rust. A plant
+#              temporarily kept from flowering is still capable of
+#              reproduction; it is counted.
+# N_flowering  the stricter count: alive plants actually flowering this year.
+#              Kept for comparison (and as an alternative assessment metric:
+#              assess_a4(n_metric = "N_flowering")).
+# Neither is total abundance: juveniles are excluded from both.
 
 #' Build the census row for year t.
 census_year <- function(pop, resist_gt, t, n_rec, n_dead, params,
@@ -17,7 +26,8 @@ census_year <- function(pop, resist_gt, t, n_rec, n_dead, params,
   row <- data.frame(
     year              = t,
     N_alive           = N_alive,
-    N_IUCN            = sum(alive & pop$flowering),
+    N_IUCN            = sum(alive & pop$age >= pop$age_first_flower),
+    N_flowering       = sum(alive & pop$flowering),
     N_juvenile        = sum(alive & pop$age < pop$age_first_flower & !pop$resprout),
     N_resprout        = sum(alive & pop$resprout),
     births            = n_rec,
@@ -32,7 +42,7 @@ census_year <- function(pop, resist_gt, t, n_rec, n_dead, params,
 }
 
 #' Simple IUCN Criterion A style percent-decline calculator on the
-#' reproductive-adult count, between any two years present in a census
+#' mature-individual count (N_IUCN), between any two years present in a census
 #' data frame (e.g. a fixed window, or 3-generation length).
 pct_decline <- function(census, y0, y1) {
   n0 <- census$N_IUCN[census$year == y0]

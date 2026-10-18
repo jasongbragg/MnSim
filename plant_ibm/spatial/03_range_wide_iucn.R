@@ -4,8 +4,12 @@
 #
 # Samples N site-seed pairs (Option X: site drawn ∝ weight_n_raw, seed
 # uniformly random), runs run_iucn_a4() for each, and compiles the
-# distribution of A4 decline (worst 3-generation window spanning the
-# present) across the species' range.
+# distribution of A4 decline across the species' range. Each run gives one
+# decline: mean N_IUCN over the 11 yr ending the year before rust arrival
+# (2009) vs mean N_IUCN over the 11 yr ending 3*T_g later. Because sites are
+# drawn in proportion to weight_n_raw, the plain median across runs is the
+# abundance-weighted central tendency over space, fire and rust variation;
+# that median is the value reported for the assessment.
 #
 # DESIGN
 # ------
@@ -50,14 +54,14 @@ YEAR_GENTIME_START   <- 1810L
 YEAR_GENTIME_END     <- 1910L
 YEAR_RUST            <- 2010L
 YEAR_ASSESS          <- 2026L   # the present; A4 windows straddle this
-YEAR_END             <- 2210L   # >= YEAR_ASSESS + 100 + SMOOTH_HALF
-SMOOTH_HALF          <- 5L      # running-mean half width for N(y)
+YEAR_END             <- 2210L   # >= 2009 + 3*T_g (comparison window end), capped at YEAR_ASSESS + 100
+AVG_YEARS            <- 11L     # length of the reference and comparison averaging windows
 
 # Assessment settings in one object: used for the run AND its cache ID
 ASSESS <- iucn_assess_spec(
   year_spinup = YEAR_SPINUP, year_gentime_start = YEAR_GENTIME_START,
   year_gentime_end = YEAR_GENTIME_END, year_rust = YEAR_RUST,
-  year_assess = YEAR_ASSESS, year_end = YEAR_END, smooth_half = SMOOTH_HALF)
+  year_assess = YEAR_ASSESS, year_end = YEAR_END, avg_years = AVG_YEARS)
 
 # ============================================================================
 # build_site_params(): override base params for one site
@@ -136,7 +140,7 @@ run_range_wide_iucn <- function(
         year_rust          = YEAR_RUST,
         year_assess        = YEAR_ASSESS,
         year_end           = YEAR_END,
-        smooth_half        = SMOOTH_HALF,
+        avg_years          = AVG_YEARS,
         save_rds           = out,
         plot               = FALSE,
         verbose            = FALSE
@@ -187,11 +191,17 @@ run_range_wide_iucn <- function(
                 quantile(df$pct_decline, 0.25, na.rm=TRUE),
                 quantile(df$pct_decline, 0.75, na.rm=TRUE)))
     cat(sprintf("  T_g (yr):      median=%.1f\n", median(df$T_g, na.rm=TRUE)))
-    cat(sprintf("  IUCN outcomes: LC/NT=%d%%  VU=%d%%  EN=%d%%  CR=%d%%\n",
-                round(100*mean(df$pct_decline <  30, na.rm=TRUE)),
-                round(100*mean(df$iucn_vu==1 & df$iucn_en==0, na.rm=TRUE)),
-                round(100*mean(df$iucn_en==1 & df$iucn_cr==0, na.rm=TRUE)),
-                round(100*mean(df$iucn_cr==1, na.rm=TRUE))))
+    shares <- function(x) round(100*prop.table(table(factor(
+      vapply(x, iucn_category, ""), levels=c("LC/NT","VU","EN","CR")))))
+    sh <- shares(df$pct_decline)
+    cat(sprintf("  IUCN outcomes (mature individuals): LC/NT=%d%%  VU=%d%%  EN=%d%%  CR=%d%%\n",
+                sh[[1]], sh[[2]], sh[[3]], sh[[4]]))
+    if ("pct_decline_flowering" %in% names(df)) {
+      sf <- shares(df$pct_decline_flowering)
+      cat(sprintf("  IUCN outcomes (flowering only):     LC/NT=%d%%  VU=%d%%  EN=%d%%  CR=%d%%   median=%.1f%%\n",
+                  sf[[1]], sf[[2]], sf[[3]], sf[[4]],
+                  median(df$pct_decline_flowering, na.rm=TRUE)))
+    }
   }
 
   df
@@ -238,8 +248,8 @@ plot_range_wide_iucn <- function(df, save_path=NULL,
                        size=3, colour=c("#eda100","#e34948","#8b0000")) +
     ggplot2::geom_vline(xintercept=median(df$pct_decline, na.rm=TRUE),
                          colour="#333333", linewidth=1) +
-    ggplot2::scale_x_continuous(limits=c(0,100)) +
-    ggplot2::labs(x="Decline in reproductive adults over worst A4 window (%)",
+    ggplot2::scale_x_continuous(limits=c(min(0, 10*floor(min(df$pct_decline, na.rm=TRUE)/10)), 100)) +
+    ggplot2::labs(x="Decline in mature individuals from pre-rust to 3 generations later (%)",
                   y="Number of runs",
                   title=sprintf("Range-wide IUCN A4 ensemble  (n=%d)", n),
                   subtitle=sprintf(

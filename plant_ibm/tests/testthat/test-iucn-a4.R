@@ -156,12 +156,12 @@ test_that("compute_gen_time works correctly with recruit-only mothers (no founde
 # assess_a4 tests (hand-built census trajectories, no simulation)
 # ============================================================================
 #
-# Reference trajectory: N = 1000 up to 2010, then a straight-line decline to
-# 400 at 2080, then flat at 400. With T_g = 70/3 the window is L = 70 yr and,
-# with no smoothing (smooth_half = 0), the worst window is 2010-2080:
-#   decline = (1000 - 400) / 1000 = 60%.
-# Windows starting before 2010 end before 2080 (less decline); windows
-# starting after 2010 start lower but end at the same 400 floor.
+# Fixture: N = 1000 up to 2010, then a straight-line decline to 400 at 2080,
+# then flat at 400. Rust arrives in 2010, so the reference window is the 11 yr
+# ending 2009 (1999-2009, mean 1000). With T_g = 70/3, 3*T_g = 70 yr and the
+# comparison window is the 11 yr ending 2009 + 70 = 2079 (2069-2079). N is
+# linear there, so its mean is N at the mid-year 2074:
+#   1000 - 600 * 64 / 70 = 451.43  ->  decline 54.86%.
 .make_census <- function(years = 1900:2220, extinct_at = NA) {
   N <- ifelse(years <= 2010, 1000,
        ifelse(years >= 2080, 400, 1000 - 600 * (years - 2010) / 70))
@@ -173,75 +173,74 @@ test_that("compute_gen_time works correctly with recruit-only mothers (no founde
   }
   cen
 }
+.N_at <- function(y) ifelse(y <= 2010, 1000, ifelse(y >= 2080, 400, 1000 - 600 * (y - 2010) / 70))
 
-test_that("assess_a4 finds the worst window and its decline", {
-  a <- assess_a4(.make_census(), T_g = 70 / 3, year_assess = 2026L, smooth_half = 0L)
+test_that("assess_a4 compares the pre-rust window with the window 3*T_g later", {
+  a <- assess_a4(.make_census(), T_g = 70 / 3, year_rust = 2010L, year_assess = 2026L)
   expect_equal(a$window_len, 70L)
-  expect_equal(a$win_start, 2010L)
-  expect_equal(a$win_end,   2080L)
-  expect_equal(a$pct_decline, 60, tolerance = 1e-10)
+  expect_equal(c(a$ref_start, a$ref_end), c(1999L, 2009L))
+  expect_equal(c(a$cmp_start, a$cmp_end), c(2069L, 2079L))
+  expect_equal(a$N_ref, 1000)
+  expect_equal(a$N_compare, mean(.N_at(2069:2079)))
+  expect_equal(a$pct_decline, 100 * (1000 - mean(.N_at(2069:2079))) / 1000)
   expect_equal(a$iucn_cat, "EN")
 })
 
-test_that("assess_a4 windows all straddle the present and reach <= 100 yr ahead", {
-  a  <- assess_a4(.make_census(), T_g = 70 / 3, year_assess = 2026L, smooth_half = 0L)
-  dc <- a$decline_curve
-  expect_true(all(dc$win_start <  2026L))
-  expect_true(all(dc$win_end   >  2026L))
-  expect_true(all(dc$win_end   <= 2026L + 100L))
-  expect_equal(range(dc$win_start), c(2026L - 70L + 1L, 2025L))
+test_that("assess_a4 window is fixed by rust arrival, not by the present", {
+  a1 <- assess_a4(.make_census(), T_g = 70 / 3, year_rust = 2010L, year_assess = 2026L)
+  a2 <- assess_a4(.make_census(), T_g = 70 / 3, year_rust = 2010L, year_assess = 2040L)
+  expect_identical(a1[c("ref_end", "cmp_end", "pct_decline")],
+                   a2[c("ref_end", "cmp_end", "pct_decline")])
 })
 
-test_that("assess_a4 uses a 10-year minimum window for short generations", {
-  a <- assess_a4(.make_census(), T_g = 2, year_assess = 2026L, smooth_half = 0L)
+test_that("assess_a4 averages over avg_years at each end", {
+  a <- assess_a4(.make_census(), T_g = 70 / 3, year_rust = 2010L,
+                 year_assess = 2026L, avg_years = 1L)
+  expect_equal(c(a$ref_start, a$ref_end, a$cmp_start, a$cmp_end),
+               c(2009L, 2009L, 2079L, 2079L))
+  expect_equal(a$N_compare, .N_at(2079))
+})
+
+test_that("assess_a4 uses a 10-year minimum window (and warns it is not A4)", {
+  expect_warning(
+    a <- assess_a4(.make_census(), T_g = 2, year_rust = 2010L, year_assess = 2026L),
+    "not an A4 window")
   expect_equal(a$window_len, 10L)
-  # Steepest 10-yr decline in the linear phase: start as late as possible
-  # (2025) because the per-year drop is constant but N(s) keeps falling.
-  expect_equal(a$win_start, 2025L)
-  N_s <- 1000 - 600 * 15 / 70
-  expect_equal(a$pct_decline, 100 * (600 * 10 / 70) / N_s, tolerance = 1e-10)
+  expect_equal(a$cmp_end, 2019L)
 })
 
-test_that("assess_a4 caps the future at 100 yr when 3*T_g exceeds 100", {
-  # T_g = 40 -> L = 120: windows must start in [2026-119, 2026+100-120].
-  a  <- assess_a4(.make_census(), T_g = 40, year_assess = 2026L, smooth_half = 0L)
-  expect_equal(a$window_len, 120L)
-  expect_equal(max(a$decline_curve$win_start), 2006L)
-  expect_true(all(a$decline_curve$win_end <= 2126L))
-  expect_equal(a$pct_decline, 60, tolerance = 1e-10)
-})
-
-test_that("assess_a4 running mean is applied at both window ends", {
-  a <- assess_a4(.make_census(), T_g = 70 / 3, year_assess = 2026L, smooth_half = 5L)
-  dc <- a$decline_curve
-  row <- dc[dc$win_start == 2015L, ]
-  N_y <- function(y) ifelse(y <= 2010, 1000, ifelse(y >= 2080, 400, 1000 - 600 * (y - 2010) / 70))
-  expect_equal(row$N_start, mean(N_y(2010:2020)), tolerance = 1e-10)
-  expect_equal(row$N_end,   mean(N_y(2080:2090)), tolerance = 1e-10)
+test_that("assess_a4 caps the comparison window at 100 yr after the present", {
+  expect_warning(
+    a <- assess_a4(.make_census(), T_g = 40, year_rust = 2010L, year_assess = 2026L),
+    "capping")
+  expect_equal(a$cmp_end, 2126L)
+  expect_equal(a$window_len, 2126L - 2009L)
+  expect_equal(a$pct_decline, 60)
 })
 
 test_that("assess_a4 treats years after extinction as N = 0", {
   a <- assess_a4(.make_census(extinct_at = 2050L), T_g = 70 / 3,
-                 year_assess = 2026L, smooth_half = 2L)
-  expect_equal(a$pct_decline, 100, tolerance = 1e-10)
+                 year_rust = 2010L, year_assess = 2026L)
+  expect_equal(a$N_compare, 0)
+  expect_equal(a$pct_decline, 100)
   expect_equal(a$iucn_cat, "CR")
 })
 
 test_that("assess_a4 warns and returns NA when the census is too short", {
   expect_warning(
-    a <- assess_a4(.make_census(years = 1900:2020), T_g = 70 / 3,
-                   year_assess = 2026L, smooth_half = 0L),
-    "No A4 window")
+    a <- assess_a4(.make_census(1900:2050), T_g = 70 / 3,
+                   year_rust = 2010L, year_assess = 2026L),
+    "does not cover")
   expect_true(is.na(a$pct_decline))
-  expect_true(is.na(a$iucn_cat))
+  expect_true(is.na(a$cmp_end))
 })
 
 test_that("iucn_category thresholds", {
+  expect_equal(iucn_category(NA),   NA_character_)
   expect_equal(iucn_category(29.9), "LC/NT")
   expect_equal(iucn_category(30),   "VU")
   expect_equal(iucn_category(50),   "EN")
   expect_equal(iucn_category(80),   "CR")
-  expect_true(is.na(iucn_category(NA_real_)))
 })
 
 test_that("iucn_run_id changes when assessment settings change", {
@@ -249,7 +248,9 @@ test_that("iucn_run_id changes when assessment settings change", {
   id1 <- iucn_run_id(p, iucn_assess_spec(year_assess = 2026L))
   id2 <- iucn_run_id(p, iucn_assess_spec(year_assess = 2030L))
   id3 <- iucn_run_id(p, iucn_assess_spec(year_assess = 2026L))
+  id4 <- iucn_run_id(p, iucn_assess_spec(avg_years = 5L))
   expect_false(identical(id1, id2))
+  expect_false(identical(id1, id4))
   expect_identical(id1, id3)
   expect_false(identical(id1, make_run_id(p)))
 })
@@ -258,17 +259,20 @@ test_that("iucn_run_id changes when assessment settings change", {
 # summarise_iucn_a4 tests
 # ============================================================================
 
-.make_mock_result <- function(pct_decline, T_g = 25, N_start = 1000) {
+.make_mock_result <- function(pct_decline, T_g = 25, N_ref = 1000) {
+  L <- as.integer(round(max(10, 3 * T_g)))
   list(
     criterion      = "A4",
     run_id         = "test123abc456",
     T_g            = T_g,
-    window_len     = as.integer(round(max(10, 3 * T_g))),
+    window_len     = L,
     year_assess    = 2026L,
-    win_start      = 2005L,
-    win_end        = 2080L,
-    N_start        = N_start,
-    N_end          = N_start * (1 - pct_decline / 100),
+    ref_start      = 1999L,
+    ref_end        = 2009L,
+    cmp_start      = 2009L + L - 10L,
+    cmp_end        = 2009L + L,
+    N_ref          = N_ref,
+    N_compare      = N_ref * (1 - pct_decline / 100),
     pct_decline    = pct_decline,
     iucn_cat       = iucn_category(pct_decline),
     n_offspring_gt = 42L
@@ -301,17 +305,13 @@ test_that("summarise_iucn_a4 threshold flags at the boundaries", {
   expect_equal(c(s$iucn_vu, s$iucn_en, s$iucn_cr), c(1L, 1L, 1L))
 })
 
-test_that("summarise_iucn_a4 window_len = max(10, 3*T_g), no 100-yr cap", {
-  expect_equal(summarise_iucn_a4(.make_mock_result(40, T_g = 25))$window_len, 75L)
-  expect_equal(summarise_iucn_a4(.make_mock_result(40, T_g = 40))$window_len, 120L)
-  expect_equal(summarise_iucn_a4(.make_mock_result(40, T_g = 2))$window_len,  10L)
-})
-
-test_that("summarise_iucn_a4 N_start and N_end are numerically correct", {
-  s <- summarise_iucn_a4(.make_mock_result(40, N_start = 2000))
-  expect_equal(s$N_start,     2000, tolerance = 1e-10)
-  expect_equal(s$N_end,       1200, tolerance = 1e-10)
-  expect_equal(s$pct_decline,   40, tolerance = 1e-10)
+test_that("summarise_iucn_a4 carries window bounds and N values", {
+  s <- summarise_iucn_a4(.make_mock_result(40, N_ref = 2000))
+  expect_equal(c(s$ref_start, s$ref_end), c(1999L, 2009L))
+  expect_equal(s$cmp_end,   2084L)
+  expect_equal(s$N_ref,     2000, tolerance = 1e-10)
+  expect_equal(s$N_compare, 1200, tolerance = 1e-10)
+  expect_equal(s$pct_decline, 40, tolerance = 1e-10)
 })
 
 test_that("collect_iucn_results skips non-A4 result files", {
@@ -326,10 +326,15 @@ test_that("collect_iucn_results skips non-A4 result files", {
   expect_equal(df$criterion, "A4")
 })
 
-test_that("assess_a4 warns when only some windows can be evaluated", {
-  expect_warning(
-    a <- assess_a4(.make_census(years = 1900:2030), T_g = 70 / 3,
-                   year_assess = 2026L, smooth_half = 0L),
-    "could not be evaluated")
-  expect_equal(sum(!is.na(a$decline_curve$pct_decline)), 4L)
+test_that("assess_a4 can assess the flowering-only count over the same window", {
+  cen <- .make_census()
+  cen$N_flowering <- cen$N_IUCN / 2
+  cen$N_flowering[cen$year >= 2069] <- 100
+  a  <- assess_a4(cen, T_g = 70 / 3, year_rust = 2010L, year_assess = 2026L)
+  af <- assess_a4(cen, T_g = 70 / 3, year_rust = 2010L, year_assess = 2026L,
+                  n_col = "N_flowering")
+  expect_equal(af$cmp_end, a$cmp_end)
+  expect_equal(af$N_ref, 500)
+  expect_equal(af$pct_decline, 80)
+  expect_error(assess_a4(cen, 20, 2010L, 2026L, n_col = "nope"), "no column")
 })

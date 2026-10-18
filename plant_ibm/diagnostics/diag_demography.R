@@ -20,7 +20,7 @@
 #   Two lines through the whole window (both diverge pre-fire):
 #     Blue:  rust OFF -- fire effect only
 #     Red:   rust ON  -- fire + max rust pressure
-#   Bold: N_IUCN (= reproductive adults, n_flowering) -- the IUCN metric.
+#   Bold: N_IUCN (mature individuals: alive, reproductive age, incl. fire/rust-suppressed) -- the IUCN metric.
 #   Thin: N_alive -- total population.
 #   Vertical dashed line at year 0 (fire). Horizontal dashed line at
 #   rust-OFF pre-fire N_IUCN (undisturbed, rust-free reference).
