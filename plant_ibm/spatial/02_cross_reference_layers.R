@@ -58,7 +58,8 @@
 # Configuration — edit paths before running
 # ============================================================================
 FIRE_SHP    <- "/home/jgb/projects/melsims/utilities/fire/NPWSFireHistory.shp"  # edit to local path after download
-SDM_TIFF    <- "/home/jgb/projects/melsims/utilities/rust/maxent_MR.tiff"       # edit to local path
+#SDM_TIFF    <- "/home/jgb/projects/melsims/utilities/rust/maxent_MR.tiff"       # edit to local path
+SDM_TIFF    <- "/home/jgb/projects/mrsdm/output/projections/AP_suitability_current.tif"
 MN_GRID   <- "spatial/data/mn_grid.csv"
 GRID_DEG  <- 0.1          # must match 01_get_melaleuca_occurrences.R
 
@@ -116,7 +117,8 @@ AREA_THRESH <- 0.1
 
 YNR_LON   <- 153.21967
 YNR_LAT   <- -29.09357
-SDM_YARR  <- 0.5736       # MaxEnt at Yarringully (do not change)
+# SDM_YARR  <- 0.5736       # MaxEnt at Yarringully (do not change)
+SDM_YARR <- 0.993
 MU_YARR   <- 0.70         # calibrated annual_env mean at Yarringully
 CONC      <- 20L          # Beta concentration (alpha + beta), fixed
 
@@ -157,6 +159,7 @@ message("Step 2: Loading fire history shapefile...")
 # Disable S2: government shapefiles commonly have minor geometric invalidity
 # (duplicate vertices, etc.) that fail S2 but work fine under GEOS
 sf_use_s2(FALSE)
+options(sf.use_s2 = FALSE)   # suppress planar coordinate warnings
 
 fire_raw <- st_read(FIRE_SHP, quiet = TRUE)
 message(sprintf("  %d polygons, CRS: EPSG:%s", nrow(fire_raw),

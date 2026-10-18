@@ -17,3 +17,31 @@
 
 source("spatial/01_get_melaleuca_occurrences.R")
 source("spatial/02_cross_reference_layers.R")
+
+
+# IUCN over spatial surface
+source("params.R")
+source("R/individuals.R"); source("R/genetics.R"); source("R/mortality.R")
+source("R/fire.R"); source("R/recruitment.R"); source("R/census.R")
+source("R/simulate.R")
+source("runner/params_utils.R")
+source("runner/iucn_a3.R")
+source("runner/summarise.R")
+source("spatial/03_range_wide_iucn.R")
+library(dplyr); library(readr); library(ozmaps)
+
+# Quick run (200 runs, ~10 min on 8 cores)
+df <- run_range_wide_iucn(n_runs=200, n_cores=8,
+                           results_dir="results/range_wide_iucn/")
+plot_range_wide_iucn(df, save_path="outputs/range_wide_iucn.png")
+
+Three design notes worth flagging:
+
+Resistance hook — there's a clearly marked # RESISTANCE HOOK comment in build_site_params(). When you have site-level resistance data, add a resist_freq0 column to mn_site_params.csv and uncomment the one line. No structural changes needed.
+
+Site metadata join — the run_id hash lets us join site information back to results after the fact. The join works by reconstructing the site-seed mapping from the same random seed (42), so it's deterministic even after restarts.
+
+The scatter plot — Panel C (fire × rust interaction surface) is the most scientifically interesting output. It directly shows whether the high-fire + high-rust corner produces categorically different outcomes from the low-fire + low-rust corner, which speaks directly to the synergism question that's central to this work.
+
+Plant ibm
+ZIP 
