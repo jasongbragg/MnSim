@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900"
+     font-family="Inter, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+    <marker id="arrRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+    </marker>
+    <marker id="arrOr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d97a00"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="40" y="52" font-size="30" font-weight="700" fill="#2b2b2b">MnSim: an individual-based model of <tspan font-style="italic">Melaleuca nodosa</tspan> under myrtle rust and fire</text>
+
+  <!-- ================= LEFT: one population ================= -->
+  <rect x="30" y="80" width="900" height="760" rx="14" fill="#f7f6f2" stroke="#ddd8cc"/>
+  <text x="56" y="118" font-size="22" font-weight="700" fill="#2b2b2b">One simulated population · annual time step</text>
+
+  <!-- Individual card -->
+  <rect x="56" y="136" width="848" height="52" rx="8" fill="#ffffff" stroke="#cfc8b8"/>
+  <text x="76" y="169" font-size="17" fill="#444">Each plant: age · flowering age · rust-resistance genotype (inherited) · microsite (fixed)</text>
+
+  <!-- Annual cycle -->
+  <g font-size="17" text-anchor="middle" fill="#2b2b2b">
+    <rect x="56"  y="214" width="120" height="66" rx="10" fill="#ffffff" stroke="#9a9a9a"/>
+    <text x="116" y="243">Age &amp;</text><text x="116" y="265">recover</text>
+
+    <rect x="196" y="214" width="120" height="66" rx="10" fill="#fff3e0" stroke="#d97a00" stroke-width="2"/>
+    <text x="256" y="252" font-weight="700" fill="#b35f00">Fire?</text>
+
+    <rect x="336" y="214" width="120" height="66" rx="10" fill="#ffffff" stroke="#9a9a9a"/>
+    <text x="396" y="252">Flowering</text>
+
+    <rect x="476" y="214" width="120" height="66" rx="10" fill="#fdecea" stroke="#c0392b" stroke-width="2"/>
+    <text x="536" y="252" font-weight="700" fill="#a03024">Mortality</text>
+
+    <rect x="616" y="214" width="140" height="66" rx="10" fill="#ffffff" stroke="#9a9a9a"/>
+    <text x="686" y="252">Recruitment</text>
+
+    <rect x="776" y="214" width="128" height="66" rx="10" fill="#eef4fb" stroke="#2a78d6" stroke-width="2"/>
+    <text x="840" y="243" font-weight="700" fill="#1d5fae">Census</text><text x="840" y="265" font-size="14" fill="#1d5fae">mature plants</text>
+  </g>
+  <g stroke="#555" stroke-width="2" fill="none" marker-end="url(#arr)">
+    <line x1="176" y1="247" x2="194" y2="247"/>
+    <line x1="316" y1="247" x2="334" y2="247"/>
+    <line x1="456" y1="247" x2="474" y2="247"/>
+    <line x1="596" y1="247" x2="614" y2="247"/>
+    <line x1="756" y1="247" x2="774" y2="247"/>
+    <path d="M840,280 L840,300 Q840,306 834,306 L122,306 Q116,306 116,300 L116,284"/>
+  </g>
+  <text x="480" y="326" font-size="14" fill="#777" text-anchor="middle">next year</text>
+
+  <!-- Fire detail -->
+  <rect x="56" y="350" width="300" height="226" rx="10" fill="#ffffff" stroke="#d97a00"/>
+  <text x="76" y="382" font-size="19" font-weight="700" fill="#b35f00">Fire</text>
+  <g font-size="16" fill="#444">
+    <text x="76" y="412">Each burnt plant is either</text>
+    <text x="90" y="440">• killed (young plants likelier), or</text>
+    <text x="90" y="466">• resprouts: no flowering for</text>
+    <text x="104" y="488">several years (longer if</text>
+    <text x="104" y="510">rust-susceptible)</text>
+    <text x="76" y="546">Fire frequency &amp; extent by cell</text>
+  </g>
+  <line x1="256" y1="282" x2="256" y2="348" stroke="#d97a00" stroke-width="2" marker-end="url(#arrOr)"/>
+
+  <!-- Rust disease triangle -->
+  <rect x="376" y="350" width="528" height="300" rx="10" fill="#ffffff" stroke="#c0392b"/>
+  <text x="396" y="382" font-size="19" font-weight="700" fill="#a03024">Myrtle rust: disease triangle</text>
+  <polygon points="520,436 445,580 595,580" fill="#fdecea" stroke="#c0392b" stroke-width="2"/>
+  <g font-size="15" fill="#2b2b2b" text-anchor="middle">
+    <text x="520" y="412" font-weight="700">Host</text>
+    <text x="520" y="428" font-size="13" fill="#666">1 − resistance</text>
+    <text x="452" y="604" font-weight="700">Microsite</text>
+    <text x="452" y="622" font-size="13" fill="#666">fixed per plant</text>
+    <text x="598" y="604" font-weight="700">Pathogen year</text>
+    <text x="598" y="622" font-size="13" fill="#666">pressure from SDM</text>
+    <text x="520" y="530" font-size="14" fill="#a03024">effective</text>
+    <text x="520" y="548" font-size="14" fill="#a03024">susceptibility</text>
+  </g>
+  <line x1="580" y1="525" x2="676" y2="525" stroke="#c0392b" stroke-width="2" marker-end="url(#arrRed)"/>
+  <g font-size="16" fill="#444">
+    <text x="690" y="456">Raises death risk:</text>
+    <text x="704" y="482">• highest in seedlings</text>
+    <text x="704" y="506">• extra for resprouts</text>
+    <text x="690" y="540">Delays resprout</text>
+    <text x="690" y="562">recovery</text>
+    <text x="690" y="598">Reduces seed set</text>
+    <text x="690" y="620" font-size="13" fill="#888">(option; off for now)</text>
+  </g>
+  <line x1="536" y1="282" x2="536" y2="348" stroke="#c0392b" stroke-width="2" marker-end="url(#arrRed)"/>
+
+  <!-- Recruitment detail -->
+  <rect x="56" y="596" width="300" height="226" rx="10" fill="#ffffff" stroke="#9a9a9a"/>
+  <text x="76" y="628" font-size="19" font-weight="700" fill="#2b2b2b">Recruitment</text>
+  <g font-size="16" fill="#444">
+    <text x="76" y="658">Seedlings from flowering</text>
+    <text x="76" y="680">plants, density-limited</text>
+    <text x="76" y="702">(Beverton–Holt)</text>
+    <text x="76" y="736">Offspring inherit resistance</text>
+    <text x="76" y="758">alleles from both parents,</text>
+    <text x="76" y="780">so selection can act</text>
+  </g>
+
+  <!-- Census detail -->
+  <rect x="376" y="670" width="528" height="152" rx="10" fill="#eef4fb" stroke="#2a78d6"/>
+  <text x="396" y="702" font-size="19" font-weight="700" fill="#1d5fae">IUCN count: mature individuals</text>
+  <g font-size="16" fill="#334">
+    <text x="396" y="732">Alive plants of reproductive age, including those not</text>
+    <text x="396" y="754">flowering this year because of fire or rust</text>
+    <text x="396" y="788">Generation time = mean age of mothers, from the run's</text>
+    <text x="396" y="810">own pre-rust pedigree</text>
+  </g>
+
+  <!-- ================= RIGHT: ensemble ================= -->
+  <rect x="950" y="80" width="620" height="760" rx="14" fill="#f4f7fb" stroke="#cfdbea"/>
+  <text x="976" y="118" font-size="22" font-weight="700" fill="#2b2b2b">Range-wide ensemble</text>
+
+  <g font-size="16" fill="#334">
+    <rect x="976" y="138" width="568" height="40" rx="8" fill="#ffffff" stroke="#b9c8da"/>
+    <text x="992" y="164"><tspan font-weight="700">Occurrences</tspan>  →  abundance by grid cell</text>
+    <rect x="976" y="186" width="568" height="40" rx="8" fill="#ffffff" stroke="#b9c8da"/>
+    <text x="992" y="212"><tspan font-weight="700">Pathogen SDM</tspan>  →  rust pressure by cell</text>
+    <rect x="976" y="234" width="568" height="40" rx="8" fill="#ffffff" stroke="#b9c8da"/>
+    <text x="992" y="260"><tspan font-weight="700">Fire history</tspan>  →  fire frequency &amp; extent  <tspan fill="#b35f00">(Qld pending)</tspan></text>
+    <rect x="976" y="282" width="568" height="40" rx="8" fill="#ffffff" stroke="#b9c8da"/>
+    <text x="992" y="308"><tspan font-weight="700">Pegg et al. 2025</tspan>  →  plausible range, resprout mortality</text>
+  </g>
+  <line x1="1260" y1="324" x2="1260" y2="350" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+
+  <rect x="976" y="352" width="568" height="88" rx="10" fill="#ffffff" stroke="#2a78d6" stroke-width="2"/>
+  <text x="996" y="384" font-size="18" font-weight="700" fill="#1d5fae">Each run draws</text>
+  <text x="996" y="414" font-size="16" fill="#334">a cell (∝ abundance) × a random seed (fire timing,</text>
+  <text x="996" y="434" font-size="16" fill="#334">rust years) × uncertain parameter values</text>
+  <line x1="1260" y1="440" x2="1260" y2="466" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+
+  <rect x="976" y="468" width="568" height="64" rx="10" fill="#ffffff" stroke="#9a9a9a"/>
+  <text x="996" y="496" font-size="16" fill="#334">Simulate 1600 → 2126 with the population model;</text>
+  <text x="996" y="518" font-size="16" fill="#334">rust arrives 2010</text>
+  <line x1="1260" y1="532" x2="1260" y2="558" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- A4 mini-timeline -->
+  <rect x="976" y="560" width="568" height="124" rx="10" fill="#ffffff" stroke="#9a9a9a"/>
+  <text x="996" y="588" font-size="17" font-weight="700" fill="#2b2b2b">One decline per run (IUCN criterion A4)</text>
+  <rect x="1000" y="604" width="40" height="44" fill="#a1d99b" opacity="0.7"/>
+  <rect x="1360" y="604" width="40" height="44" fill="#fdae6b" opacity="0.7"/>
+  <path d="M1000,612 L1040,612 L1060,616 L1100,628 L1150,634 L1200,639 L1250,642 L1300,643 L1360,644 L1400,644 L1500,645"
+        fill="none" stroke="#1d5fae" stroke-width="2.5"/>
+  <line x1="1046" y1="600" x2="1046" y2="652" stroke="#c0392b" stroke-dasharray="5,4" stroke-width="2"/>
+  <text x="1020" y="668" font-size="13" fill="#2f6b2a" text-anchor="middle">pre-rust</text>
+  <text x="1046" y="668" font-size="13" fill="#c0392b" text-anchor="start" dx="8">rust</text>
+  <text x="1380" y="668" font-size="13" fill="#9a5400" text-anchor="middle">3 generations on</text>
+  <text x="1420" y="626" font-size="13" fill="#555">11-yr means</text>
+  <line x1="1260" y1="684" x2="1260" y2="710" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- distribution glyph -->
+  <rect x="976" y="712" width="568" height="110" rx="10" fill="#ffffff" stroke="#9a9a9a"/>
+  <g>
+    <rect x="1000" y="790" width="18" height="14" fill="#8fb3cf"/>
+    <rect x="1020" y="780" width="18" height="24" fill="#8fb3cf"/>
+    <rect x="1040" y="768" width="18" height="36" fill="#eda100"/>
+    <rect x="1060" y="752" width="18" height="52" fill="#eda100"/>
+    <rect x="1080" y="740" width="18" height="64" fill="#d6452f"/>
+    <rect x="1100" y="746" width="18" height="58" fill="#d6452f"/>
+    <rect x="1120" y="762" width="18" height="42" fill="#d6452f"/>
+    <rect x="1140" y="780" width="18" height="24" fill="#7a0f12"/>
+    <rect x="1160" y="794" width="18" height="10" fill="#7a0f12"/>
+    <line x1="996" y1="804" x2="1184" y2="804" stroke="#888"/>
+  </g>
+  <text x="1204" y="744" font-size="17" font-weight="700" fill="#2b2b2b">Distribution of outcomes</text>
+  <text x="1204" y="770" font-size="16" fill="#334">share of runs in each category:</text>
+  <text x="1204" y="798" font-size="16" font-weight="700"><tspan fill="#5d87a8">LC/NT</tspan> · <tspan fill="#c98a00">VU</tspan> · <tspan fill="#d6452f">EN</tspan> · <tspan fill="#7a0f12">CR</tspan></text>
+
+  <!-- footer -->
+  <text x="40" y="875" font-size="15" fill="#777">Preliminary. Not yet included: field resistance data (all plants fully susceptible); Queensland fire history (prior only); rust effects on seed set.</text>
+</svg>

@@ -1,0 +1,22 @@
+# Pegg et al. (2025) Austral Ecology 50(7), doi:10.1111/aec.70099, Fig. 3a:
+# Melaleuca nodosa, Yarringully Nature Reserve. 50 fire-affected trees, all
+# resprouting when monitoring began (Mar 2020). "Trees dead (%)" bars,
+# DIGITISED BY EYE from the published figure (approximate) except the final
+# value, which the text gives exactly (24 of 50 dead, Jan 2022).
+# Replace with the raw counts if available. exact = TRUE for text-reported values.
+date,pct_dead,n_trees,exact
+2020-03-15,0,50,FALSE
+2020-04-15,4,50,FALSE
+2020-05-15,4,50,FALSE
+2020-06-15,6,50,FALSE
+2020-07-15,6,50,FALSE
+2020-08-15,6,50,FALSE
+2020-09-15,8,50,FALSE
+2020-11-15,10,50,FALSE
+2020-12-15,10,50,FALSE
+2021-01-15,12,50,FALSE
+2021-02-15,22,50,FALSE
+2021-04-15,32,50,FALSE
+2021-06-15,40,50,FALSE
+2021-07-15,40,50,FALSE
+2022-01-15,48,50,TRUE
