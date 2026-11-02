@@ -31,9 +31,10 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
       from the cell's burnt-fraction distribution; the fire reaches the
       stand with probability equal to its size, burns 90% of plants, and
       kills old plants up to 0.30 x size. Nov 2026. Notes: D3.
-- [ ] **Retire `spatial/03_range_wide_iucn.R`** in favour of the run design in
-      `talk/make_talk_figures.R` (per-run RNG streams; plan table instead of
-      the seed/join reconstruction).
+- [x] **Retire `spatial/03_range_wide_iucn.R`**: replaced by
+      `runner/range_ensemble.R` (per-run RNG streams, plan table, category
+      shares by region, drivers plot); runscript
+      `runscripts/range_ensemble.run.code`. Nov 2026.
 - [ ] **Smaller model checks:** yearly census deaths exclude fire deaths;
       Weibull hazard used as a probability; rust delay to resprouting ignores
       the disease triangle; no first-year seedling mortality; inconsistent

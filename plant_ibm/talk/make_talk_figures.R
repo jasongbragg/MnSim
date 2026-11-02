@@ -47,20 +47,12 @@ N_PEGG      <- 100L     # Pegg-scenario runs
 N_RANGE     <- 300L     # range-wide A4 runs
 MASTER_SEED <- 20261022L
 
-# Model uncertainty: parameters drawn independently per run, uniform on
-# [min, max]. 'path' is the location in the params list. Set to list() to
-# switch parameter uncertainty off (site + seed variation only).
-PARAM_DRAWS <- list(
-  resprout_rust_mortality = list(
-    path  = c("rust_dose_response", "resprout", "max_effect"),
-    min   = 0.32, max = 0.78,
-    label = "Extra rust mortality of resprouting plants (max_effect)",
-    note  = "values whose Pegg-scenario median lies in the 95% CI of 24/50 dead (0.34-0.63), at the Yarringully cell")
-)
+# Model uncertainty: by default the ensemble's draws (runner/range_ensemble.R,
+# DEFAULT_PARAM_DRAWS); override here, or set to list() for site + seed only.
+PARAM_DRAWS <- NULL   # NULL = DEFAULT_PARAM_DRAWS
 
 PEGG_CSV     <- "talk/data/pegg2025_yarringully_fig3a.csv"
 DIAGRAM_SVG  <- "talk/model_diagram.svg"
-QLD_LAT      <- -28.16   # approx. NSW/Qld border on the coast
 
 # ============================================================================
 # Model code
@@ -71,27 +63,14 @@ for (f in c("individuals", "genetics", "mortality", "fire", "recruitment",
   source(file.path("R", paste0(f, ".R")))
 source("runner/params_utils.R")
 source("runner/iucn_a4.R")
-source("spatial/03_range_wide_iucn.R")   # build_site_params(), ASSESS, YEAR_*
+source("runner/range_ensemble.R")       # range-wide ensemble: plan, run, collect
 source("runner/pegg_validation.R")      # pegg_site_params(): Pegg runs at the anchor cell
 
 dir.create(RESULTS_DIR, recursive = TRUE, showWarnings = FALSE)
 dir.create(FIG_DIR,     recursive = TRUE, showWarnings = FALSE)
 
 TALK_VERSION <- "talk-v1"
-
-# Apply this run's parameter draws (uses the current RNG stream).
-draw_params <- function(p) {
-  vals <- list()
-  for (nm in names(PARAM_DRAWS)) {
-    d <- PARAM_DRAWS[[nm]]
-    v <- stats::runif(1, d$min, d$max)
-    p[[d$path]] <- v
-    vals[[nm]]  <- v
-  }
-  list(params = p, values = vals)
-}
-
-base_value <- function(d) get_default_params()[[d$path]]
+if (is.null(PARAM_DRAWS)) PARAM_DRAWS <- DEFAULT_PARAM_DRAWS
 
 # ============================================================================
 # Stage 1: Pegg scenario -- cumulative death of resprouters through time
@@ -106,7 +85,7 @@ PEGG_LAST_YEAR <- 2025L
 
 pegg_trajectory <- function(i) {
   set.seed(MASTER_SEED + 100000L + i)
-  dr <- draw_params(get_default_params())
+  dr <- draw_params(get_default_params(), PARAM_DRAWS)
   p  <- pegg_site_params(dr$params, "anchor")   # Yarringully cell's rust pressure
   p$seed             <- 5000L + i
   p$rust_start_year  <- PEGG_RUST
@@ -154,83 +133,12 @@ run_pegg_stage <- function() {
 }
 
 # ============================================================================
-# Stage 2: range-wide A4 ensemble
+# Stage 2: range-wide A4 ensemble (runner/range_ensemble.R)
 # ============================================================================
-load_sites <- function() {
-  s <- load_site_params(drop_incomplete = TRUE)
-  s$region <- ifelse(s$lat_centre > QLD_LAT, "Qld", "NSW")
-  s
-}
-
-plan_range_run <- function(i, sites, base) {
-  set.seed(MASTER_SEED + i)
-  k  <- sample.int(nrow(sites), 1L, prob = sites$weight_n_raw)
-  sd <- sample.int(99999L, 1L)
-  dr <- draw_params(base)
-  p  <- build_site_params(dr$params, sites[k, ])
-  p$seed <- sd
-  row <- data.frame(run = i, cell_row = k, cell_id = sites$cell_id[k],
-                    lon = sites$lon_centre[k], lat = sites$lat_centre[k],
-                    region = sites$region[k], sim_seed = sd,
-                    run_id = iucn_run_id(p, ASSESS))
-  for (nm in names(dr$values)) row[[nm]] <- dr$values[[nm]]
-  list(params = p, row = row)
-}
-
-run_range_stage <- function() {
-  sites <- load_sites()
-  base  <- get_default_params()
-  base$fire_years <- integer(0)
-  message(sprintf("Range-wide: %d runs on %d cores (%d cells; %d cells without rust/fire values dropped, %.1f%% of abundance weight)",
-                  N_RANGE, N_CORES, nrow(sites), attr(sites, "n_dropped"),
-                  100 * attr(sites, "weight_dropped")))
-  plans <- lapply(seq_len(N_RANGE), plan_range_run, sites = sites, base = base)
-  plan  <- do.call(rbind, lapply(plans, `[[`, "row"))
-  write.csv(plan, file.path(RESULTS_DIR, "range_plan.csv"), row.names = FALSE)
-
-  rdir <- file.path(RESULTS_DIR, "range")
-  dir.create(rdir, recursive = TRUE, showWarnings = FALSE)
-  parallel::mclapply(seq_len(N_RANGE), function(i) {
-    out <- file.path(rdir, paste0(plans[[i]]$row$run_id, ".rds"))
-    if (file.exists(out)) return(invisible(NULL))
-    tryCatch(
-      suppressWarnings(run_iucn_a4(
-        plans[[i]]$params,
-        year_spinup = YEAR_SPINUP, year_gentime_start = YEAR_GENTIME_START,
-        year_gentime_end = YEAR_GENTIME_END, year_rust = YEAR_RUST,
-        year_assess = YEAR_ASSESS, year_end = YEAR_END, avg_years = AVG_YEARS,
-        save_rds = out, plot = FALSE, verbose = FALSE)),
-      error = function(e) message("  range run ", i, ": ", conditionMessage(e)))
-    invisible(NULL)
-  }, mc.cores = N_CORES)
-  invisible(plan)
-}
-
-# Gather summaries and N_IUCN / N_ref trajectories for the planned runs.
-TRAJ_YEARS <- 1950:2130
-collect_range <- function() {
-  plan <- read.csv(file.path(RESULTS_DIR, "range_plan.csv"))
-  plan <- plan[plan$run <= N_RANGE, ]
-  rdir <- file.path(RESULTS_DIR, "range")
-  rows <- list(); traj <- list()
-  for (j in seq_len(nrow(plan))) {
-    f <- file.path(rdir, paste0(plan$run_id[j], ".rds"))
-    if (!file.exists(f)) next
-    r <- readRDS(f)
-    s <- summarise_iucn_a4(r)
-    rows[[length(rows) + 1L]] <- cbind(plan[j, setdiff(names(plan), "run_id")], s)
-    cen <- r$census
-    N <- cen$N_IUCN[match(TRAJ_YEARS, cen$year)]
-    if (isTRUE(cen$extinct[nrow(cen)])) N[TRAJ_YEARS > max(cen$year)] <- 0
-    traj[[length(traj) + 1L]] <- data.frame(run = plan$run[j], year = TRAJ_YEARS,
-                                            rel = N / s$N_ref)
-  }
-  if (length(rows) == 0L) stop("No range-wide results found in ", rdir)
-  df <- do.call(rbind, rows)
-  df$category <- factor(vapply(df$pct_decline, iucn_category, ""),
-                        levels = c("LC/NT", "VU", "EN", "CR"))
-  list(runs = df, traj = do.call(rbind, traj))
-}
+load_sites <- function() load_range_sites()
+run_range_stage <- function()
+  run_range_ensemble(N_RANGE, RESULTS_DIR, N_CORES, PARAM_DRAWS, MASTER_SEED)
+collect_range <- function() collect_range_ensemble(RESULTS_DIR, N_RANGE)
 
 # ============================================================================
 # Stage 3: figures
@@ -250,13 +158,6 @@ save_fig <- function(p, name, w = 12, h = 6.75) {
   ggsave(file.path(FIG_DIR, name), p, width = w, height = h, dpi = 200, bg = "white")
   message("  wrote ", file.path(FIG_DIR, name))
 }
-draws_caption <- function() {
-  if (length(PARAM_DRAWS) == 0L) return("No parameter draws (site and seed variation only).")
-  paste(vapply(PARAM_DRAWS, function(d)
-    sprintf("%s ~ U(%.2f, %.2f) [%s]", d$label, d$min, d$max, d$note), ""),
-    collapse = "; ")
-}
-
 fig_diagram <- function() {
   if (!file.exists(DIAGRAM_SVG)) { message("  no ", DIAGRAM_SVG); return(invisible()) }
   rsvg::rsvg_png(DIAGRAM_SVG, file.path(FIG_DIR, "fig1_model_diagram.png"),
@@ -313,7 +214,7 @@ fig_pegg <- function(traj) {
            "Field data: Pegg et al. 2025, Austral Ecology, Yarringully NR, 50 trees resprouting when monitoring began; error bars 95% binomial CI. ",
            "Monthly values read off the published figure (approximate).\n",
            "Model: annual time step (deaths shown at the end of each model year); every tree burned (2020); rust present since 2010. ",
-           draws_caption()))) +
+           draws_caption(PARAM_DRAWS)))) +
     theme_talk() +
     theme(legend.position = c(0.98, 0.04), legend.justification = c(1, 0),
           legend.background = element_rect(fill = "white", colour = NA))
@@ -360,7 +261,7 @@ fig_trajectories <- function(R) {
            length(unique(tr$run)), length(show)),
          caption = wrap(paste0("Mature individuals = alive plants of reproductive age, including those not flowering after fire or rust. ",
                           "Each run's comparison window ends 3 x its own generation time after 2009.\n",
-                          draws_caption()))) +
+                          draws_caption(PARAM_DRAWS)))) +
     theme_talk()
 }
 
@@ -420,7 +321,7 @@ fig_outcomes <- function(R) {
                          nrow(df)),
       caption = wrap(paste0("* Qld cells: no Qld fire history yet; fire frequency and extent there come from the prior. ",
                        "Rust pressure from the pathogen SDM everywhere. No resistance yet (fully susceptible).\n",
-                       draws_caption()), 190),
+                       draws_caption(PARAM_DRAWS)), 190),
       theme = theme_talk())
 }
 
@@ -461,7 +362,7 @@ write_numbers <- function(R, traj) {
     sprintf("Generated: %s", format(Sys.time(), "%Y-%m-%d %H:%M")),
     sprintf("Model commit: %s", tryCatch(system("git rev-parse --short HEAD", intern = TRUE),
                                          error = function(e) "unknown")),
-    sprintf("Parameter draws: %s", draws_caption()),
+    sprintf("Parameter draws: %s", draws_caption(PARAM_DRAWS)),
     "",
     sprintf("PEGG: %d runs; resprouters dead by Jan 2022: median %.1f%% (50%%: %.1f-%.1f; 90%%: %.1f-%.1f); observed 48%% (24/50, 95%% CI 33.7-62.6%%)",
             length(unique(traj$run)), 100 * median(at22),
@@ -502,6 +403,7 @@ make_figures <- function() {
   save_fig(fig_trajectories(R),  "fig3_trajectories.png")
   save_fig(fig_outcomes(R),      "fig4_outcomes.png", w = 13, h = 6.75)
   save_fig(fig_map(R),           "fig5_map.png", w = 7.5, h = 8.5)
+  plot_range_drivers(R, file.path(FIG_DIR, "figS1_drivers.png"), PARAM_DRAWS)
   write_numbers(R, traj)
 }
 

@@ -42,7 +42,7 @@
 # parameter draws are summarised as the frequency distribution of runs across
 # the IUCN categories (LC/NT, VU, EN, CR), with the median and quantiles as
 # the central tendency -- see run_iucn_seeds() / plot_iucn_ensemble() and
-# spatial/03_range_wide_iucn.R.
+# runner/range_ensemble.R.
 #
 # GENERATION TIME
 # ---------------

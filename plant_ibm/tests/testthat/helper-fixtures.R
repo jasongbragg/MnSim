@@ -26,6 +26,7 @@ source("runner/params_utils.R")  # make_run_id(), vec_to_params(), params_to_vec
 source("runner/iucn_a4.R")       # compute_gen_time(), assess_a4(), summarise_iucn_a4()
 source("runner/pegg_validation.R")  # compute_pegg_stats(), pegg_run_id()
 source("spatial/rust_pressure.R")    # rust_pressure_from_sdm(), apply_sdm_to_sites()
+source("runner/range_ensemble.R")   # plan_range_run(), draw_params(), range_category_shares()
 # Test files run with wd = tests/testthat: point data paths at the project root.
 assign("SITE_PARAMS_PATH", file.path(proj_root, "spatial/data/mn_site_params.csv"), envir = globalenv())
 

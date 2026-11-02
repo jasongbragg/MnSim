@@ -1,0 +1,25 @@
+# Range-wide IUCN A4 ensemble (replaces the old 03_range_wide_iucn.R workflow).
+# Run from plant_ibm/ with /opt/R/4.3.1/bin/R.
+
+source("params.R")
+for (f in c("individuals","genetics","mortality","fire","recruitment","census","simulate"))
+  source(file.path("R", paste0(f, ".R")))
+source("runner/params_utils.R")
+source("runner/iucn_a4.R")
+source("runner/range_ensemble.R")
+
+# New folder whenever the model or params change (results are cached per run).
+out <- "results/range_v1/"
+
+# Runs are restartable and extendable: rerun with a larger n_runs to add more;
+# earlier runs are reused and unchanged.
+run_range_ensemble(n_runs = 300, results_dir = out,
+                   n_cores = parallel::detectCores() - 1L)
+
+R <- collect_range_ensemble(out)
+range_category_shares(R$runs)          # % of runs per category, overall and NSW / Qld
+plot_range_drivers(R, file.path(out, "drivers.png"))
+
+# Parameter uncertainty: DEFAULT_PARAM_DRAWS in runner/range_ensemble.R.
+# Switch off (site + seed variation only):
+#   run_range_ensemble(300, "results/range_noparam/", param_draws = list())

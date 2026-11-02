@@ -66,7 +66,9 @@ distribution model governs how hard rust hits, not when it arrived.
 One run = one grid cell (0.1 degree) x one simulation seed (fire timing,
 annual rust years, demographic chance) x one set of values for the uncertain
 parameters. Each run has its own random-number stream, so adding runs never
-changes earlier ones (`talk/make_talk_figures.R`).
+changes earlier ones (`runner/range_ensemble.R`, which replaced
+`spatial/03_range_wide_iucn.R` in Nov 2026; same cells, seeds and draws as
+the October talk ensemble).
 
 **B2. Cells drawn in proportion to abundance** [assumption]
 Cells are drawn with probability proportional to `weight_n_raw`, the number of
