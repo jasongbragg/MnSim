@@ -16,6 +16,18 @@
 # site-wide inoculum pressure / weather favourability for rust. It is
 # passed to nominate_deaths() and recruit() so that rust effects on
 # mortality and fecundity experience the same environmental year.
+#
+# ARCHIVING DEAD PLANTS (speed)
+# -----------------------------
+# Dead plants are never needed again inside the loop, but kept in 'pop'
+# they make every step scan and copy an ever-growing table (~400,000 rows
+# against ~7,000 alive over a 610-year run). When dead rows outnumber the
+# living (and exceed 1,000), they are moved, with their genotype rows, to an
+# archive; at the end the archive and the living are recombined in id
+# order, so the returned individuals and resist_gt are exactly what an
+# unarchived run returns. Archiving uses no random numbers and preserves
+# the order of living plants, so results are identical with it on or off
+# (params$archive_dead = FALSE turns it off).
 
 run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALSE) {
   set.seed(params$seed)
@@ -30,6 +42,11 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
   }
   # States saved before death_cause existed: add it (causes unknown).
   if (is.null(pop$death_cause)) pop$death_cause <- NA_character_
+
+  archive_on  <- !isFALSE(params$archive_dead)
+  arch_pop    <- list()
+  arch_gt     <- list()
+  next_id     <- max(pop$id) + 1L
 
   n_years     <- params$n_years
   census_list <- vector("list", n_years)
@@ -118,9 +135,10 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     pop$flowering[dead_idx]   <- FALSE
 
     # 6. recruitment: Beverton-Holt, parent sampling, Mendelian inheritance
-    rec       <- recruit(pop, resist_gt, t, params, annual_env_t)
+    rec       <- recruit(pop, resist_gt, t, params, annual_env_t, next_id = next_id)
     pop       <- rec$pop
     resist_gt <- rec$resist_gt
+    next_id   <- next_id + rec$n_rec
 
     # 7. census
     census_list[[i]] <- census_year(pop, resist_gt, t, rec$n_rec,
@@ -138,7 +156,29 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
       census_list <- census_list[seq_len(i)]
       break
     }
+
+    # Archive dead rows once they outnumber the living.
+    if (archive_on) {
+      n_dead <- nrow(pop) - sum(pop$alive)
+      if (n_dead > 1000L && n_dead > nrow(pop) - n_dead) {
+        dead <- !pop$alive
+        arch_pop[[length(arch_pop) + 1L]] <- pop[dead, , drop = FALSE]
+        arch_gt[[length(arch_gt) + 1L]]   <- resist_gt[dead, , drop = FALSE]
+        pop       <- pop[!dead, , drop = FALSE]
+        resist_gt <- resist_gt[!dead, , drop = FALSE]
+        rownames(pop) <- NULL
+      }
+    }
   }
+
+  if (length(arch_pop)) {
+    pop       <- do.call(rbind, c(arch_pop, list(pop)))
+    resist_gt <- do.call(rbind, c(arch_gt, list(resist_gt)))
+    ord       <- order(pop$id)
+    pop       <- pop[ord, , drop = FALSE]
+    resist_gt <- resist_gt[ord, , drop = FALSE]
+  }
+  rownames(pop) <- NULL
 
   census <- do.call(rbind, census_list)
   list(individuals = pop, resist_gt = resist_gt, census = census)

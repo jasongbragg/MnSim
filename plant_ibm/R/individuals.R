@@ -66,10 +66,11 @@ create_population <- function(params, year0 = 0L) {
 }
 
 #' Build the data-frame rows for n_rec new recruits.
-make_recruit_rows <- function(n_rec, t, mother_idx, father_idx, pop, params) {
+make_recruit_rows <- function(n_rec, t, mother_idx, father_idx, pop, params,
+                              start_id = NULL) {
   if (n_rec == 0) return(NULL)
 
-  start_id <- max(pop$id) + 1L
+  if (is.null(start_id)) start_id <- max(pop$id) + 1L
   age_first_flower <- pmax(round(rnorm(n_rec, params$age_first_flower_mean,
                                            params$age_first_flower_sd)), 1L)
 

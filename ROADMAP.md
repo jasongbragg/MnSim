@@ -41,10 +41,11 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
       survivors (no code change); calendar birth years + `founder` flag.
       Pegg median 0.492 after the changes (max_effect unchanged). Nov 2026.
       Notes: C5, E1, E2, E2b.
-- [ ] **Speed.** Dead plants are never removed from the population table,
-      so runs slow as they go (~45 s per A4 run). Archive dead rows (keeping
-      what `compute_gen_time()` and the Pegg statistics need). Needed before
-      Phases 2-3, which take thousands of runs.
+- [x] **Speed.** Dead plants archived once they outnumber the living, and
+      recruits appended column-wise instead of with rbind.data.frame:
+      ~6.8x faster (610-yr run 53 s -> 8 s; full A4 run ~8-9 s), with
+      identical output to the previous code (tested). Also fixed parent
+      sampling when only one plant flowers. Nov 2026.
 
 ## Phase 1: data inputs
 

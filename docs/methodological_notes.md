@@ -227,6 +227,8 @@ R_max and K_half, for which there are no data either).
 and are excluded as mothers from the generation-time estimate (A3). The
 census counts all deaths, with fire deaths also given separately
 (deaths_fire); previously fire deaths were missing from the yearly total.
+Dead plants are archived during a run for speed and restored at the end;
+this changes no result (verified identical, Nov 2026).
 **E3.** Resistance: multilocus, Mendelian inheritance; currently starting
 frequency 0 (fully susceptible) everywhere, pending the range-wide resistance
 data (ROADMAP Phase 1c). [open]

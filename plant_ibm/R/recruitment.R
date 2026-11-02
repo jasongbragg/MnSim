@@ -1,5 +1,18 @@
 # R/recruitment.R
 
+#' Append rows to a data frame column by column. Same result as
+#' rbind(pop, new) for these all-atomic columns, without rbind.data.frame's
+#' row-name bookkeeping (which dominated run time). Falls back to rbind if
+#' the columns differ.
+append_rows <- function(pop, new) {
+  if (!setequal(names(pop), names(new))) return(rbind(pop, new))
+  out <- lapply(names(pop), function(nm) c(pop[[nm]], new[[nm]]))
+  names(out) <- names(pop)
+  attr(out, "row.names") <- .set_row_names(nrow(pop) + nrow(new))
+  class(out) <- "data.frame"
+  out
+}
+
 #' Beverton-Holt recruitment: saturates smoothly, never explodes.
 bevholt <- function(N, params) {
   (params$R_max * N) / (params$K_half + N)
@@ -11,12 +24,14 @@ ricker <- function(N, params) {
 }
 
 #' Sample n_rec mother/father ROW INDEX pairs from the flowering pool.
+#' Indexes flower_idx explicitly (sample.int), so a pool of one plant is not
+#' misread as sample(1:k); otherwise identical draws to sample(flower_idx, ...).
 sample_parents <- function(pop, n_rec, params) {
   flower_idx <- which(pop$alive & pop$flowering)
   n_flower   <- length(flower_idx)
   if (n_flower == 0) return(NULL)
 
-  mother_idx <- sample(flower_idx, n_rec, replace = TRUE)
+  mother_idx <- flower_idx[sample.int(n_flower, n_rec, replace = TRUE)]
 
   if (n_flower == 1) {
     return(list(mother_idx = mother_idx, father_idx = mother_idx))
@@ -30,10 +45,10 @@ sample_parents <- function(pop, n_rec, params) {
 
   need <- which(!is_self)
   if (length(need) > 0) {
-    candidate <- sample(flower_idx, length(need), replace = TRUE)
+    candidate <- flower_idx[sample.int(n_flower, length(need), replace = TRUE)]
     clash <- candidate == mother_idx[need]
     while (any(clash)) {
-      candidate[clash] <- sample(flower_idx, sum(clash), replace = TRUE)
+      candidate[clash] <- flower_idx[sample.int(n_flower, sum(clash), replace = TRUE)]
       clash <- candidate == mother_idx[need]
     }
     father_idx[need] <- candidate
@@ -75,8 +90,10 @@ shade_suppression <- function(N_canopy, params) {
 #' the sum of each adult's (1 - rust_fecundity_suppression) weight,
 #' so a fully resistant adult contributes 1.0 regardless of annual_env_t.
 #'
+#' next_id: id for the first recruit (run_simulation keeps a running
+#' counter because dead rows may have been archived); NULL = max(pop$id) + 1.
 #' Returns list(pop, resist_gt, n_rec).
-recruit <- function(pop, resist_gt, t, params, annual_env_t = 0) {
+recruit <- function(pop, resist_gt, t, params, annual_env_t = 0, next_id = NULL) {
   flower_mask <- pop$alive & pop$flowering
   n_flowering <- sum(flower_mask)
   N_canopy    <- canopy_density(pop)
@@ -113,10 +130,11 @@ recruit <- function(pop, resist_gt, t, params, annual_env_t = 0) {
   rec_score <- resist_score_from_gt(rec_gt, params)
 
   new_rows              <- make_recruit_rows(n_rec, t, parents$mother_idx,
-                                              parents$father_idx, pop, params)
+                                              parents$father_idx, pop, params,
+                                              start_id = next_id)
   new_rows$resist_score <- rec_score
 
-  pop       <- rbind(pop, new_rows)
+  pop       <- append_rows(pop, new_rows)
   resist_gt <- rbind(resist_gt, rec_gt)
 
   list(pop = pop, resist_gt = resist_gt, n_rec = n_rec)

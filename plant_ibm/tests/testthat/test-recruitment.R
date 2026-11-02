@@ -268,3 +268,14 @@ test_that("recruit(): shading strictly suppresses the recruit count relative to 
 
   expect_lt(mean(counts_on), mean(counts_off))
 })
+
+test_that("sample_parents with a single flowering plant always returns that plant", {
+  p   <- make_toy_params()
+  pop <- make_toy_pop(50, p)
+  pop$flowering <- FALSE; pop$alive <- TRUE
+  pop$flowering[37] <- TRUE                 # one flowering plant, at row 37
+  set.seed(1)
+  par <- sample_parents(pop, 200, p)
+  expect_true(all(par$mother_idx == 37L))
+  expect_true(all(par$father_idx == 37L))
+})

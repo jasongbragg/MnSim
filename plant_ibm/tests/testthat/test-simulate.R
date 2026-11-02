@@ -74,3 +74,29 @@ test_that("init_state correctly resumes a run from a saved population and genoty
   expect_equal(res2$census$year, 6:10)
   expect_true(nrow(res2$individuals) >= nrow(res1$individuals))
 })
+
+# --- Archiving dead plants (speed) must not change results ------------------
+
+test_that("archiving dead plants gives identical census, individuals and genotypes", {
+  p <- make_toy_params()
+  p$N0 <- 600L; p$n_years <- 120L; p$seed <- 21L
+  p$fire_years <- c(30L, 70L); p$fire_kill_prob <- 0.4; p$fire_p_fimp <- 0
+  a <- run_simulation(p, year0 = 1L)
+  p$archive_dead <- FALSE
+  b <- run_simulation(p, year0 = 1L)
+  rownames(b$individuals) <- NULL
+  expect_gt(sum(!a$individuals$alive), 1000L)        # archiving actually happened
+  expect_identical(a$census, b$census)
+  expect_identical(a$individuals, b$individuals)
+  expect_identical(unname(a$resist_gt), unname(b$resist_gt))
+  expect_false(anyDuplicated(a$individuals$id) > 0)
+  expect_identical(a$individuals$id, sort(a$individuals$id))
+})
+
+test_that("append_rows matches rbind for population rows", {
+  p <- make_toy_params()
+  pop <- make_toy_pop(30, p)
+  new <- pop[1:5, ]; new$id <- 101:105; rownames(new) <- NULL
+  x <- append_rows(pop, new); y <- rbind(pop, new); rownames(y) <- NULL
+  expect_identical(x, y)
+})
