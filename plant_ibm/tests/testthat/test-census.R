@@ -109,3 +109,17 @@ test_that("pct_decline returns NA for a missing year or a zero baseline", {
   census0 <- data.frame(year = c(2010, 2020), N_IUCN = c(0, 0))
   expect_true(is.na(pct_decline(census0, 2010, 2020)))
 })
+
+
+test_that("census counts fire deaths in deaths and separately in deaths_fire", {
+  p <- make_toy_params(fire_kill_prob = 0.5, fire_p_fimp = 0)
+  p$N0 <- 400L; p$n_years <- 6L; p$fire_years <- 3L; p$fire_prob_annual <- 0
+  res <- run_simulation(p, year0 = 1L)
+  cen <- res$census; pop <- res$individuals
+  fire_dead <- sum(pop$death_cause %in% "fire")
+  expect_gt(fire_dead, 0)
+  expect_equal(cen$deaths_fire[cen$year == 3], fire_dead)
+  expect_equal(sum(cen$deaths_fire), fire_dead)
+  expect_equal(sum(cen$deaths), sum(!pop$alive))          # every death is counted once
+  expect_true(all(cen$deaths_fire[cen$year != 3] == 0))
+})

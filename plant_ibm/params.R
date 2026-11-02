@@ -122,8 +122,12 @@ get_default_params <- function() {
         half_sat    = 0.2,
         hill         = 1
       ),
+      # Extra resprout delay through the disease triangle (rust_resprout_delay):
+        # mean extra years = max_effect * (1 - resistance) * microsite * mean
+        # pressure. 1.79 = 1 / (0.8 * 0.70) keeps the previous mean of one extra
+        # year for a fully susceptible plant at the anchor site (Nov 2026).
       delay = list(
-        max_effect = 1,
+        max_effect = 1.79,
         form        = "linear",
         half_sat    = 1,
         hill         = 1

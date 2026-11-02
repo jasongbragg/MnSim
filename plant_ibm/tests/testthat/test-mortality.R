@@ -256,12 +256,22 @@ test_that("nominate_deaths returns only alive row indices", {
   expect_true(all(pop$alive[dead]))
 })
 
-test_that("nominate_deaths: hazard = 1 exactly kills everyone (deterministic)", {
+test_that("nominate_deaths: an overwhelming hazard kills everyone", {
   set.seed(42L)
-  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1.0)
-  pop  <- make_toy_pop(1000, p)
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 0.01)   # P(death) = 1 - e^-100
+  pop  <- make_toy_pop(1000, make_toy_params())
+  pop$age <- 5L                       # plants are aged before mortality in a run
   dead <- nominate_deaths(pop, t = 1L, p)
   expect_equal(length(dead), sum(pop$alive))
+})
+
+test_that("nominate_deaths: a hazard of 1 per year kills 1 - 1/e, not everyone", {
+  set.seed(42L)
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 1.0)
+  pop  <- make_toy_pop(5000, make_toy_params())
+  pop$age <- 50L                      # adults: no juvenile or senescence terms in toy params
+  dead <- nominate_deaths(pop, t = 1L, p)
+  expect_equal(length(dead) / sum(pop$alive), 1 - exp(-1), tolerance = 0.02)
 })
 
 test_that("nominate_deaths: zero hazard kills nobody", {
@@ -416,4 +426,42 @@ test_that("nominate_deaths(): younger juveniles face higher mortality under matu
                                        half_sat = 500, hill = 1)
   dead <- nominate_deaths(pop, t = 1L, p)
   expect_gt(mean(1:n_each %in% dead), mean((n_each+1):(2*n_each) %in% dead))
+})
+
+
+# --- weibull_death_prob: annual probability from the cumulative hazard -----
+
+test_that("weibull_death_prob is 1 - exp(-1/lambda) at every age when k = 1", {
+  p <- make_toy_params(weibull_k = 1, weibull_lambda = 60)
+  expect_equal(weibull_death_prob(c(1, 5, 80), p), rep(1 - exp(-1 / 60), 3))
+  expect_lt(weibull_death_prob(5, p), weibull_hazard(5, p))
+})
+
+test_that("weibull_death_prob integrates the hazard over the year (k > 1)", {
+  p <- make_toy_params(weibull_k = 2, weibull_lambda = 30)
+  a <- 10
+  expect_equal(weibull_death_prob(a, p),
+               1 - exp(-((a / 30)^2 - ((a - 1) / 30)^2)))
+  expect_true(all(diff(weibull_death_prob(1:80, p)) > 0))
+  expect_true(all(weibull_death_prob(1:200, p) < 1))
+})
+
+test_that("weibull_death_prob stays finite in the first year when k < 1", {
+  p <- make_toy_params(weibull_k = 0.5, weibull_lambda = 30)
+  expect_true(is.finite(weibull_death_prob(1, p)))
+  expect_gt(weibull_death_prob(1, p), weibull_death_prob(10, p))
+})
+
+# --- rust_resprout_delay: through the disease triangle ---------------------
+
+test_that("rust_resprout_delay is zero before rust and scales with each vertex", {
+  p <- make_toy_params(rust_start_year = 10L, rust_pressure = 1)
+  p$rust_dose_response$delay <- list(max_effect = 2, form = "linear", half_sat = 1, hill = 1)
+  p$annual_env_alpha <- 7; p$annual_env_beta <- 3            # mean pressure 0.7
+  pop <- make_toy_pop(4, p)
+  pop$resist_score       <- c(0, 0.5, 0, 0)
+  pop$env_susceptibility <- c(1, 1, 0.5, 0)
+  expect_equal(rust_resprout_delay(pop, 1:4, p, t = 9L), rep(0, 4))
+  expect_equal(rust_resprout_delay(pop, 1:4, p, t = 10L),
+               2 * c(1, 0.5, 0.5, 0) * 0.7)
 })

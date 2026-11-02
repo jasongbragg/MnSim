@@ -21,7 +21,7 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
   set.seed(params$seed)
 
   if (is.null(init_state)) {
-    init      <- create_population(params)
+    init      <- create_population(params, year0 = year0)
     pop       <- init$pop
     resist_gt <- init$resist_gt
   } else {
@@ -78,8 +78,11 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     # A fire in the cell may miss the stand ("stand" extent mode); the
     # census records whether it reached the simulated population.
     fire_reached <- FALSE
+    n_dead_fire  <- 0L
     if (fire_this_year) {
+      n_before <- sum(pop$alive)
       pop <- apply_fire(pop, params, t)
+      n_dead_fire <- n_before - sum(pop$alive)
       fire_reached <- !identical(attr(pop, "fire_reached"), FALSE)
       attr(pop, "fire_reached") <- NULL
     }
@@ -121,9 +124,10 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
 
     # 7. census
     census_list[[i]] <- census_year(pop, resist_gt, t, rec$n_rec,
-                                     length(dead_idx), params,
+                                     length(dead_idx) + n_dead_fire, params,
                                      fire_this_year = fire_reached,
-                                     fire_in_cell   = fire_this_year)
+                                     fire_in_cell   = fire_this_year,
+                                     n_dead_fire    = n_dead_fire)
 
     if (verbose && i %% 10 == 0) {
       cat(sprintf("year %d: N=%d  N_IUCN=%d\n",

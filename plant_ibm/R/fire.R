@@ -64,7 +64,6 @@ apply_fire <- function(pop, params, t) {
   n_alive   <- length(alive_idx)
   if (n_alive == 0) return(pop)
 
-  rust <- rust_modifiers(params, t)
 
   mode <- if (is.null(params$fire_extent_mode)) "plant" else params$fire_extent_mode
 
@@ -119,8 +118,7 @@ apply_fire <- function(pop, params, t) {
   # Survivors → resprout
   n_surv <- length(surv_idx)
   if (n_surv > 0) {
-    resist_surv <- pop$resist_score[surv_idx]
-    rust_delay  <- (1 - resist_surv) * rust$delay_extra
+    rust_delay  <- rust_resprout_delay(pop, surv_idx, params, t)
 
     delay <- rpois(n_surv, params$resprout_yrs_base) + rpois(n_surv, rust_delay)
     delay <- pmax(delay, 1L)

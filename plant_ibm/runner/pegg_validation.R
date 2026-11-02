@@ -120,10 +120,7 @@ compute_pegg_stats <- function(pop, census, year_fire, year_survey, year_spinup)
     stop("pop has no death_cause column; rerun with the current model code.")
   last_year <- year_survey - 1L
 
-  # Calendar birth year (founders have birth_year = -(age at spinup))
-  cal_birth <- ifelse(pop$birth_year < year_spinup,
-                       year_spinup + pop$birth_year,
-                       pop$birth_year)
+  cal_birth <- calendar_birth_year(pop, year_spinup)
 
   # Pre-fire cohort: alive at the end of year_fire - 1
   prefire_year  <- year_fire - 1L

@@ -35,10 +35,12 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
       `runner/range_ensemble.R` (per-run RNG streams, plan table, category
       shares by region, drivers plot); runscript
       `runscripts/range_ensemble.run.code`. Nov 2026.
-- [ ] **Smaller model checks:** yearly census deaths exclude fire deaths;
-      Weibull hazard used as a probability; rust delay to resprouting ignores
-      the disease triangle; no first-year seedling mortality; inconsistent
-      `birth_year` encoding for founders.
+- [x] **Smaller model checks:** census counts fire deaths (`deaths_fire`);
+      Weibull hazard converted to an annual probability; resprout delay
+      through the disease triangle; recruits documented as first-year
+      survivors (no code change); calendar birth years + `founder` flag.
+      Pegg median 0.492 after the changes (max_effect unchanged). Nov 2026.
+      Notes: C5, E1, E2, E2b.
 - [ ] **Speed.** Dead plants are never removed from the population table,
       so runs slow as they go (~45 s per A4 run). Archive dead rows (keeping
       what `compute_gen_time()` and the Pegg statistics need). Needed before

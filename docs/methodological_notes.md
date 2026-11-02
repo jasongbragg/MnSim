@@ -134,8 +134,13 @@ Rust raises death risk, most for seedlings and young plants (declining with
 age), with an extra component for resprouting plants (`max_effect`, C/V4);
 it lengthens the time to recover from resprouting. Effects on flowering and
 seed set are implemented but switched off (no data).
-[open] The resprout delay uses rust pressure directly, not the disease
-triangle.
+Resprout delay (Nov 2026): the extra years a burnt plant spends resprouting
+(Poisson mean) = 1.79 x (1 - resistance) x microsite x the site's MEAN annual
+pressure, i.e. through the disease triangle, using the site mean rather than
+the fire year's draw because the delay spans several years. 1.79 = 1/(0.8 x
+0.70) keeps the previous mean of one extra year for a fully susceptible plant
+at the anchor site; the delay now also varies between plants (microsite) and
+between cells (rust pressure). [assumption] Magnitude not constrained by data.
 
 ## D. Fire
 
@@ -205,9 +210,23 @@ Phase 1a).
 **E1.** Background mortality is a constant annual hazard (Weibull k = 1,
 scale 60 yr), plus a senescence term rising with age and a juvenile
 mortality term that increases with canopy density. [assumption]
+The Weibull hazard is converted to an annual probability by integrating it
+over the plant's year of age: p = 1 - exp(-(H(a) - H(a - 1))),
+H(x) = (x / scale)^k (Nov 2026; previously the hazard itself was used as the
+probability, a small overestimate: 0.0167 vs 0.0165 per year at scale 60).
 **E2.** Recruitment: Beverton-Holt seedling production from flowering plants
 (R_max 1000, K_half 4000), parents sampled from flowering plants; selfing rate
 0.10; mean age at first flowering 5 yr. [assumption]
+Recruits enter at age 0 after the year's mortality step and first face
+mortality at age 1, so there is no explicit first-year seedling mortality:
+recruitment numbers are interpreted as seedlings that survive their first
+year (Nov 2026, decided; adding age-0 mortality would require recalibrating
+R_max and K_half, for which there are no data either).
+**E2b.** Bookkeeping (Nov 2026): every plant's birth_year is a calendar year
+(age = year - birth_year at year end); founding plants carry founder = TRUE
+and are excluded as mothers from the generation-time estimate (A3). The
+census counts all deaths, with fire deaths also given separately
+(deaths_fire); previously fire deaths were missing from the yearly total.
 **E3.** Resistance: multilocus, Mendelian inheritance; currently starting
 frequency 0 (fully susceptible) everywhere, pending the range-wide resistance
 data (ROADMAP Phase 1c). [open]
@@ -259,3 +278,4 @@ flower) in the model. Not used for fitting.
 | Nov 2026 | C2 | Single rust anchor; SDM normalised at the anchor cell |
 | Nov 2026 | V4 | `max_effect` 0.53; ensemble range 0.32-0.78 |
 | Nov 2026 | D3 | Fire: per-fire size; stand reached with P = size; cover 0.9; kill ceiling linear in size |
+| Nov 2026 | C5, E1, E2 | Resprout delay via the disease triangle; Weibull hazard -> annual probability; recruits = first-year survivors |

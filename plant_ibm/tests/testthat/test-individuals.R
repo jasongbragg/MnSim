@@ -57,3 +57,24 @@ test_that("make_recruit_rows returns NULL for zero recruits", {
   pop <- make_toy_pop(5, p)
   expect_null(make_recruit_rows(0L, t = 1L, integer(0), integer(0), pop, p))
 })
+
+
+test_that("founders get calendar birth years and a founder flag; recruits do not", {
+  p <- make_toy_params(); p$N0 <- 200L; p$n_years <- 15L
+  res <- run_simulation(p, year0 = 1900L)
+  pop <- res$individuals
+  f <- pop$founder
+  expect_true(any(f) && any(!f))
+  expect_true(all(pop$birth_year[f] < 1900L))
+  expect_true(all(pop$birth_year[!f] >= 1900L & pop$birth_year[!f] <= 1914L))
+  # age = year - birth_year at the end of the last year, founders and recruits alike
+  al <- pop$alive
+  expect_true(all(pop$age[al] == 1914L - pop$birth_year[al]))
+  expect_identical(calendar_birth_year(pop, 1900L), pop$birth_year)
+})
+
+test_that("calendar_birth_year and is_founder still read the legacy encoding", {
+  old <- data.frame(birth_year = c(-10, 150), alive = TRUE)   # no founder column
+  expect_equal(calendar_birth_year(old, 100), c(90, 150))
+  expect_equal(is_founder(old, 100), c(TRUE, FALSE))
+})

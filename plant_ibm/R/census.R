@@ -16,7 +16,8 @@
 
 #' Build the census row for year t.
 census_year <- function(pop, resist_gt, t, n_rec, n_dead, params,
-                         fire_this_year = FALSE, fire_in_cell = fire_this_year) {
+                         fire_this_year = FALSE, fire_in_cell = fire_this_year,
+                         n_dead_fire = 0L) {
   alive   <- pop$alive
   N_alive <- sum(alive)
 
@@ -31,7 +32,8 @@ census_year <- function(pop, resist_gt, t, n_rec, n_dead, params,
     N_juvenile        = sum(alive & pop$age < pop$age_first_flower & !pop$resprout),
     N_resprout        = sum(alive & pop$resprout),
     births            = n_rec,
-    deaths            = n_dead,
+    deaths            = n_dead,        # all deaths this year (fire + other causes)
+    deaths_fire       = n_dead_fire,   # of which killed by fire
     mean_resist_score = if (N_alive > 0) mean(pop$resist_score[alive]) else NA_real_,
     fire_event        = fire_this_year,   # fire reached the simulated stand
     fire_in_cell      = fire_in_cell,     # fire occurred in the cell

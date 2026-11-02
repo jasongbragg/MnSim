@@ -39,7 +39,7 @@
 
 test_that("L1 geometric: IBM asymptotic lambda matches closed form s*(1+F)", {
   p <- make_geometric_params()
-  s <- 1 - weibull_hazard(1, p)        # constant survival (k=1)
+  s <- 1 - weibull_death_prob(1, p)        # constant survival (k=1)
   F <- p$R_max / p$K_half               # per-adult fecundity, linear BH limit
   lambda_theory <- s * (1 + F)
 
@@ -66,7 +66,7 @@ test_that("L1 geometric: Leslie matrix eigenvalue itself matches the closed form
   # Confirms build_leslie()'s degenerate single-class case is correct
   # before trusting it as a benchmark for the IBM.
   p             <- make_geometric_params()
-  s             <- 1 - weibull_hazard(1, p)
+  s             <- 1 - weibull_death_prob(1, p)
   F             <- p$R_max / p$K_half
   lambda_theory <- s * (1 + F)
   lambda_matrix <- dominant_lambda(build_leslie(p, max_age = 80L))
@@ -156,7 +156,7 @@ test_that("L3 Lefkovitch: zero fire_kill_prob makes fire-year survival equal no-
   # which the M[1,] / M[2,] zero rows already capture).
   p   <- make_lefkovitch_params()
   p$fire_kill_prob <- 0
-  s   <- max(1 - weibull_hazard(2, p), 0)
+  s   <- max(1 - weibull_death_prob(2, p), 0)
   M_f <- build_lefkovitch_fire(p)
   expect_equal(unique(M_f[3L, ]), s, tolerance = 1e-10)
 })
@@ -178,7 +178,7 @@ test_that("build_leslie: subdiagonal entries equal Weibull survival probabilitie
   p <- make_leslie_params()
   L <- build_leslie(p, max_age = 30L)
   for (j in 0:29) {
-    expected_s <- max(1 - weibull_hazard(j + 1, p), 0)
+    expected_s <- max(1 - weibull_death_prob(j + 1, p), 0)
     expect_equal(L[j + 2L, j + 1L], expected_s, tolerance = 1e-10,
       label = paste("survival age", j, "to", j + 1))
   }

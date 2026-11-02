@@ -84,18 +84,13 @@ IUCN_CRITERION <- "A4"
 # compute_gen_time()
 # ============================================================================
 # Mean maternal age at reproduction (IUCN generation length definition)
-# over a specified window of births. Handles the birth_year encoding:
-# founders store birth_year = -age (relative to year_spinup); recruits
-# store birth_year = t (calendar year). Both are adjusted to calendar
-# years using year_spinup before computing maternal age.
+# over a specified window of births. Birth years are calendar years with a
+# founder flag (calendar_birth_year() / is_founder() also handle older saved
+# populations, where founders stored -age).
 compute_gen_time <- function(pop, window_start, window_end, year_spinup) {
 
-  # Adjust birth_year to calendar year:
-  # Founders store birth_year = -age (relative to simulation start, so negative)
-  # Recruits store birth_year = calendar year (>= year_spinup)
-  cal_birth <- ifelse(pop$birth_year < year_spinup,
-                       year_spinup + pop$birth_year,
-                       pop$birth_year)
+  cal_birth <- calendar_birth_year(pop, year_spinup)
+  founder   <- is_founder(pop, year_spinup)
 
   # Offspring born in window with known mother
   in_window <- !is.na(pop$mother_id) &
@@ -132,8 +127,8 @@ compute_gen_time <- function(pop, window_start, window_end, year_spinup) {
   # year_spinup - age and does not represent an actual birth event in the
   # model. Their apparent maternal age therefore depends on the arbitrary
   # initial age assignment rather than real simulated dynamics.
-  # Recruits (cal_birth >= year_spinup) have genuine birth events.
-  born_in_sim <- !is.na(mother_cal_birth) & mother_cal_birth >= year_spinup
+  # Recruits (founder = FALSE) have genuine birth events.
+  born_in_sim <- !is.na(mother_idx) & !founder[mother_idx]
   n_excl_founder <- sum(dead_mother & !born_in_sim, na.rm = TRUE)
   if (n_excl_founder > 0L)
     message(sprintf(

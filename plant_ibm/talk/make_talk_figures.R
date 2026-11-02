@@ -101,8 +101,7 @@ pegg_trajectory <- function(i) {
   if (file.exists(out)) return(readRDS(out))
 
   pop <- run_simulation(p, year0 = PEGG_SPINUP)$individuals
-  cal_birth <- ifelse(pop$birth_year < PEGG_SPINUP,
-                      PEGG_SPINUP + pop$birth_year, pop$birth_year)
+  cal_birth <- calendar_birth_year(pop, PEGG_SPINUP)
   prefire <- cal_birth <= PEGG_FIRE - 1L &
              (pop$alive | (!is.na(pop$death_year) & pop$death_year >= PEGG_FIRE))
   resprouters <- prefire & !(pop$death_cause %in% "fire")

@@ -52,7 +52,7 @@ build_leslie <- function(params, max_age = 100) {
 
   for (j in 0:max_age) {
     # survival from age j: individual ages to j+1, faces hazard at j+1
-    s_j <- max(1 - weibull_hazard(j + 1, params), 0)
+    s_j <- max(1 - weibull_death_prob(j + 1, params), 0)
 
     # fecundity: age-j individual ages to j+1. If j+1 >= AFR it flowers.
     if ((j + 1L) >= AFR) {
@@ -82,7 +82,7 @@ build_leslie <- function(params, max_age = 100) {
 #' therefore equal, and the system reduces to a 2-class (N, R) system with
 #' dominant eigenvalue s*(1+F) when fire is absent.
 build_lefkovitch_nofire <- function(params) {
-  s   <- max(1 - weibull_hazard(2, params), 0)
+  s   <- max(1 - weibull_death_prob(2, params), 0)
   F   <- params$R_max / params$K_half
   q   <- params$resprout_prob_recovery
   AFR <- as.integer(round(params$age_first_flower_mean))
@@ -102,7 +102,7 @@ build_lefkovitch_nofire <- function(params) {
 #' Survivors also face normal Weibull mortality (step 5), so the combined
 #' per-individual survival rate in a fire year is (1 - fire_kill_prob) * s.
 build_lefkovitch_fire <- function(params) {
-  s   <- max(1 - weibull_hazard(2, params), 0)
+  s   <- max(1 - weibull_death_prob(2, params), 0)
   fkp <- params$fire_kill_prob
   matrix(c(
     0,           0,           0,

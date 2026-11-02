@@ -22,6 +22,19 @@ weibull_hazard <- function(age, params) {
   (k / lambda) * (age_safe / lambda) ^ (k - 1)
 }
 
+#' Annual probability of death from the Weibull background hazard, for a
+#' plant in its age-th year (age already incremented this step): the hazard
+#' integrated over [age - 1, age],
+#'   p = 1 - exp(-(H(age) - H(age - 1))),  H(x) = (x / lambda)^k.
+#' This is what the model applies each year; weibull_hazard() above is the
+#' instantaneous rate, kept for diagnostics. For k = 1, p = 1 - exp(-1/lambda)
+#' (e.g. 0.01653 for lambda = 60, vs the hazard 0.01667).
+weibull_death_prob <- function(age, params) {
+  k <- params$weibull_k; lambda <- params$weibull_lambda
+  H <- function(x) (pmax(x, 0) / lambda) ^ k
+  1 - exp(-(H(age) - H(age - 1)))
+}
+
 #' Declining Hill-function weight: 1 at x = 0, 0.5 at x = half_sat,
 #' approaching 0 as x → ∞. Used for the juvenile-decline age-decay and
 #' the fire kill/resprout split. Large hill values produce a sharper,
@@ -58,12 +71,23 @@ dose_response <- function(pressure, cfg) {
 #' Returns delay_extra = 0 before rust_start_year (resistance locus is
 #' then selectively neutral -- freely drifting).
 #'
-#' Note: the age-decay and resprout-bonus rust mortality components are
-#' now computed per-individual directly in nominate_deaths() via the
-#' disease-triangle effective_susceptibility, NOT via this function.
-#' rust_modifiers() is kept only for the resprout delay used in
-#' apply_fire() and by the diagnostic functions in
-#' diag_rust_pressure.R.
+#' Note: the model itself no longer uses this function. Rust mortality is
+#' computed in nominate_deaths() and the resprout delay in
+#' rust_resprout_delay(), both through the disease triangle. Kept for the
+#' diagnostic functions in diag_rust_pressure.R.
+#' Extra resprout delay (years, Poisson mean) that rust adds for each
+#' surviving plant, through the disease triangle:
+#'   rust_pressure * (1 - resistance) * microsite * mean annual pressure
+#' The site's MEAN annual pathogen pressure (alpha / (alpha + beta)) is used,
+#' not the fire year's draw, because the delay spans several years. Zero
+#' before rust arrives.
+rust_resprout_delay <- function(pop, idx, params, t) {
+  if (length(idx) == 0L || t < params$rust_start_year) return(numeric(length(idx)))
+  mu  <- params$annual_env_alpha / (params$annual_env_alpha + params$annual_env_beta)
+  eff <- (1 - pop$resist_score[idx]) * pop$env_susceptibility[idx] * mu
+  dose_response(params$rust_pressure * eff, params$rust_dose_response$delay)
+}
+
 rust_modifiers <- function(params, t) {
   if (t < params$rust_start_year) {
     return(list(delay_extra = 0))
@@ -150,7 +174,7 @@ nominate_deaths <- function(pop, t, params, annual_env_t = 0) {
   # --- Background Weibull hazard ------------------------------------------
   # With weibull_k = 1 (recommended pairing for senescence_hazard below),
   # this is a flat constant background, not a senescence term.
-  p_age <- weibull_hazard(age_i, params)
+  p_age <- weibull_death_prob(age_i, params)
 
   # --- Senescence hazard: rising Hill function of age ----------------------
   # Off by default (max_effect = 0). See senescence_hazard() docstring --

@@ -50,6 +50,15 @@
 # compute_gen_time tests
 # ============================================================================
 
+test_that("compute_gen_time gives the same T_g with the calendar encoding + founder flag", {
+  pop <- .make_test_pop()
+  pop$birth_year[1] <- 90                     # founder, now stored as a calendar year
+  pop$founder <- c(TRUE, rep(FALSE, 8))
+  gt <- compute_gen_time(pop, window_start = 200, window_end = 300, year_spinup = 100)
+  expect_equal(gt$T_g, 120, tolerance = 1e-10)
+  expect_equal(gt$n_offspring, 2L)
+})
+
 test_that("compute_gen_time returns expected T_g = 120 after both filters", {
   pop <- .make_test_pop()
   gt  <- compute_gen_time(pop, window_start = 200, window_end = 300, year_spinup = 100)
