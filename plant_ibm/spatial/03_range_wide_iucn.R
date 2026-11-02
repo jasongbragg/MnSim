@@ -46,7 +46,6 @@
 # ============================================================================
 # Configuration
 # ============================================================================
-SITE_PARAMS_PATH <- "spatial/data/mn_site_params.csv"
 
 # IUCN simulation phasing (calendar years)
 YEAR_SPINUP          <- 1600L   # 200-yr spin-up
@@ -63,32 +62,9 @@ ASSESS <- iucn_assess_spec(
   year_gentime_end = YEAR_GENTIME_END, year_rust = YEAR_RUST,
   year_assess = YEAR_ASSESS, year_end = YEAR_END, avg_years = AVG_YEARS)
 
-# ============================================================================
-# build_site_params(): override base params for one site
-# ============================================================================
-build_site_params <- function(base_params, site_row) {
-  p <- base_params
-
-  # Site-specific fire regime
-  p$fire_prob_annual <- site_row$fire_prob_annual
-  p$fire_p_fimp      <- site_row$fire_p_fimp
-  p$fire_years       <- integer(0)   # must use fire_prob_annual for long runs
-
-  # Site-specific rust pressure (from SDM, anchored at Yarringully)
-  p$annual_env_alpha <- site_row$annual_env_alpha
-  p$annual_env_beta  <- site_row$annual_env_beta
-  # microclim_alpha/beta held constant (within-site individual variation,
-  # assumed similar across all M. nodosa sites)
-
-  # --- RESISTANCE HOOK -------------------------------------------------------
-  # When site-level genetic resistance data are available, add a
-  # resist_freq0 column to mn_site_params.csv and uncomment:
-  # p$resist_freq0 <- c(site_row$resist_freq0)
-  # For now: resist_freq0 = c(0) from params.R (fully susceptible everywhere)
-  # ---------------------------------------------------------------------------
-
-  p
-}
+# build_site_params() lives in runner/site_params.R (shared with the Pegg
+# validation and the talk figures).
+source("runner/site_params.R")
 
 # ============================================================================
 # run_range_wide_iucn()

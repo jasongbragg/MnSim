@@ -1,12 +1,9 @@
-# parlib/diags/demography/params.R
+# params.R
 #
-# Base parameterisation for the demography diagnostic (diag_demography.R).
-# Starting point: the working M. nodosa calibration from plant_ibm/params.R.
-#
-# The diagnostic runs three phases automatically (no need to edit here):
-#   1. 500-year fire-free spin-up (rust off regardless of rust_start_year)
-#   2. Post-fire rust-ON scenario  (annual_env_t ≈ 1.0, max constant pressure)
-#   3. Post-fire rust-OFF scenario (rust_start_year forced to Inf)
+# Working M. nodosa calibration: the default parameter set for single-site
+# runs, the Pegg et al. validation and the base for range-wide runs (which
+# override fire and rust pressure per grid cell; see runner/site_params.R).
+# Assumptions behind these values: docs/methodological_notes.md.
 #
 # Parameters to consider adjusting here:
 #   rust_dose_response  -- determines how hard rust hits each age class
@@ -14,6 +11,24 @@
 #                          shows absolute worst-case rust impact)
 #   fire_p_fimp / fire_kill_scalar / fire_kill_half_sat -- fire severity
 #   resprout_yrs_base   -- recovery window length
+
+# ---- Rust-pressure anchor ---------------------------------------------------
+# The single place where the absolute level of rust pressure is set.
+# Yarringully NR (Pegg et al. 2025 site): field incidence gives a mean annual
+# pathogen pressure of 0.70. Range-wide, each grid cell's mean pressure is
+#   mu * (SDM_cell / SDM_anchor_cell), capped at 'cap'
+# where the anchor cell is the occupied 0.1-degree cell nearest (lon, lat),
+# so the anchor cell always gets exactly 'mu' whatever SDM is used
+# (spatial/rust_pressure.R). 'conc' = alpha + beta of the annual Beta draw
+# (year-to-year variability; not yet constrained by data).
+RUST_ANCHOR <- list(
+  site = "Yarringully NR",
+  lon  = 153.21967,
+  lat  = -29.09357,
+  mu   = 0.70,
+  conc = 20,
+  cap  = 0.95
+)
 
 get_default_params <- function() {
   list(
@@ -82,12 +97,10 @@ get_default_params <- function() {
     rust_pressure      = 1,
     microclim_alpha    = 20,
     microclim_beta     = 5,
-    annual_env_alpha   = 40,   # overridden to ~1e4 in rust-ON scenario
-    annual_env_beta    = 8,   # overridden to 1   in rust-ON scenario
-#    microclim_alpha    = 1,
-#    microclim_beta     = 1,
-#    annual_env_alpha   = 1,   # overridden to ~1e4 in rust-ON scenario
-#    annual_env_beta    = 1,   # overridden to 1   in rust-ON scenario
+    # Annual pathogen draw at the anchor site: Beta(mu*conc, (1-mu)*conc),
+    # i.e. Beta(14, 6). Range-wide runs replace these per cell.
+    annual_env_alpha   = RUST_ANCHOR$mu * RUST_ANCHOR$conc,
+    annual_env_beta    = (1 - RUST_ANCHOR$mu) * RUST_ANCHOR$conc,
 
     rust_dose_response = list(
       age_peak     = 0.3,
@@ -95,7 +108,9 @@ get_default_params <- function() {
       age_half_sat = 2,
       age_hill     = 4,
       resprout = list(
-        max_effect = 0.45,
+        # 0.53: Pegg et al. median at the Yarringully cell (Nov 2026 sweep;
+        # docs/methodological_notes.md V4). Plausible range 0.32-0.78.
+        max_effect = 0.53,
         form        = "saturating",
         half_sat    = 0.2,
         hill         = 1

@@ -1,7 +1,7 @@
 # MnSim roadmap: to a completed IUCN A4 assessment for *Melaleuca nodosa*
 
 Status as of November 2026. Tick items off as they land; add the commit or
-date after each.
+date after each. Assumptions and decisions: `docs/methodological_notes.md`.
 
 ## Where things stand
 
@@ -14,7 +14,7 @@ date after each.
   count kept alongside).
 - Validation: Pegg et al. 2025 (Yarringully NR), 24/50 resprouters dead by
   Jan 2022; resprout rust mortality (`rust_dose_response$resprout$max_effect`)
-  set to 0.45 in `params.R`.
+  0.53 at the Yarringully cell's rust pressure (Nov 2026).
 - Range-wide ensemble (`plant_ibm/talk/make_talk_figures.R`): cells drawn by
   abundance x seed x parameter draws. Preliminary result (Oct 2026, 300 runs):
   99% of runs threatened, split VU 45% / EN 54%, median decline 51%.
@@ -23,9 +23,10 @@ date after each.
 
 ## Phase 0: housekeeping (before any fitting)
 
-- [ ] **Pegg runs use the Yarringully cell's rust pressure.** Currently they
-      use `params.R` (Beta(40, 8), mean 0.83); the range runs use the cell
-      values from `02` (Yarringully: Beta(14, 6), mean 0.70).
+- [x] **Pegg runs use the Yarringully cell's rust pressure.** Single anchor
+      (`RUST_ANCHOR` in `params.R`); SDM normalised at the anchor cell;
+      `max_effect` recalibrated to 0.53 (range 0.32-0.78). Nov 2026.
+      Notes: C2, V4.
 - [ ] **Separate fire extent from fire intensity.** `fire_p_fimp` is the
       burnt fraction of a cell but also scales the old-plant kill ceiling
       (c x p), so partly burnt cells get gentler fires. Model change.

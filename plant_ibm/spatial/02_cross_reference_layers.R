@@ -39,10 +39,13 @@
 #
 # SDM CALIBRATION
 # ---------------
-# Yarringully NR anchor: lon=153.21967, lat=-29.09357, SDM=0.5736
-# annual_env_mean(site) = MU_YARR × (SDM_site / SDM_YARR)
-# Beta concentration (alpha+beta = CONC) held constant across sites.
-# At Yarringully: Beta(14,6), mean=0.70, SD=0.10 — consistent with params.R
+# Anchor (RUST_ANCHOR in params.R): Yarringully NR, mean pressure mu = 0.70.
+# annual_env_mean(cell) = mu * SDM_cell / SDM_anchor_cell, capped at 0.95,
+# with the anchor cell's SDM read from the raster each run (never typed in),
+# so the anchor cell is always exactly mu: Beta(14, 6), as in params.R.
+# Beta concentration (alpha + beta = conc) held constant across cells.
+# See spatial/rust_pressure.R; to refresh only this step after an SDM
+# update, run spatial/02c_update_rust_pressure.R.
 #
 # OUTPUT
 # ------
@@ -115,12 +118,11 @@ PFIMP_MIN     <- 0.05     # floor fire_p_fimp (minimum plausible impact fraction
 # n_wildfire_years_all for sensitivity checking and method transparency.
 AREA_THRESH <- 0.1
 
-YNR_LON   <- 153.21967
-YNR_LAT   <- -29.09357
-# SDM_YARR  <- 0.5736       # MaxEnt at Yarringully (do not change)
-SDM_YARR <- 0.993
-MU_YARR   <- 0.70         # calibrated annual_env mean at Yarringully
-CONC      <- 20L          # Beta concentration (alpha + beta), fixed
+# Rust anchor (site, mu, conc, cap) lives in params.R: RUST_ANCHOR.
+source("params.R")
+source("spatial/rust_pressure.R")
+YNR_LON   <- RUST_ANCHOR$lon
+YNR_LAT   <- RUST_ANCHOR$lat
 
 # ============================================================================
 # Setup
@@ -387,39 +389,10 @@ message(sprintf("    mean_frac_burned:  median=%.3f  range=[%.3f, %.3f]",
 # ============================================================================
 # STEP 4: SDM suitability → disease triangle parameters
 # ============================================================================
-message("\nStep 4: Extracting MaxEnt SDM values...")
+message("\nStep 4: SDM suitability -> rust pressure (anchored)...")
 
-sdm      <- rast(SDM_TIFF)
-mn_pts   <- vect(mn_grid, geom = c("lon_centre","lat_centre"), crs = "EPSG:4326")
-sdm_vals <- terra::extract(sdm, mn_pts)[, 2L]
-sdm_vals[sdm_vals < -1e30] <- NA_real_
-mn_grid$sdm_suitability <- sdm_vals
-
-# Verify Yarringully value
-ynr_val <- terra::extract(sdm,
-  vect(data.frame(lon=YNR_LON, lat=YNR_LAT),
-       geom=c("lon","lat"), crs="EPSG:4326"))[,2L]
-message(sprintf("  YNR check: SDM=%.4f (expected %.4f, diff=%.4f)",
-                ynr_val, SDM_YARR, abs(ynr_val - SDM_YARR)))
-
-# Map SDM → annual_env Beta parameters, anchored at Yarringully.
-# annual_env_mean scales linearly with SDM suitability all the way down.
-# The ONLY floor needed is numerical: Beta(alpha, beta) requires alpha > 0.
-# With CONC=20, floor = 1/(CONC*10) = 0.005 gives alpha_min = 0.1, which is
-# well within R's rbeta() numerical range. Sites with SDM near zero get
-# annual_env_mean ≈ 0.005-0.02 — effectively rust-absent pressure without
-# needing a separate rust_start_year=Inf for those cells.
-# Raising this floor (e.g. to 0.10 as originally) would artificially impose
-# substantial rust pressure at sites where the SDM says rust can barely persist.
-FLOOR_ENV <- 1 / (CONC * 10)   # 0.005 with CONC=20; keeps alpha >= 0.1
-
-mn_grid <- mn_grid |>
-  mutate(
-    annual_env_mean  = pmin(0.95, pmax(FLOOR_ENV,
-                            MU_YARR * (sdm_suitability / SDM_YARR))),
-    annual_env_alpha = round(annual_env_mean * CONC, 2L),
-    annual_env_beta  = round((1 - annual_env_mean) * CONC, 2L)
-  )
+sdm     <- rast(SDM_TIFF)
+mn_grid <- apply_sdm_to_sites(mn_grid, sdm, RUST_ANCHOR)
 
 message(sprintf("  annual_env_mean: median=%.3f  IQR=[%.3f, %.3f]",
                 median(mn_grid$annual_env_mean, na.rm=TRUE),
@@ -620,9 +593,10 @@ pC <- ggplot(mn_grid[!is.na(mn_grid$sdm_suitability),],
   annotate("text", x=YNR_LON-0.3, y=YNR_LAT, label="YNR",
            hjust=1, size=3, colour="#e34948") +
   scale_colour_gradient(low="#ffffcc", high="#006837", name="SDM\nsuitability") +
-  labs(title="Myrtle rust MaxEnt suitability",
-       subtitle=sprintf("YNR anchor=%.4f | median=%.3f",
-                         SDM_YARR, median(mn_grid$sdm_suitability, na.rm=TRUE)),
+  labs(title="Myrtle rust SDM suitability",
+       subtitle=sprintf("anchor cell=%.4f | median=%.3f",
+                         mn_grid$sdm_suitability[mn_grid$rust_anchor_cell],
+                         median(mn_grid$sdm_suitability, na.rm=TRUE)),
        x=NULL, y=NULL)
 
 # Map D: ensemble weight (KDE)

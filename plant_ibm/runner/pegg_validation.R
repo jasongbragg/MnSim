@@ -75,7 +75,33 @@
 # scenario years and PEGG_VALIDATION_VERSION, so results from earlier
 # definitions are never silently reused.
 
-PEGG_VALIDATION_VERSION <- "v2-death-cause-survey-timing"
+source("runner/site_params.R")   # load_site_params(), anchor_site_row(), build_site_params()
+
+PEGG_VALIDATION_VERSION <- "v3-anchor-site"
+
+# ----------------------------------------------------------------------------
+# Site: the Pegg runs use the Yarringully grid cell's own values from the
+# range-wide cell table (runner/site_params.R), so the validation and the
+# range-wide runs share one rust-pressure anchor (RUST_ANCHOR in params.R),
+# and site data added later (e.g. resistance frequency) reach both the same
+# way. The Pegg fire scenario (one fire, every tree burnt) then overrides the
+# cell's fire regime.
+#   site = "anchor"   the rust anchor cell (default)
+#   site = NULL       use 'params' as given
+#   site = <row>      any one-row data.frame from the cell table
+pegg_site_params <- function(params, site = "anchor") {
+  if (is.null(site)) return(params)
+  if (identical(site, "anchor")) {
+    if (!file.exists(SITE_PARAMS_PATH)) {
+      warning("No ", SITE_PARAMS_PATH, "; Pegg runs use params as given.")
+      return(params)
+    }
+    site <- anchor_site_row(load_site_params(drop_incomplete = FALSE))
+  }
+  p <- build_site_params(params, site)
+  p$pegg_site_cell <- if ("cell_id" %in% names(site)) site$cell_id else NA
+  p
+}
 
 pegg_run_id <- function(params, scenario) {
   make_run_id(list(params = params, scenario = scenario,
@@ -166,6 +192,7 @@ run_pegg_validation <- function(
     year_fire   = 2020L,
     year_survey = 2022L,   # Jan 2022 survey = end of model year 2021
     observed    = 0.48,    # Pegg et al.: 48% of resprouting trees dead by Jan 2022
+    site        = "anchor",
     save_rds    = NULL,
     plot        = TRUE,
     verbose     = TRUE
@@ -175,7 +202,8 @@ run_pegg_validation <- function(
                    year_fire   = as.integer(year_fire),
                    year_survey = as.integer(year_survey))
 
-  p                  <- params
+  p_site             <- pegg_site_params(params, site)
+  p                  <- p_site
   p$rust_start_year  <- year_rust
   p$fire_years       <- as.integer(year_fire)
   p$fire_prob_annual <- 0
@@ -209,7 +237,9 @@ run_pegg_validation <- function(
       census          = res$census,
       fire_p_fimp     = p$fire_p_fimp,
       version         = PEGG_VALIDATION_VERSION,
-      run_id          = pegg_run_id(params, scenario),
+      site_cell       = p_site$pegg_site_cell,
+      annual_env      = c(alpha = p$annual_env_alpha, beta = p$annual_env_beta),
+      run_id          = pegg_run_id(p_site, scenario),
       params          = params
     ),
     stats
@@ -288,6 +318,7 @@ run_pegg_seeds <- function(
 ) {
   dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
   extra    <- list(...)
+  site     <- if ("site" %in% names(extra)) extra$site else "anchor"
   defaults <- formals(run_pegg_validation)
   pick     <- function(nm) as.integer(if (!is.null(extra[[nm]])) extra[[nm]] else eval(defaults[[nm]]))
   scenario <- list(year_spinup = pick("year_spinup"), year_rust = pick("year_rust"),
@@ -298,7 +329,7 @@ run_pegg_seeds <- function(
   parallel::mclapply(seeds, function(s) {
     p      <- params
     p$seed <- as.integer(s)
-    id     <- pegg_run_id(p, scenario)
+    id     <- pegg_run_id(pegg_site_params(p, site), scenario)
     out    <- file.path(results_dir, paste0(id, ".rds"))
     if (skip_existing && file.exists(out)) return(invisible(NULL))
     tryCatch(

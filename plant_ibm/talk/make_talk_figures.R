@@ -40,7 +40,7 @@ suppressPackageStartupMessages({
 # ============================================================================
 # Configuration
 # ============================================================================
-RESULTS_DIR <- "results/talk_v1/"
+RESULTS_DIR <- "results/talk_v2/"   # v2: Pegg at the anchor cell; wider max_effect range
 FIG_DIR     <- "talk/figures/"
 N_CORES     <- max(1L, parallel::detectCores() - 1L)
 N_PEGG      <- 100L     # Pegg-scenario runs
@@ -53,9 +53,9 @@ MASTER_SEED <- 20261022L
 PARAM_DRAWS <- list(
   resprout_rust_mortality = list(
     path  = c("rust_dose_response", "resprout", "max_effect"),
-    min   = 0.35, max = 0.60,
+    min   = 0.32, max = 0.78,
     label = "Extra rust mortality of resprouting plants (max_effect)",
-    note  = "range consistent with Pegg et al. 2025 (24/50 dead, 95% CI 0.34-0.63)")
+    note  = "values whose Pegg-scenario median lies in the 95% CI of 24/50 dead (0.34-0.63), at the Yarringully cell")
 )
 
 PEGG_CSV     <- "talk/data/pegg2025_yarringully_fig3a.csv"
@@ -72,6 +72,7 @@ for (f in c("individuals", "genetics", "mortality", "fire", "recruitment",
 source("runner/params_utils.R")
 source("runner/iucn_a4.R")
 source("spatial/03_range_wide_iucn.R")   # build_site_params(), ASSESS, YEAR_*
+source("runner/pegg_validation.R")      # pegg_site_params(): Pegg runs at the anchor cell
 
 dir.create(RESULTS_DIR, recursive = TRUE, showWarnings = FALSE)
 dir.create(FIG_DIR,     recursive = TRUE, showWarnings = FALSE)
@@ -106,7 +107,7 @@ PEGG_LAST_YEAR <- 2025L
 pegg_trajectory <- function(i) {
   set.seed(MASTER_SEED + 100000L + i)
   dr <- draw_params(get_default_params())
-  p  <- dr$params
+  p  <- pegg_site_params(dr$params, "anchor")   # Yarringully cell's rust pressure
   p$seed             <- 5000L + i
   p$rust_start_year  <- PEGG_RUST
   p$fire_years       <- PEGG_FIRE
@@ -154,12 +155,7 @@ run_pegg_stage <- function() {
 # Stage 2: range-wide A4 ensemble
 # ============================================================================
 load_sites <- function() {
-  s <- read.csv(SITE_PARAMS_PATH)
-  ok <- !is.na(s$annual_env_alpha) & !is.na(s$annual_env_beta) &
-        !is.na(s$fire_prob_annual) & !is.na(s$fire_p_fimp)
-  attr(s, "n_dropped")      <- sum(!ok)
-  attr(s, "weight_dropped") <- sum(s$weight_n_raw[!ok]) / sum(s$weight_n_raw)
-  s <- s[ok, ]
+  s <- load_site_params(drop_incomplete = TRUE)
   s$region <- ifelse(s$lat_centre > QLD_LAT, "Qld", "NSW")
   s
 }
