@@ -211,6 +211,9 @@ run_pegg_validation <- function(
   p$n_years          <- as.integer(year_survey - year_spinup)
   # All trees at the survey sites burned: fire_p_fimp = 1 (not a free parameter).
   p$fire_p_fimp      <- 1.0
+  # ... and the fire reached and burnt the whole stand (stand mode: size 1, full cover).
+  p$fire_size_sd     <- 0
+  p$fire_stand_cover <- 1
 
   if (verbose) message(sprintf(
     "Pegg validation: spin=%d  rust=%d  fire=%d  survey=Jan %d (end of %d)  p_fimp=1",

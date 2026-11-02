@@ -150,14 +150,47 @@ the fire years, with a regional prior (empirical Bayes). A cell with no
 recorded wildfire gets about one fire per 47 years. Fire occurrence in a run
 is a random draw each year with that probability.
 
-**D3. Fire extent and severity** [assumption, open]
-Each model fire affects each plant with probability `fire_p_fimp`, the cell's
-mean burnt fraction. Affected plants die with an age-dependent probability
-(seedlings almost always; older plants at a ceiling of 0.30 x `fire_p_fimp`),
-otherwise resprout and do not flower for a few years (Poisson, mean 3, plus
-a rust-dependent delay).
-[open] `fire_p_fimp` stands for both extent and intensity, so partly burnt
-cells also get gentler fires. To be separated (ROADMAP Phase 0).
+**D3. Fire extent and severity** [decided + assumption, Nov 2026]
+Scale: a simulated population is a stand or a few stands (~10,000 plants),
+far smaller than the 0.1-degree cell (~10,000 ha) that the fire history
+describes, and smaller than most fires counted (>= 10% of the cell).
+Each fire in the cell has its own size f (burnt fraction of the cell),
+drawn from a Beta with the cell's mean burnt fraction and between-fire sd
+(`sd_frac_burned`; cells with fewer than two fire years use the range-wide
+median, 0.125). Then:
+- *Extent*: the fire reaches the stand with probability f; if it does, each
+  plant burns with probability 0.9 (`fire_stand_cover`, fixed: unburnt
+  patches within the stand). Most fires miss; those that arrive burn most of
+  the stand.
+- *Intensity*: linked linearly to that fire's size. Burnt plants die with an
+  age-dependent probability: seedlings almost always, older plants at a
+  ceiling of 0.30 x f. Big fires are therefore both likelier to reach the
+  stand and more lethal (extent and intensity correlated between fires,
+  through one parameter).
+- Survivors resprout and do not flower for a few years (Poisson, mean 3,
+  plus a rust-dependent delay).
+Over many fires the mean share of plants burnt equals the cell's mean burnt
+fraction, as before; the change is that it comes as occasional whole-stand
+fires rather than a scattered quarter of the stand every time, and that a
+fire's lethality no longer depends on the cell's long-run average.
+The Pegg scenario is the limiting case: f = 1, full cover, ceiling 0.30
+(unchanged, so the V4 calibration stands; Pegg median 0.474 after the change).
+The previous behaviour (every fire reaches the population; per-plant
+probability and ceiling both set by the cell mean) remains available as
+`fire_extent_mode = "plant"`.
+Effect (60 paired range-wide runs, same cells/seeds/draws, Nov 2026): fires
+reaching the stand fell from ~22 to ~5 per run (1600-2210); median decline
+48.3% vs 52.7% (paired difference median -2 points), but the spread widened
+(sd 12.5 vs 7.3 points; 95th percentile 78% vs 66%), giving VU 60% / EN 35% /
+CR 5% vs VU 38% / EN 62% / CR 0%. Whether a large fire reaches the stand
+during the rust period now drives much of the between-run variation. With
+the median near the 50% EN threshold, category shares are sensitive to small
+shifts; read them with that in mind.
+[assumption] Linear size-intensity link; fixed within-stand cover 0.9; fire
+sizes at a point follow the cell's distribution of burnt fractions.
+[open] Severity data (e.g. NSW fire extent and severity mapping) could
+replace the linear link; the ceiling 0.30 is not directly calibrated
+(the share of trees killed outright at Yarringully is not reported).
 
 **D4. Queensland** [open]
 No Queensland fire history yet: the about 109 Queensland cells (about 10% of
@@ -223,3 +256,4 @@ flower) in the model. Not used for fitting.
 | Oct 2026 | V3 | Fit the two-year endpoint only |
 | Nov 2026 | C2 | Single rust anchor; SDM normalised at the anchor cell |
 | Nov 2026 | V4 | `max_effect` 0.53; ensemble range 0.32-0.78 |
+| Nov 2026 | D3 | Fire: per-fire size; stand reached with P = size; cover 0.9; kill ceiling linear in size |

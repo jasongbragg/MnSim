@@ -75,7 +75,14 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     } else {
       t %in% params$fire_years
     }
-    if (fire_this_year) pop <- apply_fire(pop, params, t)
+    # A fire in the cell may miss the stand ("stand" extent mode); the
+    # census records whether it reached the simulated population.
+    fire_reached <- FALSE
+    if (fire_this_year) {
+      pop <- apply_fire(pop, params, t)
+      fire_reached <- !identical(attr(pop, "fire_reached"), FALSE)
+      attr(pop, "fire_reached") <- NULL
+    }
 
     # 4. update flowering status, post-fire
     # Basic eligibility: alive, not resprouting, old enough
@@ -115,7 +122,8 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     # 7. census
     census_list[[i]] <- census_year(pop, resist_gt, t, rec$n_rec,
                                      length(dead_idx), params,
-                                     fire_this_year = fire_this_year)
+                                     fire_this_year = fire_reached,
+                                     fire_in_cell   = fire_this_year)
 
     if (verbose && i %% 10 == 0) {
       cat(sprintf("year %d: N=%d  N_IUCN=%d\n",

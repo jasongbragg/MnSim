@@ -16,7 +16,7 @@
 
 #' Build the census row for year t.
 census_year <- function(pop, resist_gt, t, n_rec, n_dead, params,
-                         fire_this_year = FALSE) {
+                         fire_this_year = FALSE, fire_in_cell = fire_this_year) {
   alive   <- pop$alive
   N_alive <- sum(alive)
 
@@ -33,7 +33,9 @@ census_year <- function(pop, resist_gt, t, n_rec, n_dead, params,
     births            = n_rec,
     deaths            = n_dead,
     mean_resist_score = if (N_alive > 0) mean(pop$resist_score[alive]) else NA_real_,
-    fire_event        = fire_this_year,
+    fire_event        = fire_this_year,   # fire reached the simulated stand
+    fire_in_cell      = fire_in_cell,     # fire occurred in the cell
+
     rust_active       = t >= params$rust_start_year,
     extinct           = N_alive == 0
   )

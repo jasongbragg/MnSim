@@ -36,6 +36,10 @@ build_site_params <- function(base_params, site_row) {
   # Site-specific fire regime
   p$fire_prob_annual <- site_row$fire_prob_annual
   p$fire_p_fimp      <- site_row$fire_p_fimp
+  # Between-fire sd of burnt fraction: the cell's own where it had >= 2
+  # fire years, else the base value (range-wide median).
+  if (!is.null(site_row$sd_frac_burned) && !is.na(site_row$sd_frac_burned))
+    p$fire_size_sd   <- site_row$sd_frac_burned
   p$fire_years       <- integer(0)   # must use fire_prob_annual for long runs
 
   # Site-specific rust pressure (SDM, normalised at the rust anchor cell)

@@ -152,3 +152,81 @@ test_that("two-stage: resprout_total_yrs recorded for survivors", {
     expect_true(all(pop2$resprout_yrs_remain[surv] == pop2$resprout_total_yrs[surv]))
   }
 })
+
+# ============================================================================
+# Stand extent mode (fire_extent_mode = "stand"; notes D3)
+# ============================================================================
+.stand_params <- function(...) {
+  p <- make_toy_params(fire_p_fimp = 0.3, fire_kill_scalar = 0.3,
+                       fire_kill_half_sat = 2, fire_kill_hill = 2)
+  p$fire_extent_mode <- "stand"; p$fire_size_sd <- 0; p$fire_stand_cover <- 1
+  modifyList(p, list(...))
+}
+
+test_that("stand: a fire either misses the stand entirely or reaches it", {
+  p <- .stand_params()
+  pop <- make_toy_pop(500, p)
+  set.seed(11)
+  res <- replicate(400, {
+    pop2 <- apply_fire(pop, p, t = 1L)
+    c(missed = identical(attr(pop2, "fire_reached"), FALSE),
+      touched = sum(pop2$resprout | !pop2$alive))
+  })
+  missed <- res["missed", ] == 1
+  expect_true(all(res["touched", missed] == 0))      # misses touch nobody
+  expect_true(all(res["touched", !missed] == 500))   # cover 1: everyone burns
+  expect_equal(mean(!missed), 0.3, tolerance = 0.06) # reached with P = f = 0.3
+})
+
+test_that("stand: fire_stand_cover is the share burnt when a fire arrives", {
+  p <- .stand_params(fire_p_fimp = 1, fire_stand_cover = 0.9)
+  pop <- make_toy_pop(4000, p)
+  set.seed(3)
+  pop2 <- apply_fire(pop, p, t = 1L)
+  expect_equal(mean(pop2$resprout | !pop2$alive), 0.9, tolerance = 0.02)
+})
+
+test_that("stand: old-plant kill ceiling scales with the drawn fire size", {
+  old <- function(p, n = 6000) { pop <- make_toy_pop(n, p); pop$age <- 200L; pop }
+  set.seed(5)
+  p1 <- .stand_params(fire_p_fimp = 1)
+  k1 <- mean(!apply_fire(old(p1), p1, t = 1L)$alive)
+  expect_equal(k1, 0.3, tolerance = 0.02)            # f = 1: ceiling = c
+  # Small fires that do reach the stand are gentler: kill share ~ c * f.
+  p2 <- .stand_params(fire_p_fimp = 0.25)
+  pop_old <- old(p2, 2000)              # built once: make_toy_pop() resets the seed
+  ks <- replicate(200, {
+    pop2 <- apply_fire(pop_old, p2, t = 1L)
+    if (identical(attr(pop2, "fire_reached"), FALSE)) NA else mean(!pop2$alive)
+  })
+  expect_equal(mean(ks, na.rm = TRUE), 0.3 * 0.25, tolerance = 0.015)
+})
+
+test_that("stand: fire sizes vary between fires with the cell's sd", {
+  set.seed(9)
+  f <- replicate(4000, draw_fire_size(0.25, 0.12))
+  expect_equal(mean(f), 0.25, tolerance = 0.01)
+  expect_equal(sd(f), 0.12, tolerance = 0.01)
+  expect_true(all(f > 0 & f < 1))
+  expect_equal(draw_fire_size(0.25, 0), 0.25)
+  expect_equal(draw_fire_size(1, 0.3), 1)
+  big <- replicate(500, draw_fire_size(0.2, 0.9))      # sd above the Beta maximum: capped
+  expect_true(all(is.finite(big)))
+})
+
+test_that("plant mode is the original model (ceiling = c * fire_p_fimp)", {
+  set.seed(5)
+  p <- .stand_params(fire_p_fimp = 1); p$fire_extent_mode <- "plant"
+  pop <- make_toy_pop(6000, p); pop$age <- 200L
+  expect_equal(mean(!apply_fire(pop, p, t = 1L)$alive), 0.3, tolerance = 0.02)
+  p$fire_extent_mode <- NULL                          # absent = plant
+  expect_null(attr(apply_fire(pop, p, t = 1L), "fire_reached"))
+})
+
+test_that("census separates fires in the cell from fires reaching the stand", {
+  p <- .stand_params(fire_p_fimp = 0.05)
+  p$N0 <- 200L; p$n_years <- 60L; p$fire_years <- integer(0); p$fire_prob_annual <- 0.5
+  cen <- run_simulation(p, year0 = 1L)$census
+  expect_true(all(cen$fire_event <= cen$fire_in_cell))
+  expect_gt(sum(cen$fire_in_cell), sum(cen$fire_event))
+})

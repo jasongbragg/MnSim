@@ -27,9 +27,10 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
       (`RUST_ANCHOR` in `params.R`); SDM normalised at the anchor cell;
       `max_effect` recalibrated to 0.53 (range 0.32-0.78). Nov 2026.
       Notes: C2, V4.
-- [ ] **Separate fire extent from fire intensity.** `fire_p_fimp` is the
-      burnt fraction of a cell but also scales the old-plant kill ceiling
-      (c x p), so partly burnt cells get gentler fires. Model change.
+- [x] **Separate fire extent from fire intensity.** Per-fire size drawn
+      from the cell's burnt-fraction distribution; the fire reaches the
+      stand with probability equal to its size, burns 90% of plants, and
+      kills old plants up to 0.30 x size. Nov 2026. Notes: D3.
 - [ ] **Retire `spatial/03_range_wide_iucn.R`** in favour of the run design in
       `talk/make_talk_figures.R` (per-run RNG streams; plan table instead of
       the seed/join reconstruction).

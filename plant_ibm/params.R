@@ -85,6 +85,13 @@ get_default_params <- function() {
     resprout_prob_recovery = 1 / 3,
     fire_kill_prob        = 0.35,
     fire_p_fimp           = 0.6,
+    # Extent vs intensity (docs/methodological_notes.md D3). "stand": each
+    # fire has its own size f ~ Beta(mean fire_p_fimp, sd fire_size_sd); it
+    # reaches the stand with probability f, burns fire_stand_cover of the
+    # plants, and kills old plants up to fire_kill_scalar * f.
+    fire_extent_mode      = "stand",
+    fire_size_sd          = 0.125,  # range-wide median between-fire sd (NPWS cells with >= 2 fires)
+    fire_stand_cover      = 0.9,    # share of plants burnt when a fire reaches the stand
     fire_kill_scalar      = 0.30,
     fire_kill_half_sat    = 2,
     fire_kill_hill        = 2,

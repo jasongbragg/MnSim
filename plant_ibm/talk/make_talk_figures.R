@@ -113,6 +113,8 @@ pegg_trajectory <- function(i) {
   p$fire_years       <- PEGG_FIRE
   p$fire_prob_annual <- 0
   p$fire_p_fimp      <- 1
+  p$fire_size_sd     <- 0       # one fire covering every tree
+  p$fire_stand_cover <- 1
   p$n_years          <- PEGG_LAST_YEAR - PEGG_SPINUP + 1L
 
   id  <- make_run_id(list(params = p, version = TALK_VERSION, kind = "pegg"))
