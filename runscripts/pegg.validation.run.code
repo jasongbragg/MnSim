@@ -1,26 +1,44 @@
+source("params.R")
+for (f in c("individuals","genetics","mortality","fire","recruitment","census","simulate"))
+  source(file.path("R", paste0(f, ".R")))
+source("runner/params_utils.R")
+source("runner/pegg_validation.R")
+
+# 1. Single run, with figure
+result <- run_pegg_validation(get_default_params())
+
+# 2. Seed ensemble -- use a NEW results folder (see note)
+df <- run_pegg_seeds(get_default_params(), seeds = 1:100,
+                     results_dir = "results/pegg_seeds_fit/",
+                     n_cores = parallel::detectCores() - 1L)
+plot_pegg_ensemble(df, observed = 0.48,
+                   save_path = "results/pegg_seeds_fit/pegg_ensemble.png")
+
+
+
 # /opt/R/4.3.1/bin/R
 # Source everything as usual, then:
 
-source("params.R")
-source("R/individuals.R")
-source("R/genetics.R")
-source("R/mortality.R")
-source("R/fire.R")
-source("R/recruitment.R")
-source("R/census.R")
-source("R/simulate.R")
+#source("params.R")
+#source("R/individuals.R")
+#source("R/genetics.R")
+#source("R/mortality.R")
+#source("R/fire.R")
+#source("R/recruitment.R")
+#source("R/census.R")
+#source("R/simulate.R")
 
 
-source("runner/params_utils.R")
-source("runner/pegg_validation.R")
+#source("runner/params_utils.R")
+#source("runner/pegg_validation.R")
 # (plus all model files)
 
 # Single run — quick look
-result <- run_pegg_validation(get_default_params())
+#result <- run_pegg_validation(get_default_params())
 
-df <- run_pegg_seeds(get_default_params(), seeds = 1:100,
-                     results_dir = "results/pegg_seeds_v2/")
-plot_pegg_ensemble(df, observed = 0.48)
+#df <- run_pegg_seeds(get_default_params(), seeds = 1:100,
+                     results_dir = "results/pegg_seeds/")
+#plot_pegg_ensemble(df, observed = 0.48)
 
 
 

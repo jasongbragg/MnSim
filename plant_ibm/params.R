@@ -95,7 +95,7 @@ get_default_params <- function() {
       age_half_sat = 2,
       age_hill     = 4,
       resprout = list(
-        max_effect = 0.55,
+        max_effect = 0.45,
         form        = "saturating",
         half_sat    = 0.2,
         hill         = 1
