@@ -64,9 +64,9 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
 - [x] Fire regime for all 375 cells (Qld from data, not the prior);
       wildfire default, all fire and planned burns alongside. Nov 2026.
       Notes: D5.
-- [ ] Rerun the range ensemble with the new site table (`results/range_v2/`)
-      and refresh `fire_size_sd` in `params.R` (range-wide median
-      `sd_frac_burned`).
+- [x] Refresh `fire_size_sd` in `params.R`: 0.125 -> 0.146 (range-wide
+      median `sd_frac_burned`, new table). Nov 2026.
+- [ ] Rerun the range ensemble with the new site table (`results/range_v2/`).
 - [ ] Management scenarios: planned burning as a second fire process (own
       frequency, extent and possibly severity), e.g. no burning vs burning
       a target site every N years; suppression via `fire_scale` already

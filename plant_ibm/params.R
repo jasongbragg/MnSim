@@ -90,7 +90,7 @@ get_default_params <- function() {
     # reaches the stand with probability f, burns fire_stand_cover of the
     # plants, and kills old plants up to fire_kill_scalar * f.
     fire_extent_mode      = "stand",
-    fire_size_sd          = 0.125,  # range-wide median between-fire sd (cells with >= 2 fire years; pre-Nov-2026 NSW table, to refresh: notes D3)
+    fire_size_sd          = 0.146,  # range-wide median between-fire sd of burnt fraction (105 cells with >= 2 fire years, NSW + Qld wildfire, Nov 2026; notes D3)
     fire_stand_cover      = 0.9,    # share of plants burnt when a fire reaches the stand
     fire_kill_scalar      = 0.30,
     fire_kill_half_sat    = 2,

@@ -201,8 +201,8 @@ describes, and smaller than most fires counted (>= 10% of the cell).
 Each fire in the cell has its own size f (burnt fraction of the cell),
 drawn from a Beta with the cell's mean burnt fraction and between-fire sd
 (`sd_frac_burned`; cells with fewer than two fire years use the range-wide
-median, 0.125 in `params.R`, from the pre-Nov-2026 NSW table; to be
-refreshed from the new table). Then:
+median, 0.146 in `params.R`: 105 cells with >= 2 wildfire years, NSW + Qld,
+Nov 2026; previously 0.125 from the old NSW table). Then:
 - *Extent*: the fire reaches the stand with probability f; if it does, each
   plant burns with probability 0.9 (`fire_stand_cover`, fixed: unburnt
   patches within the stand). Most fires miss; those that arrive burn most of
