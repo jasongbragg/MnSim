@@ -41,6 +41,19 @@ plant_ibm/
 │   │                                 #   multi-scenario stacked plots
 │   └── run_rust_pressure_diagnostics.R  # runnable script producing
 │                                         #   the figures/numbers below
+├── runner/                # IUCN A4 runs, Pegg validation, range-wide
+│                          #   ensemble (range_ensemble.R), site params
+├── spatial/               # per-cell inputs -> spatial/data/mn_site_params.csv
+│   ├── 01_get_melaleuca_occurrences.R   # occurrence grid (0.1 degree)
+│   ├── 02_cross_reference_layers.R      # site table: fire regime, rust, weights
+│   ├── 02c_update_rust_pressure.R       # refresh the rust columns only
+│   ├── rust_pressure.R                  # SDM -> rust pressure (anchored)
+│   └── fire/                            # NSW + Qld fire records -> cell-years
+│       ├── fire_config.R                #   periods, threshold, regimes
+│       ├── 01_download_qld.R            #   Qld fire scars + QPWS burns
+│       ├── 02_fire_cell_years.R         #   burnt fraction per cell-year
+│       ├── 03_fire_checks.R             #   border check, scenarios, figures
+│       └── R/                           #   readers, geometry, estimator
 ├── tests/
 │   ├── testthat.R
 │   └── testthat/          # see TESTING.md
@@ -436,7 +449,9 @@ These are the domain of the diagnostics above, and of the full
   in `recruitment.R` as a drop-in alternative to `bevholt()` (needs
   `params$ricker_r`); swapping it changes the recruitment count's
   response to crowding but not the rest of the pipeline.
-- **Geographic ensemble** (planned next step): `rust_pressure` and
-  `fire_prob_annual` drawn from geographic distributions across many
-  thousands of replicate runs, using the stochastic `fire_prob_annual`
-  fire mode already implemented.
+- **Geographic ensemble**: `runner/range_ensemble.R` draws grid cells in
+  proportion to abundance and runs each with the cell's fire regime and
+  rust pressure (`runscripts/range_ensemble.run.code`). Fire regime per
+  cell: wildfire by default, all fire or scaled fire frequency as
+  scenarios (`fire_regime`, `fire_scale`; `docs/methodological_notes.md`
+  D1-D5).

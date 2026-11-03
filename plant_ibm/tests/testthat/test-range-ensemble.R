@@ -24,7 +24,8 @@ test_that("plans carry the cell's values and the run's own seed", {
   expect_equal(pl$params$annual_env_alpha, s$annual_env_alpha[k])
   expect_equal(pl$params$fire_prob_annual, s$fire_prob_annual[k])
   expect_equal(pl$params$seed, pl$row$sim_seed)
-  expect_equal(pl$row$region, ifelse(s$lat_centre[k] > QLD_LAT, "Qld", "NSW"))
+  expect_equal(pl$row$region, s$region[k])
+  expect_true(all(s$region %in% c("NSW", "Qld")))
   expect_true(all(c("site_fire_prob", "site_rust", "resprout_rust_mortality") %in% names(pl$row)))
 })
 

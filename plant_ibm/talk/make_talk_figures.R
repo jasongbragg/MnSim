@@ -293,8 +293,8 @@ fig_outcomes <- function(R) {
   grp <- rbind(
     mk("All runs",   df$category),
     mk("NSW cells",  df$category[df$region == "NSW"]),
-    mk("Qld cells*", df$category[df$region == "Qld"]))
-  grp$group <- factor(grp$group, levels = rev(intersect(c("All runs", "NSW cells", "Qld cells*"), grp$group)))
+    mk("Qld cells",  df$category[df$region == "Qld"]))
+  grp$group <- factor(grp$group, levels = rev(intersect(c("All runs", "NSW cells", "Qld cells"), grp$group)))
   cnt <- as.data.frame(table(grp$group, grp$category))
   names(cnt) <- c("group", "category", "n")
   cnt$share <- cnt$n / ave(cnt$n, cnt$group, FUN = sum)
@@ -318,7 +318,7 @@ fig_outcomes <- function(R) {
                       100 * sh[2], 100 * sh[3], 100 * sh[4]),
       subtitle = sprintf("IUCN criterion A4, %d runs: grid cells drawn in proportion to abundance x simulation seed x parameter draws",
                          nrow(df)),
-      caption = wrap(paste0("* Qld cells: no Qld fire history yet; fire frequency and extent there come from the prior. ",
+      caption = wrap(paste0("Fire: wildfire records, NSW NPWS 1987-2024 and Qld fire scars (minus QPWS planned burns) 2014-2024. ",
                        "Rust pressure from the pathogen SDM everywhere. No resistance yet (fully susceptible).\n",
                        draws_caption(PARAM_DRAWS)), 190),
       theme = theme_talk())
@@ -335,7 +335,7 @@ fig_map <- function(R) {
     geom_polygon(data = aus, aes(long, lat, group = group), fill = "#f1efe9", colour = "#bdb6a6",
                  linewidth = 0.3) +
     geom_hline(yintercept = QLD_LAT, colour = "#9a9a9a", linetype = "dashed", linewidth = 0.4) +
-    annotate("text", x = 148.3, y = QLD_LAT + 0.25, label = "Qld (fire: prior only)",
+    annotate("text", x = 148.3, y = QLD_LAT + 0.25, label = "Qld",
              hjust = 0, size = 3.8, colour = "#777777") +
     annotate("text", x = 148.3, y = QLD_LAT - 0.25, label = "NSW", hjust = 0, size = 3.8,
              colour = "#777777") +
@@ -381,7 +381,7 @@ write_numbers <- function(R, traj) {
     sprintf("RANGE: generation time median %.1f yr; window median %.0f yr",
             median(df$T_g, na.rm = TRUE), median(df$window_len, na.rm = TRUE)),
     sprintf("RANGE: flowering-only decline median %.1f%%", median(df$pct_decline_flowering, na.rm = TRUE)),
-    sprintf("RANGE: Qld-cell runs: %d (fire from prior)", sum(df$region == "Qld"))
+    sprintf("RANGE: Qld-cell runs: %d", sum(df$region == "Qld"))
   )
   for (r in intersect(c("NSW", "Qld"), df$region)) {
     s <- prop.table(table(df$category[df$region == r]))

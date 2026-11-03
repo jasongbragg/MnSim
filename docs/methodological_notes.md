@@ -144,18 +144,55 @@ between cells (rust pressure). [assumption] Magnitude not constrained by data.
 
 ## D. Fire
 
-**D1. Fire history source** [decided]
-NSW NPWS Fire History, 1970-2024, wildfires only. Prescribed burns are
-excluded: they are typically patchy and low intensity, while the model's fire
-event is a landscape-scale disturbance (validated against the 2019-20 Black
-Summer wildfire). A cell-year counts as a fire year when wildfire burns at
-least 10% of the cell.
+**D1. Fire records and processing** [decided, Nov 2026]
+Two state records, put on one footing (`spatial/fire/`, developed in a
+sandpit and moved into MnSim in Nov 2026):
+- *NSW*: NPWS Fire History (agency fire perimeters, labelled wildfire or
+  prescribed burn; year = first year of the season label, so 2019-20 counts
+  as 2019). Used 1987-2024 (1970-2024 kept as a sensitivity check).
+- *Queensland*: QRSC fire scars (Landsat/Sentinel-2 burnt-area mapping,
+  annual composites, fire type not recorded), downloaded from the Qld
+  government ArcGIS service for the M. nodosa area; and the QPWS fire
+  history (planned burns and wildfires on QPWS and state land), used to
+  separate planned burns. Used 2014-2024 (D4).
+Each cell's burnt fraction in a year = area of the union of that year's
+burnt polygons (overlapping fires not double counted) / the area of the
+cell's land within its own state, in Australian Albers (EPSG:3577). A cell
+belongs to the state containing its centre (coastal cells: nearest state).
+A cell-year is a *fire year* when >= 10% of the cell's land burns.
+Changes from the pre-Nov-2026 `02`: union instead of summing a year's
+polygons; land base instead of the whole 0.1-degree cell (sea included);
+records start 1987 instead of 1970. With the old conventions the new code
+reproduced `02`'s NSW table exactly (fire-year counts 255/256 cells
+identical; burnt fractions within 0.03).
+Outputs: `spatial/data/fire/cell_years_<state>_<type>.csv` (state nsw/qld;
+type wild/planned/all), built by `spatial/fire/02_fire_cell_years.R`.
 
-**D2. Fire frequency** [calibrated]
-Annual fire probability per cell = Bayesian (Gamma-Poisson) estimate from
-the fire years, with a regional prior (empirical Bayes). A cell with no
-recorded wildfire gets about one fire per 47 years. Fire occurrence in a run
-is a random draw each year with that probability.
+**D2. Fire frequency** [calibrated, Nov 2026]
+Annual probability of a fire year per cell = posterior mean
+(alpha + k) / (beta + T) for k fire years in T years observed, under a
+Gamma(alpha, beta) prior on the cell's rate (Gamma-Poisson), clamped to
+[0.005, 0.5]. T is the cell's own record length (38 yr NSW, 11 yr Qld).
+The prior is fitted by maximum likelihood across all cells (empirical
+Bayes: k is negative binomial given alpha, beta and T). This replaces
+`02`'s method of moments on k/T over cells with k > 0, which ignored the
+cells without fire and treated chance variation in short records as real
+differences between cells.
+One prior is shared by both states: fitted separately they are almost the
+same (wildfire: NSW Gamma(0.68, 16.3), Qld Gamma(0.74, 19.8); likelihood-
+ratio test p = 0.85). Shared prior Gamma(0.69, 16.7): mean 24 yr between
+fire years, worth about 17 years of observation, so the 11-yr Qld records
+lean on it (k = 0, 1, 2 in 2014-2024 -> about 40, 16, 10 yr between fires).
+Burnt fraction per fire: mean and sd over the cell's fire years
+(`fire_p_fimp`, `sd_frac_burned`; cells without a fire year get the median
+mean burnt fraction of cells with one; sd from cells with >= 2 fire years,
+else the range-wide value in `params.R`).
+Fire occurrence in a run: a random draw each year with that probability.
+Values (wildfire, Nov 2026): NSW 4.2 and Qld 3.7 fire years per 100
+cell-years; median interval 32 yr (NSW), 40 yr (Qld); median burnt fraction
+in a fire year 0.27 (NSW), 0.19 (Qld).
+[assumption] Fire years are a Poisson process with a constant rate per cell
+(no trend, no dependence on time since fire); 10% threshold.
 
 **D3. Fire extent and severity** [decided + assumption, Nov 2026]
 Scale: a simulated population is a stand or a few stands (~10,000 plants),
@@ -164,7 +201,8 @@ describes, and smaller than most fires counted (>= 10% of the cell).
 Each fire in the cell has its own size f (burnt fraction of the cell),
 drawn from a Beta with the cell's mean burnt fraction and between-fire sd
 (`sd_frac_burned`; cells with fewer than two fire years use the range-wide
-median, 0.125). Then:
+median, 0.125 in `params.R`, from the pre-Nov-2026 NSW table; to be
+refreshed from the new table). Then:
 - *Extent*: the fire reaches the stand with probability f; if it does, each
   plant burns with probability 0.9 (`fire_stand_cover`, fixed: unburnt
   patches within the stand). Most fires miss; those that arrive burn most of
@@ -199,11 +237,60 @@ sizes at a point follow the cell's distribution of burnt fractions.
 replace the linear link; the ceiling 0.30 is not directly calibrated
 (the share of trees killed outright at Yarringully is not reported).
 
-**D4. Queensland** [open]
-No Queensland fire history yet: the about 109 Queensland cells (about 10% of
-abundance weight) use the regional prior for frequency and extent. Results
-are reported separately for NSW and Queensland cells until fixed (ROADMAP
-Phase 1a).
+**D4. Queensland fire record: edited years only** [decided, Nov 2026]
+Only 2014-2024 of the Qld fire scars are used. Evidence (border check,
+`spatial/fire/03_fire_checks.R`): over 1987-2024, Qld cells within 1 degree
+of the border had 4.96 times the NSW fire-year rate (95% CI 3.43-7.41).
+Year by year, 27-44% of Qld cells had a fire year in every year 1987-2013,
+dropping to 0-8% from 2014 (NSW level). 31 of 119 Qld cells were marked burnt
+in all 26 years 1987-2012 (and 94% of them in 2013) at burnt fractions just
+above the threshold (typically 0.11-0.25), yet have fewer fire years after
+2014 than other cells: repeated misclassification of the same patches in the
+automated mapping (QRSC: automated before ~2013, ~80% detection and up to 30%
+false scars; edited since; Sentinel-2 from 2017). 2013 still behaves like
+the automated years (starting there raises the Qld rate by ~60%; test of a
+shared prior p = 2.5e-5).
+With 2014-2024 the records agree at the border: Qld/NSW rate 0.96
+(0.52-1.72) over 2013-2024, 0.55 (0.25-1.12) in the main scenario (NSW
+1987-2024). Over the common period 2014-2024 alone the ratio is 0.33
+(0.14-0.76), driven by 2019 (43% of NSW border cells burnt vs 4% in Qld);
+without 2019 the rates are similar (NSW ~0.03, Qld 0.021 per cell-year).
+Read as one real fire season (2019-20) on the NSW side, and a reason to keep
+NSW's longer record rather than cut both states to 2014-2024.
+[assumption] Fire regimes are stable enough that 11 recent years describe
+Qld cells (with the shared prior, D2). [open] A longer, consistent Qld record
+(e.g. reprocessed Landsat burnt area) would help.
+
+**D5. Wildfire as the default; planned burns kept separately** [decided, Nov 2026]
+The default fire regime is wildfire only: NSW wildfires; Qld fire scars
+minus QPWS planned burns. Planned burns matter (they are 56% of Qld fire
+years at M. nodosa cells in 2014-2024, 14% in NSW over 1987-2024), but their
+records are less consistent: separate agency programmes; QPWS planned burns
+are mapped burn boundaries (which can include unburnt patches) and cover
+QPWS and state land only, so Qld "wildfire" still contains planned and
+agricultural burning elsewhere (the scars do not record fire type). The
+planned share in Qld is therefore a lower bound.
+All three regimes are written to `mn_site_params.csv` for every cell:
+wildfire under the standard names (`fire_prob_annual`, `fire_p_fimp`,
+`sd_frac_burned`, ...), all fire and planned burns with suffixes `_all` and
+`_planned`. Runs choose with `fire_regime` ("wild" default, "all") and can
+scale the fire probability with `fire_scale` (e.g. 0.5 = suppression
+halving fire frequency) (`build_site_params()`, `run_range_ensemble()`).
+Scenario ensembles reuse the default's cells, seeds and parameter draws, so
+runs pair up.
+Planned-burn estimates: one prior per state (agency practice differs: test
+of a shared prior p < 0.001) and no rate floor (most cells are never burnt
+by an agency; NSW Gamma(0.07, 10.6), Qld Gamma(0.14, 4.9)). Planned burns
+burn smaller fractions than wildfire in NSW (median 0.19 vs 0.27); similar
+in Qld (0.19). Wildfire + planned rates slightly exceed the all-fire rate
+(both clear the threshold in some cell-years), so "all" is estimated
+directly rather than summed.
+NSW record types (NPWS polygons 1970-2024 within the bounding box of the NSW
+cells): 18,471 wildfire, 12,084 prescribed burn, none unlabelled.
+[open] Management scenarios with planned burning as its own process (e.g.
+burning a target site every 8 or 15 years on top of wildfire) need a second
+fire process in the model, with its own extent and possibly a lower
+severity; not yet implemented (ROADMAP).
 
 ## E. Demography and genetics (current values, `params.R`)
 
@@ -281,3 +368,7 @@ flower) in the model. Not used for fitting.
 | Nov 2026 | V4 | `max_effect` 0.53; ensemble range 0.32-0.78 |
 | Nov 2026 | D3 | Fire: per-fire size; stand reached with P = size; cover 0.9; kill ceiling linear in size |
 | Nov 2026 | C5, E1, E2 | Resprout delay via the disease triangle; Weibull hazard -> annual probability; recruits = first-year survivors |
+| Nov 2026 | D1 | NSW + Qld fire records on one footing: union of a year's fires, land base, fire year >= 10% of land; NSW 1987-2024 |
+| Nov 2026 | D2 | Fire-rate prior by maximum likelihood over all cells, shared by both states |
+| Nov 2026 | D4 | Qld fire scars 2014-2024 only; automated 1987-2013 mapping rejected (border check) |
+| Nov 2026 | D5 | Wildfire-only default; all fire and planned burns kept per cell for comparison and management scenarios |

@@ -1,3 +1,6 @@
 results/range_wide_iucn/
 talk/figures/
 results/
+spatial/data/fire/raw/
+spatial/data/fire/qld_years/
+spatial/data/fire/cells.rds

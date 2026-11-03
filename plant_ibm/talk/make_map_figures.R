@@ -136,7 +136,7 @@ fig_fire <- function() {
 
   s <- sites[!is.na(sites$fire_prob_annual), ]
   s$fri <- 1 / s$fire_prob_annual
-  prior <- s$n_wildfire_events == 0
+  prior <- s$n_wildfire_years_sig == 0
   pB <- ggplot() + base_layers() +
     geom_tile(data = s[prior, ], aes(lon_centre, lat_centre),
               width = cell_size, height = cell_size, fill = "#bdbdbd",
@@ -148,13 +148,14 @@ fig_fire <- function() {
                          name = "Mean years\nbetween fires") +
     top_layers() +
     labs(title = "Fire regime given to the model",
-         subtitle = sprintf("%d M. nodosa cells (0.1 degree); grey = no wildfire\nrecorded (estimate then: one fire per %.0f yr)",
-                            nrow(s), 1 / min(s$fire_prob_annual)))
+         subtitle = sprintf("%d M. nodosa cells (0.1 degree); grey = no fire year\nrecorded (estimate then: one fire per %.0f-%.0f yr)",
+                            nrow(s), 1 / max(s$fire_prob_annual[prior]), 1 / min(s$fire_prob_annual[prior])))
 
   (pA | pB) + plot_annotation(
     caption = wrap(paste0(
-      "Right: Bayesian estimate per cell from NPWS wildfire history 1970-2024 (Gamma-Poisson, regional prior; a cell with no recorded wildfire gets ",
-      sprintf("one fire per %.0f yr).", 1 / min(s$fire_prob_annual)),
+      "Left: NSW only. Right: Bayesian estimate per cell from wildfire records, NSW NPWS 1987-2024 and Qld fire scars 2014-2024 (Gamma-Poisson, prior fitted across all cells; a cell with no fire year gets ",
+      sprintf("one fire per %.0f-%.0f yr, longer where the record is longer).",
+              1 / max(s$fire_prob_annual[prior]), 1 / min(s$fire_prob_annual[prior])),
       " Each model fire also burns a cell-specific share of plants, from the mean burnt fraction.",
       if (!have_shp) " Left panel at 0.1 degree; run with the NPWS shapefile for the 1-km version." else ""), 170)) &
     theme_map()

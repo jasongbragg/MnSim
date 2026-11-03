@@ -16,6 +16,9 @@
 #        runner/iucn_a4.R):
 #   source("runner/range_ensemble.R")
 #   run_range_ensemble(n_runs = 300, results_dir = "results/range_v1/", n_cores = 7)
+#   # fire scenarios (D5): same cells, seeds and draws, so runs pair up
+#   run_range_ensemble(300, "results/range_v1_allfire/", fire_regime = "all")
+#   run_range_ensemble(300, "results/range_v1_suppress50/", fire_scale = 0.5)
 #   R <- collect_range_ensemble("results/range_v1/")
 #   range_category_shares(R$runs)            # overall and by region
 #   plot_range_drivers(R, "results/range_v1/drivers.png")
@@ -69,27 +72,33 @@ draws_caption <- function(param_draws = DEFAULT_PARAM_DRAWS) {
     collapse = "; ")
 }
 
-# Cells usable for runs (complete rust and fire values), with region.
+# Cells usable for runs (complete rust and fire values), with region: the
+# state whose fire record the cell uses (fire_state), or by latitude for
+# older tables.
 load_range_sites <- function(path = SITE_PARAMS_PATH) {
   s <- load_site_params(path, drop_incomplete = TRUE)
-  s$region <- ifelse(s$lat_centre > QLD_LAT, "Qld", "NSW")
+  s$region <- if ("fire_state" %in% names(s)) s$fire_state else
+    ifelse(s$lat_centre > QLD_LAT, "Qld", "NSW")
   s
 }
 
 # ---- Planning ---------------------------------------------------------------
+# The random draws (cell, seed, parameters) do not depend on fire_regime or
+# fire_scale, so ensembles that differ only in those pair up run by run.
 plan_range_run <- function(i, sites, base, param_draws = DEFAULT_PARAM_DRAWS,
-                           master_seed = 20261022L) {
+                           master_seed = 20261022L, fire_regime = "wild", fire_scale = 1) {
   set.seed(master_seed + i)
   k  <- sample.int(nrow(sites), 1L, prob = sites$weight_n_raw)
   sd <- sample.int(99999L, 1L)
   dr <- draw_params(base, param_draws)
-  p  <- build_site_params(dr$params, sites[k, ])
+  p  <- build_site_params(dr$params, sites[k, ], fire_regime = fire_regime, fire_scale = fire_scale)
   p$seed <- sd
   row <- data.frame(run = i, cell_row = k, cell_id = sites$cell_id[k],
                     lon = sites$lon_centre[k], lat = sites$lat_centre[k],
                     region = sites$region[k], sim_seed = sd,
-                    site_fire_prob = sites$fire_prob_annual[k],
-                    site_fire_p_fimp = sites$fire_p_fimp[k],
+                    fire_regime = fire_regime, fire_scale = fire_scale,
+                    site_fire_prob = p$fire_prob_annual,
+                    site_fire_p_fimp = p$fire_p_fimp,
                     site_rust = sites$annual_env_alpha[k] /
                                 (sites$annual_env_alpha[k] + sites$annual_env_beta[k]),
                     run_id = iucn_run_id(p, ASSESS))
@@ -103,14 +112,18 @@ run_range_ensemble <- function(n_runs, results_dir,
                                param_draws = DEFAULT_PARAM_DRAWS,
                                master_seed = 20261022L,
                                base        = get_default_params(),
-                               sites       = load_range_sites()) {
+                               sites       = load_range_sites(),
+                               fire_regime = "wild",
+                               fire_scale  = 1) {
   dir.create(file.path(results_dir, "range"), recursive = TRUE, showWarnings = FALSE)
   base$fire_years <- integer(0)
   message(sprintf(
-    "Range-wide: %d runs on %d cores (%d cells; %d cells without rust/fire values dropped, %.1f%% of abundance weight)",
-    n_runs, n_cores, nrow(sites), attr(sites, "n_dropped"), 100 * attr(sites, "weight_dropped")))
+    "Range-wide: %d runs on %d cores (%d cells; %d cells without rust/fire values dropped, %.1f%% of abundance weight); fire regime '%s' x %.2f",
+    n_runs, n_cores, nrow(sites), attr(sites, "n_dropped"), 100 * attr(sites, "weight_dropped"),
+    fire_regime, fire_scale))
   plans <- lapply(seq_len(n_runs), plan_range_run, sites = sites, base = base,
-                  param_draws = param_draws, master_seed = master_seed)
+                  param_draws = param_draws, master_seed = master_seed,
+                  fire_regime = fire_regime, fire_scale = fire_scale)
   plan  <- do.call(rbind, lapply(plans, `[[`, "row"))
   write.csv(plan, file.path(results_dir, "range_plan.csv"), row.names = FALSE)
 

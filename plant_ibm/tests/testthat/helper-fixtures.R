@@ -27,6 +27,9 @@ source("runner/iucn_a4.R")       # compute_gen_time(), assess_a4(), summarise_iu
 source("runner/pegg_validation.R")  # compute_pegg_stats(), pegg_run_id()
 source("spatial/rust_pressure.R")    # rust_pressure_from_sdm(), apply_sdm_to_sites()
 source("runner/range_ensemble.R")   # plan_range_run(), draw_params(), range_category_shares()
+source("spatial/fire/fire_config.R")  # fire pipeline settings (D1-D5)
+for (.f in c("estimate", "regime", "cell_years"))  # estimator, site fire table, burnt fractions
+  source(file.path("spatial/fire/R", paste0(.f, ".R")))
 # Test files run with wd = tests/testthat: point data paths at the project root.
 assign("SITE_PARAMS_PATH", file.path(proj_root, "spatial/data/mn_site_params.csv"), envir = globalenv())
 

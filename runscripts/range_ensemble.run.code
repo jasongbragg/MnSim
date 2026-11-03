@@ -8,8 +8,9 @@ source("runner/params_utils.R")
 source("runner/iucn_a4.R")
 source("runner/range_ensemble.R")
 
-# New folder whenever the model or params change (results are cached per run).
-out <- "results/range_v1/"
+# New folder whenever the model, params or site table change (results are
+# cached per run). range_v2: NSW + Qld fire data (Nov 2026).
+out <- "results/range_v2/"
 
 # Runs are restartable and extendable: rerun with a larger n_runs to add more;
 # earlier runs are reused and unchanged.
@@ -23,3 +24,11 @@ plot_range_drivers(R, file.path(out, "drivers.png"))
 # Parameter uncertainty: DEFAULT_PARAM_DRAWS in runner/range_ensemble.R.
 # Switch off (site + seed variation only):
 #   run_range_ensemble(300, "results/range_noparam/", param_draws = list())
+
+# Fire scenarios (docs/methodological_notes.md D5). The default above is
+# wildfire only. Same cells, seeds and draws as 'out', so runs pair up:
+#   all recorded fire (wildfire + planned burns)
+# run_range_ensemble(300, "results/range_v2_allfire/", fire_regime = "all")
+#   wildfire suppression: half the fire frequency
+# run_range_ensemble(300, "results/range_v2_suppress50/", fire_scale = 0.5)
+# Compare: range_category_shares(collect_range_ensemble("results/range_v2_allfire/")$runs)

@@ -18,8 +18,11 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
 - Range-wide ensemble (`plant_ibm/talk/make_talk_figures.R`): cells drawn by
   abundance x seed x parameter draws. Preliminary result (Oct 2026, 300 runs):
   99% of runs threatened, split VU 45% / EN 54%, median decline 51%.
-- Not yet included: Queensland fire data (prior only), resistance (all plants
-  fully susceptible), rust effects on seed set (option, off).
+- Fire: NSW (NPWS 1987-2024) and Queensland (fire scars 2014-2024) on one
+  footing, wildfire by default; all fire and planned burns kept per cell for
+  comparison and management scenarios (Nov 2026; notes D1-D5).
+- Not yet included: resistance (all plants fully susceptible), rust effects
+  on seed set (option, off).
 
 ## Phase 0: housekeeping (before any fitting)
 
@@ -50,16 +53,24 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
 ## Phase 1: data inputs
 
 ### 1a. Queensland fire
-- [ ] Acquire Qld Landsat/Sentinel-2 fire-scar rasters; QPWS fire polygons
-      if available (to separate wildfire from planned burns, which the
-      rasters do not distinguish).
-- [ ] Restructure `02` into one adapter per source, each producing burnt
-      fraction per grid cell per year; the existing Gamma-Poisson estimator
-      runs downstream of all of them.
-- [ ] Calibrate the Qld product against NSW NPWS records in border cells so a
-      "wildfire" means the same thing in both states.
-- [ ] Re-derive `fire_prob_annual` and burnt fraction for the ~109 Qld cells
-      (about 10% of abundance weight).
+- [x] Acquire Qld fire scars (QRSC, 1987-2025) and QPWS fire history
+      (planned burns): `spatial/fire/01_download_qld.R`. Nov 2026.
+- [x] Restructure fire processing into one adapter per source, each giving
+      the burnt fraction per cell per year (`spatial/fire/`); estimator
+      downstream of all of them, prior now fitted by maximum likelihood.
+      Nov 2026. Notes: D1, D2.
+- [x] Border check: records agree using Qld 2014-2024; automated 1987-2013
+      Qld mapping rejected. Nov 2026. Notes: D4.
+- [x] Fire regime for all 375 cells (Qld from data, not the prior);
+      wildfire default, all fire and planned burns alongside. Nov 2026.
+      Notes: D5.
+- [ ] Rerun the range ensemble with the new site table (`results/range_v2/`)
+      and refresh `fire_size_sd` in `params.R` (range-wide median
+      `sd_frac_burned`).
+- [ ] Management scenarios: planned burning as a second fire process (own
+      frequency, extent and possibly severity), e.g. no burning vs burning
+      a target site every N years; suppression via `fire_scale` already
+      available. Notes: D5.
 
 ### 1b. Rust SDM (mrsdm)
 - [ ] Run `evaluate_sdm.R`: Boyce index, spatial block CV, clamping check.

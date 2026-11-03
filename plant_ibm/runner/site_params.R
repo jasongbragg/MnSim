@@ -29,17 +29,37 @@ anchor_site_row <- function(sites, anchor = RUST_ANCHOR) {
   sites[which.min(d2), ]
 }
 
+# Fire regimes a run can use (docs/methodological_notes.md D5):
+#   "wild" (default)  wildfire only: the standard columns of the site table
+#   "all"             all recorded fire (wildfire + planned burns): *_all columns
+# 'fire_scale' multiplies the annual fire probability (e.g. 0.5 = wildfire
+# suppression halving fire frequency; 1 = as recorded).
+FIRE_REGIME_CHOICES <- c("wild", "all")
+
+site_fire_values <- function(site_row, fire_regime = "wild") {
+  fire_regime <- match.arg(fire_regime, FIRE_REGIME_CHOICES)
+  sfx <- if (fire_regime == "wild") "" else paste0("_", fire_regime)
+  cols <- paste0(c("fire_prob_annual", "fire_p_fimp", "sd_frac_burned"), sfx)
+  miss <- setdiff(cols, names(site_row))
+  if (length(miss))
+    stop("site table has no ", paste(miss, collapse = ", "),
+         ": rebuild it with spatial/02_cross_reference_layers.R (fire regime '", fire_regime, "')")
+  list(prob = site_row[[cols[1]]], p_fimp = site_row[[cols[2]]], size_sd = site_row[[cols[3]]])
+}
+
 # Override base params with one cell's values.
-build_site_params <- function(base_params, site_row) {
+build_site_params <- function(base_params, site_row, fire_regime = "wild", fire_scale = 1) {
   p <- base_params
 
   # Site-specific fire regime
-  p$fire_prob_annual <- site_row$fire_prob_annual
-  p$fire_p_fimp      <- site_row$fire_p_fimp
+  fv <- site_fire_values(site_row, fire_regime)
+  stopifnot(is.numeric(fire_scale), length(fire_scale) == 1L, fire_scale >= 0)
+  p$fire_prob_annual <- min(1, fv$prob * fire_scale)
+  p$fire_p_fimp      <- fv$p_fimp
   # Between-fire sd of burnt fraction: the cell's own where it had >= 2
   # fire years, else the base value (range-wide median).
-  if (!is.null(site_row$sd_frac_burned) && !is.na(site_row$sd_frac_burned))
-    p$fire_size_sd   <- site_row$sd_frac_burned
+  if (!is.null(fv$size_sd) && !is.na(fv$size_sd))
+    p$fire_size_sd   <- fv$size_sd
   p$fire_years       <- integer(0)   # must use fire_prob_annual for long runs
 
   # Site-specific rust pressure (SDM, normalised at the rust anchor cell)

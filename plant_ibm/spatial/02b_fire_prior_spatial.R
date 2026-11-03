@@ -1,5 +1,11 @@
 # spatial/02b_fire_prior_spatial.R
 #
+# SUPERSEDED (Nov 2026): kept for reference only. The fire regime now comes
+# from spatial/fire/ (NSW + Qld, prior fitted by maximum likelihood; see
+# docs/methodological_notes.md D2). This script still reads NSW data only,
+# uses the old 1970-2024 / whole-cell conventions, and overwrites
+# mn_site_params.csv; do not run it on the current table.
+#
 # Option B: Spatially-varying Bayesian prior for fire return interval.
 #
 # Extends the Empirical Bayes approach in 02_cross_reference_layers.R by

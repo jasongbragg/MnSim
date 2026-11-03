@@ -66,6 +66,7 @@ Every test in the suite falls into one of five categories:
 | `test-params.R` | 12 | `get_default_params()` schema sanity |
 | `test-simulate.R` | 8 | `run_simulation` integration, reproducibility, extinction, common-random-numbers |
 | `test-matrix-equivalence.R` | 12 | IBM-vs-matrix validation (see below) |
+| `test-fire-regime.R` | 10 | Fire pipeline (methodological notes D1-D5): burnt fraction per cell-year (union within a year, land vs whole-cell base), NB maximum-likelihood prior recovers known parameters and uses zero cells, old method of moments reproduced, per-cell record length, no rate floor for planned burns, per-state priors and the shared-prior test, site table columns, `fire_regime` / `fire_scale` in `build_site_params()`, scenario ensembles pairing run by run |
 
 ## Matrix-model equivalence: the validation centrepiece
 

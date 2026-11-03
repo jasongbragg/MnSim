@@ -16,7 +16,14 @@
 
 
 source("spatial/01_get_melaleuca_occurrences.R")
-source("spatial/02_cross_reference_layers.R")
+
+# Fire: NSW + Qld cell-year tables (docs/methodological_notes.md D1-D5).
+# Only when fire data or the grid change; the tables are kept in git.
+# source("spatial/fire/01_download_qld.R")      # Qld downloads (internet; resumable)
+# source("spatial/fire/02_fire_cell_years.R")   # burnt fraction per cell-year (slow)
+# source("spatial/fire/03_fire_checks.R")       # border check, scenarios, figures
+
+source("spatial/02_cross_reference_layers.R")   # site table: fire regime, rust, weights
 
 
 # IUCN over the spatial surface: see runscripts/range_ensemble.run.code
