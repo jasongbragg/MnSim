@@ -83,9 +83,13 @@ resprouting plants (`max_effect`), uniform on 0.32-0.78, the range whose Pegg
 scenario medians lie in the 95% interval of the observation (V4). To be
 replaced by fitted parameter sets (ROADMAP Phase 2).
 
-**B4. Cells without inputs** [open]
-16 cells (1.7% of abundance weight) lack SDM, and therefore rust, values. They
-are dropped and reported, not silently lost.
+**B4. Cells without inputs** [decided, Nov 2026]
+Until Nov 2026, 16 cells (1.7% of abundance weight; 14 NSW, 2 Qld, all
+coastal, up to 19 records each) had no SDM value: the SDM was read at the
+cell centre, which fell at sea. The SDM is now averaged over the raster
+cells inside each 0.1-degree cell, ignoring sea (`extract_sdm_cells()`,
+`spatial/rust_pressure.R`), which gives every coastal cell a value from its
+land. Cells still lacking inputs would be dropped and reported, not lost.
 
 ## C. Myrtle rust
 
@@ -108,7 +112,8 @@ level for the whole range.
 Implementation: the anchor cell is the occupied cell nearest Yarringully
 (cell 3623, 153.25 E, 29.15 S; the reserve's point location falls in an
 unoccupied cell). Its SDM value is read from the raster every time, with the
-same extraction as every other cell, so it always gets exactly 0.70 whatever
+same extraction as every other cell (mean over the cell's land since Nov
+2026, B4), so it always gets exactly 0.70 whatever
 SDM is supplied. A new SDM therefore changes only the relative pattern;
 the level, and the Pegg calibration (V4), carry over
 (`spatial/rust_pressure.R`, `spatial/02c_update_rust_pressure.R`).
@@ -127,7 +132,22 @@ between years. No data constrain it yet; it affects the spread among runs
 Suitability is about 1 in almost every coastal cell (median 0.99), so the
 SDM separates the coastal range from drier inland cells but gives no gradient
 along the coast. Rust pressure is therefore about 0.70 almost everywhere in
-the core range.
+the core range. Numbers (site table, Nov 2026): 264 of 307 coastal cells
+have suitability >= 0.95; none exceeds the anchor cell (0.993); median rust
+pressure 0.70 in every latitude band from 24 to 38 S; the lower values are
+all inland. In the range ensemble (300 runs, Nov 2026) fire frequency, not
+rust, therefore explains nearly all differences between coastal cells.
+Likely cause: an occurrence SDM estimates where rust *can* establish, and
+rust is established along the whole coast, so its suitability saturates
+there; it is not a measure of disease *intensity*. Diagnostics
+(`mrsdm/code/evaluate_sdm.R`, sections 5-7): random vs spatial-block CV,
+Boyce curve, clamping at M. nodosa cells, saturation by algorithm, and
+whether climate (the SDM's predictors) varies along the coast.
+Routes under consideration (Phase 1b): (i) an intensity index from climate
+(e.g. months with infection-suitable temperature and moisture) rather than
+occurrence suitability; (ii) calibrating pressure against field incidence at
+several sites; (iii) keeping the SDM for the coast-inland contrast and
+representing the unknown coastal gradient as uncertainty in the ensemble.
 
 **C5. Rust effects in the model** [assumption]
 Rust raises death risk, most for seedlings and young plants (declining with
@@ -372,3 +392,4 @@ flower) in the model. Not used for fitting.
 | Nov 2026 | D2 | Fire-rate prior by maximum likelihood over all cells, shared by both states |
 | Nov 2026 | D4 | Qld fire scars 2014-2024 only; automated 1987-2013 mapping rejected (border check) |
 | Nov 2026 | D5 | Wildfire-only default; all fire and planned burns kept per cell for comparison and management scenarios |
+| Nov 2026 | B4, C2 | SDM averaged over each cell's land, not read at the centre: fills the 16 coastal cells |

@@ -6,9 +6,12 @@
 #
 # ASSUMPTION (docs/methodological_notes.md, "Rust pressure"):
 #   mean annual pressure in cell i = mu * s_i / s_anchor, capped at 'cap'
-# where s is the SDM value extracted the same way for every cell (at the
-# 0.1-degree cell centre), and the anchor cell is the occupied cell nearest
-# the anchor site. Dividing by the anchor cell's own SDM value means:
+# where s is the SDM value extracted the same way for every cell: the
+# area-weighted mean of the raster over the 0.1-degree cell (its land, since
+# the SDM is NA at sea; notes B4, C2), and the anchor cell is the occupied
+# cell nearest the anchor site. Until Nov 2026 s was read at the cell centre,
+# which left 16 coastal cells (centre at sea) without a value; that reading
+# remains available as extract = "centre". Dividing by the anchor cell's own SDM value means:
 #   - the anchor cell always gets exactly mu (0.70), for any SDM, so the
 #     field calibration at Yarringully and the Pegg et al. validation survive
 #     SDM updates;
@@ -40,19 +43,48 @@ rust_pressure_from_sdm <- function(sdm, anchor_index, anchor = RUST_ANCHOR) {
   )
 }
 
+# 0.1-degree cell polygons (terra) from cell centres.
+cell_polygons <- function(lon, lat, deg = 0.1) {
+  h <- deg / 2
+  terra::vect(lapply(seq_along(lon), function(i)
+    rbind(c(lon[i] - h, lat[i] - h), c(lon[i] + h, lat[i] - h), c(lon[i] + h, lat[i] + h),
+          c(lon[i] - h, lat[i] + h), c(lon[i] - h, lat[i] - h))),
+    type = "polygons", crs = "EPSG:4326")
+}
+
+# SDM value per cell, on a 0-1 scale (biomod2 writes 0-1000).
+#   "cell_mean": area-weighted mean over the raster cells inside the
+#                0.1-degree cell, ignoring NA (sea) -- the default
+#   "centre":    the raster value at the cell centre (pre-Nov-2026)
+extract_sdm_cells <- function(sdm, lon, lat, extract = c("cell_mean", "centre"), deg = 0.1) {
+  extract <- match.arg(extract)
+  sdm <- terra::classify(sdm[[1]], cbind(-Inf, -1e30, NA))   # nodata written as a huge negative
+  vals <- if (extract == "centre") {
+    terra::extract(sdm, terra::vect(data.frame(lon = lon, lat = lat), geom = c("lon", "lat"),
+                                    crs = "EPSG:4326"))[, 2L]
+  } else {
+    terra::extract(sdm, cell_polygons(lon, lat, deg), fun = mean, na.rm = TRUE, exact = TRUE)[, 2L]
+  }
+  vals[is.nan(vals)] <- NA_real_
+  if (any(!is.na(vals)) && max(vals, na.rm = TRUE) > 1.5) vals <- vals / 1000
+  vals
+}
+
 # Add / refresh the rust columns of a site table (one row per occupied cell,
 # columns lon_centre, lat_centre). If 'sdm' (a terra SpatRaster) is given the
-# SDM is re-extracted at cell centres; otherwise the existing
+# SDM is re-extracted per cell (extract_sdm_cells); otherwise the existing
 # sdm_suitability column is used. Prints the anchor diagnostics.
 apply_sdm_to_sites <- function(sites, sdm = NULL, anchor = RUST_ANCHOR,
-                               neighbourhood_deg = 0.15, warn_rel_diff = 0.10) {
+                               neighbourhood_deg = 0.15, warn_rel_diff = 0.10,
+                               extract = "cell_mean") {
   if (!is.null(sdm)) {
-    pts  <- terra::vect(as.data.frame(sites[, c("lon_centre", "lat_centre")]),
-                        geom = c("lon_centre", "lat_centre"), crs = "EPSG:4326")
-    vals <- terra::extract(sdm, pts)[, 2L]
-    vals[!is.na(vals) & vals < -1e30] <- NA_real_
-    if (max(vals, na.rm = TRUE) > 1.5) vals <- vals / 1000   # biomod2 0-1000 scale
-    sites$sdm_suitability <- vals
+    old <- sites$sdm_suitability
+    sites$sdm_suitability <- extract_sdm_cells(sdm, sites$lon_centre, sites$lat_centre, extract)
+    message(sprintf("  SDM per cell (%s): %d of %d cells without a value",
+                    extract, sum(is.na(sites$sdm_suitability)), nrow(sites)))
+    if (!is.null(old) && any(is.na(old) & !is.na(sites$sdm_suitability)))
+      message(sprintf("  %d cells newly filled (no value before)",
+                      sum(is.na(old) & !is.na(sites$sdm_suitability))))
   }
   k <- anchor_cell_index(sites$lon_centre, sites$lat_centre, anchor)
   rp <- rust_pressure_from_sdm(sites$sdm_suitability, k, anchor)

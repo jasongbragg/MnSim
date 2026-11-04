@@ -28,6 +28,7 @@
 # ---------------
 # Anchor (RUST_ANCHOR in params.R): Yarringully NR, mean pressure mu = 0.70.
 # annual_env_mean(cell) = mu * SDM_cell / SDM_anchor_cell, capped at 0.95,
+# with SDM_cell the mean of the raster over the cell's land (notes B4, C2),
 # with the anchor cell's SDM read from the raster each run (never typed in),
 # so the anchor cell is always exactly mu: Beta(14, 6), as in params.R.
 # Beta concentration (alpha + beta = conc) held constant across cells.

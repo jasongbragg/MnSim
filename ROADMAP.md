@@ -73,14 +73,15 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
       available. Notes: D5.
 
 ### 1b. Rust SDM (mrsdm)
-- [ ] Run `evaluate_sdm.R`: Boyce index, spatial block CV, clamping check.
+- [ ] Run `evaluate_sdm.R`: Boyce index, spatial block CV, clamping check;
+      now also saturation by algorithm and climate along the coast (Nov 2026).
 - [ ] Address saturation: suitability is ~1 in almost every coastal cell, so
       the SDM separates coast from inland but gives no gradient along the
       coast. Options: steeper suitability-to-pressure mapping; calibration
       against field incidence at several sites; humidity / leaf-wetness
       covariates.
-- [ ] Fill the 16 cells with no SDM value (1.7% of abundance), currently
-      dropped.
+- [x] Fill the 16 cells with no SDM value (1.7% of abundance): SDM averaged
+      over each cell's land instead of read at the centre. Nov 2026. Notes: B4.
 - [ ] Optional: carry the spread among SDM ensemble members into the runs.
 
 ### 1c. Resistance prevalence (once experimentally confirmed)

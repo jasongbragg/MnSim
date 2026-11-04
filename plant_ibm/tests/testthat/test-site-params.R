@@ -50,3 +50,31 @@ test_that("Pegg runs pick up the anchor cell, and site = NULL leaves params alon
   expect_equal(p$pegg_site_cell, a$cell_id)
   expect_identical(pegg_site_params(base, NULL), base)
 })
+
+test_that("extract_sdm_cells averages over the cell's land, filling cells whose centre is at sea", {
+  skip_if_not_installed("terra")
+  r <- terra::rast(xmin = 150, xmax = 151, ymin = -31, ymax = -30, res = 0.025, crs = "EPSG:4326")
+  terra::values(r) <- 800                                     # biomod2 0-1000 scale
+  xy <- terra::crds(r, na.rm = FALSE)
+  r[xy[, 1] > 150.52 & xy[, 2] < -30.5] <- NA                 # "sea" over cell 2's centre
+  r[xy[, 1] < 150.5 & xy[, 2] > -30.5 & xy[, 1] < 150.25] <- 400   # west half of cell 1 lower
+  lon <- c(150.25, 150.55); lat <- c(-30.25, -30.55)
+  ctr <- extract_sdm_cells(r, lon, lat, "centre")
+  avg <- extract_sdm_cells(r, lon, lat, "cell_mean")
+  expect_true(is.na(ctr[2]))
+  expect_equal(avg[2], 0.8)                                   # land part only
+  expect_equal(avg[1], 0.6, tolerance = 1e-6)                 # half 0.4, half 0.8
+})
+
+test_that("apply_sdm_to_sites keeps the anchor cell at exactly mu with cell means", {
+  skip_if_not_installed("terra")
+  r <- terra::rast(xmin = 152.5, xmax = 153.5, ymin = -29.5, ymax = -28.5, res = 0.025, crs = "EPSG:4326")
+  xy <- terra::crds(r, na.rm = FALSE)
+  terra::values(r) <- 0.5 + 0.4 * (xy[, 2] + 29.5)             # rises northwards
+  s <- data.frame(cell_id = 1:3, lon_centre = c(153.25, 152.95, 153.05),
+                  lat_centre = c(-29.15, -28.75, -29.35))
+  out <- suppressMessages(apply_sdm_to_sites(s, r, .A))
+  expect_true(out$rust_anchor_cell[1])
+  expect_equal(out$annual_env_mean[1], .A$mu)
+  expect_gt(out$annual_env_mean[2], out$annual_env_mean[3])
+})
