@@ -128,26 +128,46 @@ between years. No data constrain it yet; it affects the spread among runs
 (e.g. Pegg-scenario spread is wider at 20 than at 48). Candidate for fitting
 (Phase 2), e.g. against year-to-year incidence at Yarringully.
 
-**C4. SDM saturation** [open]
-Suitability is about 1 in almost every coastal cell (median 0.99), so the
-SDM separates the coastal range from drier inland cells but gives no gradient
-along the coast. Rust pressure is therefore about 0.70 almost everywhere in
-the core range. Numbers (site table, Nov 2026): 264 of 307 coastal cells
-have suitability >= 0.95; none exceeds the anchor cell (0.993); median rust
-pressure 0.70 in every latitude band from 24 to 38 S; the lower values are
-all inland. In the range ensemble (300 runs, Nov 2026) fire frequency, not
-rust, therefore explains nearly all differences between coastal cells.
-Likely cause: an occurrence SDM estimates where rust *can* establish, and
-rust is established along the whole coast, so its suitability saturates
-there; it is not a measure of disease *intensity*. Diagnostics
-(`mrsdm/code/evaluate_sdm.R`, sections 5-7): random vs spatial-block CV,
-Boyce curve, clamping at M. nodosa cells, saturation by algorithm, and
-whether climate (the SDM's predictors) varies along the coast.
-Routes under consideration (Phase 1b): (i) an intensity index from climate
-(e.g. months with infection-suitable temperature and moisture) rather than
-occurrence suitability; (ii) calibrating pressure against field incidence at
-several sites; (iii) keeping the SDM for the coast-inland contrast and
-representing the unknown coastal gradient as uncertainty in the ensemble.
+**C4. No rust gradient along the coast: current SDM kept** [decided, Nov 2026]
+Suitability is about 1 in almost every coastal cell, so rust pressure is
+about 0.70 throughout the core range and falls only towards the arid
+interior. Numbers (Nov 2026): 313 of 375 cells have suitability >= 0.9;
+none exceeds the anchor cell (0.993); median pressure 0.70 in every latitude
+band from 24 to 38 S. In the range ensemble, fire frequency, not rust,
+explains nearly all differences between coastal cells.
+Decision: keep the current SDM as the rust layer. It captures what the data
+support -- a sharp decline in rust with aridity -- and treating the coast
+as uniform reflects that intensity along the coast is not resolved by the
+data (year-to-year variation, C3, is large).
+Why the SDM saturates (`mrsdm/code/evaluate_sdm.R`, Nov 2026): pseudo-
+absences are drawn 250-500 km from records, so the model contrasts the humid
+coast with the dry interior; GBM and RF responses are flat across coastal
+climate (e.g. max summer temperature below ~31 C, rainfall 1000-3000 mm).
+Coastal climate does vary (annual mean 17-21 C, Spearman rho with latitude
+0.95) but the occurrence model has no reason to pass that on. Other
+diagnostics: continuous Boyce index 0.93 (P/E > 1 only above suitability
+~0.83); random-CV TSS 0.95-0.99 is inflated by the distant pseudo-absences;
+spatial-block CV TSS 0.47-0.60 (AUC 0.74-0.98), from only 2 of 4 folds
+because the others lacked presences or absences; clamping at 3 of 358
+M. nodosa cells (current), 1 (future). GLM response curves show near-
+separation (step and U shapes), an SDM-level caveat, not one that affects
+MnSim given the saturation.
+Bias probe (`mrsdm/code/probe_sdm_bias.R`, Nov 2026): refitting with
+background drawn at random within the study area (as in KarinaGuo/MQ_SDM)
+does give a coastal pattern (suitability 0.64-0.92, 10th-90th percentile),
+but across the 313 coastal cells it follows survey effort, not climate:
+Spearman rho with log distance to the nearest city -0.40, with local rust
+record density 0.55, with annual mean temperature 0.16, with latitude 0.07.
+In a joint regression on coastal cells, distance to city explains R2 0.16
+and temperature 0.03 (coefficients -0.30 and 0.14, standardised). So the
+gradient a presence-background model produces here is largely where people
+look; it is not used.
+[assumption] Rust pressure is uniform along the coast at the anchor level.
+[open] If incidence data across several coastal sites become available,
+test this directly; a target-group background (TG_FILE in the probe) would
+be a stronger effort control. A coastal gradient could also enter Phase 3
+as an uncertain term (strength drawn per run, including zero) to see whether
+it would matter for the listing.
 
 **C5. Rust effects in the model** [assumption]
 Rust raises death risk, most for seedlings and young plants (declining with
@@ -393,3 +413,4 @@ flower) in the model. Not used for fitting.
 | Nov 2026 | D4 | Qld fire scars 2014-2024 only; automated 1987-2013 mapping rejected (border check) |
 | Nov 2026 | D5 | Wildfire-only default; all fire and planned burns kept per cell for comparison and management scenarios |
 | Nov 2026 | B4, C2 | SDM averaged over each cell's land, not read at the centre: fills the 16 coastal cells |
+| Nov 2026 | C4 | Current SDM kept; rust uniform along the coast; random-background gradient shown to follow survey effort |
