@@ -85,6 +85,9 @@ date after each. Assumptions and decisions: `docs/methodological_notes.md`.
 - [ ] Optional: carry the spread among SDM ensemble members into the runs.
 
 ### 1c. Resistance prevalence (once experimentally confirmed)
+Status Nov 2026: range-wide seedling screening under way (unpublished);
+resistance appears rare and clustered; single-locus model kept.
+Parked until the data are in; expected to change results modestly. Notes: E3.
 - [ ] Map measured resistance onto the model's genetics: number of loci,
       dominance, effect sizes (`resist_score`).
 - [ ] Interpolate site frequencies to grid cells; enable `RESISTANCE HOOK`

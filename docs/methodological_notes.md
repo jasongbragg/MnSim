@@ -356,9 +356,21 @@ census counts all deaths, with fire deaths also given separately
 (deaths_fire); previously fire deaths were missing from the yearly total.
 Dead plants are archived during a run for speed and restored at the end;
 this changes no result (verified identical, Nov 2026).
-**E3.** Resistance: multilocus, Mendelian inheritance; currently starting
-frequency 0 (fully susceptible) everywhere, pending the range-wide resistance
-data (ROADMAP Phase 1c). [open]
+**E3.** Resistance: Mendelian inheritance; currently one locus
+(`resist_locus_effect = 1`, `resist_dominance = 1`) at starting frequency 0
+(fully susceptible) everywhere. [open, data pending]
+Status (Nov 2026): range-wide seedling screening for resistance is under
+way (unpublished); resistance appears rare and spatially clustered, and a
+single-locus model is consistent with the work so far. Site samples are
+small, so most site-level estimates will be imprecise (often zero).
+Implications: the single-locus
+assumption is reasonable; setting resistance to 0 is a close
+approximation for most of the range, so including the data is expected to
+change results modestly. Planned use (ROADMAP 1c): site prevalence ->
+allele frequency (given dominance) -> per-cell `resist_freq0` through the
+`RESISTANCE HOOK` in `build_site_params()`, drawn from its binomial
+uncertainty. Until then, keep resistance confined to `params.R` and that
+hook (no other hard-coding of resistance = 0).
 **E4.** Simulation phasing: spin-up from 1600; generation time measured
 1810-1910; rust from 2010; present 2026. [decided]
 
