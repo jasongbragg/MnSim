@@ -1,0 +1,23 @@
+# Pegg et al. (2025) Austral Ecology 50: e70099, doi:10.1111/aec.70099.
+# Melaleuca nodosa monitoring plots: 50 tagged resprouting trees per plot.
+# One row per observation interval: deaths among the n_at_risk trees alive
+# at t1, by t2 (months since the fire). INTERIM (Nov 2026), from the paper:
+#   - coordinates: Yarringully = the reserve's point (as RUST_ANCHOR); the
+#     others are APPROXIMATE, placed from the site names (coords_approx = TRUE)
+#   - fire months: approximate (Black Summer, Nov-Dec 2019)
+#   - Yarringully split between post-fire years read by eye from Fig. 3a
+#     (talk/data/pegg2025_yarringully_fig3a.csv); the 24/50 total is exact
+#   - mid-north coast ("Central Coast" in the paper): tagged Sep 2020, final
+#     assessment May 2021; dead % given for Kiwarrak (56), Wallabi Point (20),
+#     Knappinghat (10); Saltwater and McClymont Creek taken as 0, INFERRED
+#     from "tree deaths in three of the five" (deaths_exact = FALSE)
+# To be replaced by per-tree, per-visit records (requested Nov 2026).
+plot,lon,lat,coords_approx,fire_month,t1_months,t2_months,n_at_risk,deaths,deaths_exact,note
+Yarringully,153.21967,-29.09357,FALSE,2019-12,3,12,50,5,FALSE,Fig 3a: ~10% dead by Dec 2020
+Yarringully,153.21967,-29.09357,FALSE,2019-12,12,25,45,19,FALSE,24/50 dead by Jan 2022 (exact total)
+Bundjalung,153.33,-29.25,TRUE,2019-11,6,26,50,0,TRUE,no deaths May 2020-Jan 2022
+Kiwarrak,152.50,-31.98,TRUE,2019-11,10,18,50,28,TRUE,56% dead at final assessment
+Wallabi Point,152.56,-32.01,TRUE,2019-11,10,18,50,10,TRUE,20% dead at final assessment
+Knappinghat,152.54,-32.05,TRUE,2019-11,10,18,50,5,TRUE,10% dead at final assessment
+Saltwater,152.56,-32.07,TRUE,2019-11,10,18,50,0,FALSE,zero deaths inferred
+McClymont Creek,152.48,-32.10,TRUE,2019-11,10,18,50,0,FALSE,zero deaths inferred

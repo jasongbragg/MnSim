@@ -1,0 +1,36 @@
+# Phase 2: fit post-fire mortality at the Pegg et al. (2025) plots, level and
+# spread between plots (docs/methodological_notes.md V6; runner/pegg_sites.R).
+# Run from plant_ibm/ with /opt/R/4.3.1/bin/R.
+
+source("params.R")
+for (f in c("individuals","genetics","mortality","fire","recruitment","census","simulate"))
+  source(file.path("R", paste0(f, ".R")))
+source("runner/params_utils.R")
+source("runner/pegg_sites.R")
+
+out <- "results/pegg_sites_v1/"   # new folder when the model, params or plot data change
+
+# Two candidate sources of between-site variation:
+#   year-to-year: Beta concentration of the annual rust draw (site_sd = 0)
+#   persistent:   site effect on mean rust pressure (conc kept at 20)
+# (The interim run, Nov 2026, put the best fit at the edge of sd 2 and
+# max_effect 0.8, so the ranges below go further.)
+grid <- rbind(
+  data.frame(conc = c(50, 20, 10, 5, 3, 2), site_sd = 0),
+  data.frame(conc = 20, site_sd = c(0.5, 1, 1.5, 2, 3, 4)))
+max_effects <- c(0, 0.15, 0.3, 0.45, 0.6, 0.8, 1.0, 1.2, 1.5)
+
+# 12 grid points x 5 cells x 60 seeds = 3600 spin-ups (~4 s each with branches);
+# about 35 min on 7 cores. Cached: rerun with more seeds to add precision.
+run_pegg_plot_grid(grid, max_effects, seeds = 1:60, results_dir = out,
+                   n_cores = parallel::detectCores() - 1L)
+
+sims <- collect_pegg_plot_grid(out)
+fit  <- pegg_plot_loglik(sims)
+head(fit$loglik, 10)                                    # best parameter sets
+plot_pegg_plot_fit(fit, file.path(out, "pegg_sites_fit.png"))
+saveRDS(fit, file.path(out, "fit.rds"))
+
+# Per-plot predictions at the best set
+b <- fit$loglik[1, ]
+subset(fit$per_plot, conc == b$conc & site_sd == b$site_sd & max_effect == b$max_effect)

@@ -77,3 +77,38 @@ build_site_params <- function(base_params, site_row, fire_regime = "wild", fire_
 
   p
 }
+
+# ---- Persistent site effect on rust pressure (notes C3, V6) -----------------
+# Sites with the same modelled rust pressure differ a lot in post-fire
+# mortality (Pegg et al. 2025: 0-56% across seven plots). Two sources of
+# between-site variation are compared in Phase 2: year-to-year variation
+# (the Beta concentration annual_env_alpha + annual_env_beta) and a persistent
+# site effect -- a deviation z ~ Normal(0, rust_site_sd) in the logit of the
+# site's mean annual pressure, fixed for the whole run. rust_site_sd = 0 (the
+# params.R default) switches it off; then no random numbers are used, so runs
+# and plans are unchanged.
+draw_rust_site_effect <- function(p) {
+  sd <- if (is.null(p$rust_site_sd)) 0 else p$rust_site_sd
+  if (sd <= 0) return(0)
+  stats::rnorm(1, 0, sd)
+}
+
+# Shift the site's mean annual pressure by z on the logit scale, keeping the
+# Beta concentration (year-to-year variability) unchanged.
+apply_rust_site_effect <- function(p, z) {
+  if (is.null(z) || z == 0) { p$rust_site_z <- 0; return(p) }
+  conc <- p$annual_env_alpha + p$annual_env_beta
+  mu   <- stats::plogis(stats::qlogis(p$annual_env_alpha / conc) + z)
+  p$annual_env_alpha <- mu * conc
+  p$annual_env_beta  <- (1 - mu) * conc
+  p$rust_site_z      <- z
+  p
+}
+
+# Set the Beta concentration (year-to-year variability) keeping the mean.
+set_rust_concentration <- function(p, conc) {
+  mu <- p$annual_env_alpha / (p$annual_env_alpha + p$annual_env_beta)
+  p$annual_env_alpha <- mu * conc
+  p$annual_env_beta  <- (1 - mu) * conc
+  p
+}

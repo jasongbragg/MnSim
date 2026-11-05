@@ -96,17 +96,30 @@ Parked until the data are in; expected to change results modestly. Notes: E3.
 
 ## Phase 2: fitting to data
 
-- [ ] Assemble targets as coarse summaries, not detailed curves:
-  - Pegg: ~48% of resprouters dead after 2 yr; ~15% of survivors
-    flowering at Jan 2022 (4 of 26).
-  - Rust incidence levels (Pegg Fig. 3, % trees infected), for rust pressure.
-  - Resistance prevalence (Phase 1c).
-  - Stand structure / age at first flowering, if available.
-  - Share of trees killed outright by fire (literature, if reported).
-- [ ] Decide which parameters are free; fix the rest from literature, with
-      sources noted in `params.R`.
-- [ ] Fit by simulation (ABC or history matching). Accepted parameter sets
-      replace the hand-set ranges in `PARAM_DRAWS`.
+Aim: fit the level and the spread between sites, using as many monitored
+sites as possible, at coarse resolution (annual or per observation
+interval; no monthly dynamics). Notes: V6.
+
+- [x] Fire-only resprout window fixed at 2 years (was Poisson, mean 3).
+      Nov 2026. Notes: D3.
+- [x] Multi-plot fitting framework (`runner/pegg_sites.R`): seven Pegg et
+      al. plots, interval mortality, mixture likelihood over simulated
+      sites; persistent site effect on rust pressure (`rust_site_sd`) as an
+      alternative to year-to-year variation. Interim run: persistent effect
+      strongly preferred, best at the grid edge. Nov 2026.
+- [ ] Full grid on jupiter (`runscripts/pegg.sites.fit.run.code`).
+- [ ] Per-tree data from G. Pegg (requested Nov 2026): coordinates, fire
+      dates, per-visit status, infection, flowering/capsules, seedlings,
+      later revisits. Replace the interim plot table; refit.
+- [ ] Decide where the site effect acts (rust pressure vs tolerance) once
+      infection records are in; carry the fitted rust_site_sd and max_effect
+      into the range ensemble (already wired; 0 until fitted).
+- [ ] Flowering (after mortality): share of surviving resprouters
+      flowering by post-fire year against a pre-rust baseline of ~0.7
+      (Hewitt et al. 2014a); rust effect on flowering/seed set (now off);
+      consequences for recruitment.
+- [ ] Other targets as available: rust incidence levels; resistance
+      prevalence (1c); stand structure; fire-killed fraction.
 
 ## Phase 3: sensitivity analysis
 

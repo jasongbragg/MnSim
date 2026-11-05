@@ -122,7 +122,7 @@ Guards: a warning if the anchor cell's SDM differs from its surrounding
 current SDM no cell exceeds the anchor (anchor SDM 0.993).
 [open] Confirm and cite the field-incidence source for 0.70.
 
-**C3. Year-to-year variability of rust pressure** [assumption, open]
+**C3. Year-to-year variability of rust pressure** [assumption, open; being fitted, V6]
 The Beta concentration (alpha + beta = 20) sets how much rust pressure varies
 between years. No data constrain it yet; it affects the spread among runs
 (e.g. Pegg-scenario spread is wider at 20 than at 48). Candidate for fitting
@@ -252,8 +252,13 @@ Nov 2026; previously 0.125 from the old NSW table). Then:
   ceiling of 0.30 x f. Big fires are therefore both likelier to reach the
   stand and more lethal (extent and intensity correlated between fires,
   through one parameter).
-- Survivors resprout and do not flower for a few years (Poisson, mean 3,
-  plus a rust-dependent delay).
+- Survivors resprout: they do not flower, and are exposed to the extra rust
+  mortality of resprouting plants, for a fixed 2 years from fire alone, plus
+  a rust-dependent Poisson delay (decided Nov 2026; previously Poisson with
+  mean 3, at least 1 year; `resprout_delay_dist = "poisson"` restores it).
+  [assumption] Two years is a judgement, not a measured value; because it
+  sets how long resprouters are exposed to rust mortality, it is fixed
+  before the Phase 2 mortality fit (V6).
 Over many fires the mean share of plants burnt equals the cell's mean burnt
 fraction, as before; the change is that it comes as occasional whole-stand
 fires rather than a scattered quarter of the stand every time, and that a
@@ -406,6 +411,62 @@ pressure 0.83) -> 0.53 (Nov, at the anchor cell's 0.70).
 2022 (4 of 26) against about 13% of surviving resprouters recovered (able to
 flower) in the model. Not used for fitting.
 
+**V6. Several plots: level and spread, by interval** [in progress, Nov 2026]
+Why: Yarringully alone fixes the level of resprout rust mortality but not
+how much sites differ. Pegg et al. (2025) followed seven M. nodosa plots of
+50 tagged resprouting trees each, all at about the same modelled rust
+pressure (0.70), with very different outcomes: Yarringully 48% dead (24/50,
+to Jan 2022), Bundjalung 0% (to Jan 2022, despite heavy infection and
+dieback), and five mid-north coast plots (the paper's "Central Coast";
+tagged Sep 2020, final assessment May 2021) Kiwarrak 56%, Wallabi Point 20%,
+Knappinghat 10%, Saltwater and McClymont Creek 0% (inferred from "deaths at
+three of the five"). Fitting the spread asks how much between-site
+variation the model needs and of what kind (C3).
+Data: `runner/data/pegg2025_mnodosa_plots.csv`, one row per observation
+interval (months since fire, trees at risk, deaths). INTERIM: coordinates
+approximate except Yarringully; fire months approximate; the Yarringully
+split between post-fire years read off Fig. 3a; two zero plots inferred.
+Per-tree, per-visit records, coordinates, fire dates and infection records
+requested from G. Pegg (Nov 2026).
+Observation model (`runner/pegg_sites.R`): cohort = plants of reproductive
+age alive before the fire and not killed by it (tagged trees are adults;
+V2 used every resprouter); the Pegg scenario at each plot's cell gives the
+cohort's survival after each post-fire year; a constant death rate within a
+year maps that to any observed interval. Fitting is by interval, not two-
+year totals, because the windows differ (the mid-north coast plots start 10
+months after the fire), and whether deaths come in year 1 or year 2 matters.
+Likelihood per plot = mean over simulated sites (seeds) of the binomial
+probability of its deaths in each interval, so a parameter set that never
+produces a near-zero site gives the zero-death plots almost no probability.
+Two sources of between-site variation are compared: year-to-year (Beta
+concentration of the annual rust draw, C3) and a persistent site effect
+(`rust_site_sd`: logit-normal shift in a site's mean annual pressure, drawn
+once per site; 0 by default, already carried through the range ensemble).
+Interim result (Nov 2026; 20 seeds per cell; resprout window 2 yr, D3):
+log-likelihood (7 plots), best max_effect per structure --
+current model (conc 20, no site effect) -70.5 (max_effect 0.3);
+year-to-year only: conc 5 -60.5, conc 2 -50.6 (0.6);
+persistent site effect sd 1 -48.9 (0.8), sd 2 -34.0 (0.8, best, at the edge
+of both ranges tried). The current model predicts every plot in a narrow
+band (e.g. Bundjalung 26-50% dead for a 50-tree plot) and never zero deaths.
+Even at the best set the chance of a 50-tree plot with no deaths is only
+0-3%: adult resprouters die at ~4-5% a year in the model even without the
+extra resprout rust mortality, near the most that zero deaths in ~20 months
+allows. Single-site check: at the Yarringully cell (conc 20) the new window
+and adult cohort give ~41% (max_effect 0.45) and ~50% (0.6) dead over its
+record, so the V4 level is roughly unchanged.
+Reading (provisional): the plots favour a large persistent site effect over
+year-to-year variation, with a higher max_effect to keep the level. If
+confirmed this matters for the assessment: a persistent effect implies
+lasting low-rust sites (refugia) across the range. Caveats: interim data,
+few seeds, optimum at the grid edge. Bundjalung's heavy infection without
+deaths suggests the site effect may act on tolerance (mortality given
+infection) rather than on pressure; the requested infection records can
+separate the two. Next: the full grid (`runscripts/pegg.sites.fit.run.code`)
+with wider ranges and 60 seeds; then the per-tree data.
+[open] Background mortality of adult resprouters (~4-5%/yr) may be too high
+to allow zero-death plots; revisit once the data are in.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -426,3 +487,5 @@ flower) in the model. Not used for fitting.
 | Nov 2026 | D5 | Wildfire-only default; all fire and planned burns kept per cell for comparison and management scenarios |
 | Nov 2026 | B4, C2 | SDM averaged over each cell's land, not read at the centre: fills the 16 coastal cells |
 | Nov 2026 | C4 | Current SDM kept; rust uniform along the coast; random-background gradient shown to follow survey effort |
+| Nov 2026 | D3 | Fire-only resprout window fixed at 2 years (was Poisson, mean 3), set before the Phase 2 fit |
+| Nov 2026 | V6 | Phase 2: fit level and between-plot spread of post-fire mortality at seven Pegg plots, by interval |

@@ -120,7 +120,11 @@ apply_fire <- function(pop, params, t) {
   if (n_surv > 0) {
     rust_delay  <- rust_resprout_delay(pop, surv_idx, params, t)
 
-    delay <- rpois(n_surv, params$resprout_yrs_base) + rpois(n_surv, rust_delay)
+    # Fire-only window: fixed (params.R default, notes D3) or Poisson
+    # (the original rule; also the default when resprout_delay_dist is absent).
+    base  <- if (identical(params$resprout_delay_dist, "fixed"))
+      rep(as.integer(params$resprout_yrs_base), n_surv) else rpois(n_surv, params$resprout_yrs_base)
+    delay <- base + rpois(n_surv, rust_delay)
     delay <- pmax(delay, 1L)
 
     pop$resprout[surv_idx]            <- TRUE

@@ -92,15 +92,16 @@ plan_range_run <- function(i, sites, base, param_draws = DEFAULT_PARAM_DRAWS,
   sd <- sample.int(99999L, 1L)
   dr <- draw_params(base, param_draws)
   p  <- build_site_params(dr$params, sites[k, ], fire_regime = fire_regime, fire_scale = fire_scale)
+  p  <- apply_rust_site_effect(p, draw_rust_site_effect(p))   # no draw when rust_site_sd = 0
   p$seed <- sd
   row <- data.frame(run = i, cell_row = k, cell_id = sites$cell_id[k],
                     lon = sites$lon_centre[k], lat = sites$lat_centre[k],
                     region = sites$region[k], sim_seed = sd,
                     fire_regime = fire_regime, fire_scale = fire_scale,
+                    rust_site_z = p$rust_site_z,
                     site_fire_prob = p$fire_prob_annual,
                     site_fire_p_fimp = p$fire_p_fimp,
-                    site_rust = sites$annual_env_alpha[k] /
-                                (sites$annual_env_alpha[k] + sites$annual_env_beta[k]),
+                    site_rust = p$annual_env_alpha / (p$annual_env_alpha + p$annual_env_beta),
                     run_id = iucn_run_id(p, ASSESS))
   for (nm in names(dr$values)) row[[nm]] <- dr$values[[nm]]
   list(params = p, row = row)

@@ -80,7 +80,13 @@ get_default_params <- function() {
     # Edit fire_kill_scalar, fire_kill_half_sat, fire_kill_hill to tune severity.
     fire_years            = integer(0),  # ignored during diagnostic runs
     fire_prob_annual      = 1/50,
-    resprout_yrs_base     = 3,
+    # Years a fire survivor stays resprouting (no flowering; exposed to the
+    # extra rust mortality of resprouting plants) from fire alone: fixed at 2
+    # (notes D3; decided Nov 2026). Rust adds a Poisson delay on top
+    # (rust_dose_response$delay). resprout_delay_dist = "poisson" restores the
+    # previous rule (Poisson with mean resprout_yrs_base, at least 1 year).
+    resprout_yrs_base     = 2,
+    resprout_delay_dist   = "fixed",
     resprout_recovery     = "countdown",
     resprout_prob_recovery = 1 / 3,
     fire_kill_prob        = 0.35,
@@ -108,6 +114,10 @@ get_default_params <- function() {
     # i.e. Beta(14, 6). Range-wide runs replace these per cell.
     annual_env_alpha   = RUST_ANCHOR$mu * RUST_ANCHOR$conc,
     annual_env_beta    = (1 - RUST_ANCHOR$mu) * RUST_ANCHOR$conc,
+    # Persistent site effect: sd of a per-site shift in the logit of mean
+    # annual pressure, drawn once per site (runner/site_params.R). 0 = off.
+    # Candidate for Phase 2 fitting against between-site spread (notes V6).
+    rust_site_sd       = 0,
 
     rust_dose_response = list(
       age_peak     = 0.3,
