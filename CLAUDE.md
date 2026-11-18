@@ -27,8 +27,9 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
    data. Where code needs resistance data, use placeholder values from the species YAML.
 2. **Never edit files in `tests/reference/`.** If a regression test fails, the code is wrong, not
    the reference. Stop and report the difference. Don't "fix" it by changing expected values.
-3. **Run the tests before every commit:** `Rscript -e 'testthat::test_dir("tests")'`. Do not commit
-   while tests are failing.
+3. **Run the tests before every commit:** `cd plant_ibm && /opt/R/4.3.1/bin/Rscript tests/testthat.R`.
+   Do not commit while tests are failing. (Run from `plant_ibm/`: the helper sources model code by
+   relative path. Use R 4.3.1: the system `Rscript` is R 3.4.4 and cannot load `sf`.)
 4. **Do not hand-tune parameters to hit calibration targets.** All fitting goes through the
    calibration code (Phase 5), so it is logged and reproducible.
 5. **Every parameter value in a species YAML must cite its CSV row** (species + parameter), or be
