@@ -618,6 +618,44 @@ The point values are unchanged: the priors document uncertainty and nothing was 
 - 16 are inactive (switched-off terms, the legacy fire mode, shape settings the chosen form ignores);
 - 2 are the single-site fire defaults, which belong to the landscape layer (T4).
 
+**T7. YAML schema and loader** [decided, 2026-11-19]
+`plant_ibm/R/species_config.R` assembles the params list from four files and validates it:
+- `config/schema.yaml`: every field's layer, type, hard bounds or choices, and the list order;
+- `species/<sp>.yaml`: biology and rust anchor;
+- `config/landscape.yaml`: shared fire defaults (T4);
+- `config/run_defaults.yaml`: `N0`, `n_years`, `seed`, `fire_years`, `rust_start_year`.
+
+For M. nodosa, `load_species("m_nodosa")` is `identical()` to `get_default_params()`, so
+`make_run_id()` hashes and result caches are unchanged. `load_rust_anchor()` is identical to
+`RUST_ANCHOR`. `params.R` is not yet switched over (next PLAN item).
+
+Defined forms:
+- Every YAML number is parsed by R's `as.numeric()`, then coerced to the schema type. A YAML
+  `10000` therefore becomes a double, not an integer.
+- Fractions may be written as `1/3` or `1/50`, and `.inf` reads as Inf.
+- `annual_env_alpha` and `annual_env_beta` are written `{derived: rust_anchor}` and computed from
+  the anchor exactly as `params.R` did. This matters: `(1 - 0.7) * 20` is not exactly 6.
+
+Rule 5 at load time:
+- Each species value carries `cite: <csv>`. The loader checks that the row (species + `__` path)
+  exists once and that the value matches.
+- Otherwise the value is a prior (`prior: true`, min/max or choices, reason). The loader checks
+  the value lies within its range and that the range matches the CSV's PRIOR note.
+- Landscape values need a `source` or must be a prior. Run settings are not cited.
+- Fields the schema does not know, or in the wrong file, are errors. All problems are reported
+  together.
+
+`species/m_nodosa.yaml` was generated from `data/m_nodosa_params.csv`. A test checks that every
+CSV parameter row is used.
+
+The 18 rows still `UNTRACED` after T6 are now priors:
+- The 16 inactive values are fixed at their value (range [v, v]), with the reason "inactive".
+  This avoids implying uncertainty about settings that have no effect.
+- Shade `max_effect` is the exception: [0, 0.95], with the upper bound from `param_ranges.R`.
+- The single-site fire defaults are bounded by the fire pipeline's floor and cap:
+  `fire_prob_annual` [0.005, 0.5], `fire_p_fimp` [0.05, 1]. Their canonical values are in
+  `config/landscape.yaml`.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -646,3 +684,4 @@ The point values are unchanged: the priors document uncertainty and nothing was 
 | 2026-11-19 | T4 | Four config layers (species, landscape, assessment, validation); rust arrival 2010 for all species; windows are species settings with T_g-relative warnings |
 | 2026-11-19 | T5 | parlib: unittests fixture completed (schema test added), diags archived, param_ranges format for Phase 4 priors |
 | 2026-11-19 | T6 | M. nodosa values in data/m_nodosa_params.csv (rule 5 names both CSVs); 19 untraced active values marked as priors |
+| 2026-11-19 | T7 | YAML schema + loader (config/, species/m_nodosa.yaml, R/species_config.R); identical to get_default_params(); rule 5 checked at load; remaining 18 untraced rows made priors |

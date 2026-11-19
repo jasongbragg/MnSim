@@ -89,7 +89,10 @@ where each parameter is used.
     `fire_extent_mode`, `fire_size_sd`, `fire_stand_cover`, `rust_site_sd`);
   - remove or archive `diags/*` (five identical, unused, older copies);
   - adopt the `ensemble/.../param_ranges.R` format for Phase 4 priors.
-- [ ] [agent] Write a YAML schema and loader with validation (required fields, types, ranges).
+- [x] [agent] Write a YAML schema and loader with validation (required fields, types, ranges).
+  Done 2026-11-19 (notes T7): `config/schema.yaml`, `species/m_nodosa.yaml`, `config/landscape.yaml`,
+  `config/run_defaults.yaml`, `plant_ibm/R/species_config.R`; `test-species-config.R` checks
+  `identical()` to `get_default_params()` and that broken files are rejected.
   - The YAML mirrors the nested list exactly.
   - Add a test that `load_species("m_nodosa")` is `identical()` to the old `get_default_params()`
     before the old file is retired.

@@ -1,0 +1,116 @@
+# config/schema.yaml
+#
+# Schema for the model's parameter list (PLAN.md Phase 2; methodological notes T7).
+# The order of fields here is the order of the assembled params list, which
+# must be identical() to the old get_default_params() in plant_ibm/params.R.
+#
+# Each field (a mapping with 'type') gives:
+#   layer   where its value comes from (notes T4):
+#             species    species/<sp>.yaml       (cite a CSV row or be a prior: CLAUDE.md rule 5)
+#             landscape  config/landscape.yaml   (shared by all species; needs a source or a prior)
+#             run        config/run_defaults.yaml (run settings, overridden by runners)
+#   type    double | integer | character | double_vector | integer_vector
+#   min/max hard validity bounds (not priors)
+#   choices allowed values for character fields
+#   derive  how a value marked {derived: rust_anchor} is computed from the species' rust anchor
+#
+# The species' rust anchor (RUST_ANCHOR in params.R) is described under rust_anchor.
+
+rust_anchor:
+  site: {type: character}
+  lon:  {type: double, min: -180, max: 180}
+  lat:  {type: double, min: -90, max: 90}
+  mu:   {type: double, min: 0, max: 1}
+  conc: {type: double, min: 0}
+  cap:  {type: double, min: 0, max: 1}
+
+params:
+  N0:      {layer: run, type: double, min: 1}
+  n_years: {layer: run, type: double, min: 1}
+  seed:    {layer: run, type: double}
+
+  weibull_k:      {layer: species, type: double, min: 0}
+  weibull_lambda: {layer: species, type: double, min: 0}
+
+  senescence_dose_response:
+    max_effect: {layer: species, type: double, min: 0, max: 1}
+    form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}
+    half_sat:   {layer: species, type: double, min: 0}
+    hill:       {layer: species, type: double, min: 0}
+
+  juv_decline_dose_response:
+    max_effect: {layer: species, type: double, min: 0, max: 1}
+    form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}
+    half_sat:   {layer: species, type: double, min: 0}
+    hill:       {layer: species, type: double, min: 0}
+  juv_decline_age_half_sat: {layer: species, type: double, min: 0}
+  juv_decline_age_hill:     {layer: species, type: double, min: 0}
+
+  R_max:  {layer: species, type: double, min: 0}
+  K_half: {layer: species, type: double, min: 0}
+
+  shade_dose_response:
+    max_effect: {layer: species, type: double, min: 0, max: 1}
+    form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}
+    half_sat:   {layer: species, type: double, min: 0}
+    hill:       {layer: species, type: double, min: 0}
+
+  age_first_flower_mean: {layer: species, type: double, min: 0}
+  age_first_flower_sd:   {layer: species, type: double, min: 0}
+
+  selfing_rate: {layer: species, type: double, min: 0, max: 1}
+
+  fire_years:             {layer: run, type: integer_vector}
+  fire_prob_annual:       {layer: landscape, type: double, min: 0, max: 1}
+  resprout_yrs_base:      {layer: species, type: double, min: 0}
+  resprout_delay_dist:    {layer: species, type: character, choices: [fixed, poisson]}
+  resprout_recovery:      {layer: species, type: character, choices: [countdown, geometric]}
+  resprout_prob_recovery: {layer: species, type: double, min: 0, max: 1}
+  fire_kill_prob:         {layer: species, type: double, min: 0, max: 1}
+  fire_p_fimp:            {layer: landscape, type: double, min: 0, max: 1}
+  fire_extent_mode:       {layer: species, type: character, choices: [stand, plant]}
+  fire_size_sd:           {layer: landscape, type: double, min: 0}
+  fire_stand_cover:       {layer: species, type: double, min: 0, max: 1}
+  fire_kill_scalar:       {layer: species, type: double, min: 0, max: 1}
+  fire_kill_half_sat:     {layer: species, type: double, min: 0}
+  fire_kill_hill:         {layer: species, type: double, min: 0}
+
+  rust_start_year:  {layer: run, type: double}
+  rust_pressure:    {layer: species, type: double, min: 0}
+  microclim_alpha:  {layer: species, type: double, min: 0}
+  microclim_beta:   {layer: species, type: double, min: 0}
+  annual_env_alpha: {layer: species, type: double, min: 0, derive: anchor_alpha}
+  annual_env_beta:  {layer: species, type: double, min: 0, derive: anchor_beta}
+  rust_site_sd:     {layer: species, type: double, min: 0}
+
+  rust_dose_response:
+    age_peak:     {layer: species, type: double, min: 0, max: 1}
+    age_floor:    {layer: species, type: double, min: 0, max: 1}
+    age_half_sat: {layer: species, type: double, min: 0}
+    age_hill:     {layer: species, type: double, min: 0}
+    resprout:
+      max_effect: {layer: species, type: double, min: 0, max: 1}
+      form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}
+      half_sat:   {layer: species, type: double, min: 0}
+      hill:       {layer: species, type: double, min: 0}
+    delay:
+      max_effect: {layer: species, type: double, min: 0}
+      form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}
+      half_sat:   {layer: species, type: double, min: 0}
+      hill:       {layer: species, type: double, min: 0}
+
+  rust_flower_dose_response:
+    max_effect: {layer: species, type: double, min: 0, max: 1}
+    form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}
+    half_sat:   {layer: species, type: double, min: 0}
+    hill:       {layer: species, type: double, min: 0}
+
+  rust_recruit_dose_response:
+    max_effect: {layer: species, type: double, min: 0, max: 1}
+    form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}
+    half_sat:   {layer: species, type: double, min: 0}
+    hill:       {layer: species, type: double, min: 0}
+
+  resist_locus_effect: {layer: species, type: double_vector, min: 0, max: 1}
+  resist_dominance:    {layer: species, type: double_vector, min: 0, max: 1}
+  resist_freq0:        {layer: species, type: double_vector, min: 0, max: 1}

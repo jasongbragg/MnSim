@@ -1,0 +1,16 @@
+# config/run_defaults.yaml
+#
+# Run settings: not biology and not cited (CLAUDE.md rule 5 covers species
+# files). Runners override them: stand size, run length, seed, fixed fire
+# years, rust start (set from the assessment's rust year, 2010; notes T4).
+# Methodological notes T7.
+#
+# N0 is the stand size that R_max, K_half and the canopy half_sat values
+# in the species file are scaled to (notes T1).
+
+params:
+  N0: 10000
+  n_years: 200
+  seed: 42
+  fire_years: []
+  rust_start_year: .inf

@@ -1,0 +1,298 @@
+# species/m_nodosa.yaml
+#
+# Melaleuca nodosa: species biology and the rust anchor (PLAN.md Phase 2;
+# methodological notes T4, T6, T7). Generated on 2026-11-19 from
+# data/m_nodosa_params.csv, the source of every value here; edit both together
+# (test-species-config.R checks that they agree).
+#
+# Each value either cites its CSV row (cite: file; the row is species +
+# parameter, the path below joined with '__'), or is a prior (prior: true,
+# min/max or choices, reason), as CLAUDE.md rule 5 requires. Priors also cite
+# the CSV row that documents them.
+# {derived: rust_anchor}: computed from rust_anchor (alpha = mu x conc,
+# beta = (1 - mu) x conc), exactly as params.R did.
+# Not here: landscape values (config/landscape.yaml) and run settings
+# (config/run_defaults.yaml). The schema is config/schema.yaml.
+
+species: "Melaleuca nodosa"
+
+rust_anchor:
+  site: {value: "Yarringully NR", cite: m_nodosa_params.csv}
+  lon: {value: 153.21967, cite: m_nodosa_params.csv}
+  lat: {value: -29.09357, cite: m_nodosa_params.csv}
+  mu: {value: 0.70, cite: m_nodosa_params.csv}
+  conc: {value: 20, cite: m_nodosa_params.csv}
+  cap: {value: 0.95, cite: m_nodosa_params.csv}
+
+params:
+  weibull_k: {value: 1, cite: m_nodosa_params.csv}
+  weibull_lambda: {value: 60, cite: m_nodosa_params.csv}
+  senescence_dose_response:
+    max_effect:
+      value: 0.1
+      prior: true
+      min: 0
+      max: 0.6
+      reason: "Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: at most 60% annual mortality from senescence alone"
+      cite: m_nodosa_params.csv
+    form:
+      value: "sigmoid"
+      prior: true
+      choices: ["sigmoid"]
+      reason: "The only bounded rising form in dose_response(); kept fixed"
+      cite: m_nodosa_params.csv
+    half_sat:
+      value: 40
+      prior: true
+      min: 15
+      max: 60
+      reason: "Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: senescence starts early (15 yr) to barely noticeable before 60 yr"
+      cite: m_nodosa_params.csv
+    hill:
+      value: 8
+      prior: true
+      min: 2
+      max: 12
+      reason: "Proposed: 2 = gradual onset, above ~10 = near step at half_sat"
+      cite: m_nodosa_params.csv
+  juv_decline_dose_response:
+    max_effect:
+      value: 0.5
+      prior: true
+      min: 0.3
+      max: 0.99
+      reason: "Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: substantial to near-certain seedling death under full canopy"
+      cite: m_nodosa_params.csv
+    form:
+      value: "saturating"
+      prior: true
+      choices: ["saturating", "sigmoid"]
+      reason: "Proposed: saturating = effect rises from the first canopy plant; sigmoid = threshold-like"
+      cite: m_nodosa_params.csv
+    half_sat:
+      value: 5000
+      prior: true
+      min: 1000
+      max: 20000
+      reason: "Proposed: 0.1-2 x stand size (N0 10000); a count of canopy plants, so it scales with stand size (notes T1)"
+      cite: m_nodosa_params.csv
+    hill:
+      value: 2
+      prior: true
+      min: 2
+      max: 2
+      reason: "Inactive: has no effect with the current settings; fixed at this value (the saturating form ignores hill)"
+      cite: m_nodosa_params.csv
+  juv_decline_age_half_sat:
+    value: 2
+    prior: true
+    min: 1
+    max: 8
+    reason: "Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: juvenile hazard halves by age 1 to still declining at age 8"
+    cite: m_nodosa_params.csv
+  juv_decline_age_hill:
+    value: 2
+    prior: true
+    min: 1
+    max: 4
+    reason: "Proposed: 1 = near-exponential decay with age, 4 = gate-like"
+    cite: m_nodosa_params.csv
+  R_max: {value: 1000, cite: m_nodosa_params.csv}
+  K_half: {value: 4000, cite: m_nodosa_params.csv}
+  shade_dose_response:
+    max_effect:
+      value: 0
+      prior: true
+      min: 0
+      max: 0.95
+      reason: "Shade suppression off for M. nodosa (no data); upper bound from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R"
+      cite: m_nodosa_params.csv
+    form:
+      value: "saturating"
+      prior: true
+      choices: ["saturating"]
+      reason: "Inactive: has no effect with the current settings; fixed at this value (shade is off)"
+      cite: m_nodosa_params.csv
+    half_sat:
+      value: 1000
+      prior: true
+      min: 1000
+      max: 1000
+      reason: "Inactive: has no effect with the current settings; fixed at this value (shade is off)"
+      cite: m_nodosa_params.csv
+    hill:
+      value: 4
+      prior: true
+      min: 4
+      max: 4
+      reason: "Inactive: has no effect with the current settings; fixed at this value (shade is off)"
+      cite: m_nodosa_params.csv
+  age_first_flower_mean: {value: 5, cite: m_nodosa_params.csv}
+  age_first_flower_sd:
+    value: 1.5
+    prior: true
+    min: 0.5
+    max: 3
+    reason: "Proposed: between-plant spread in years; up to about half the mean (5 yr)"
+    cite: m_nodosa_params.csv
+  selfing_rate: {value: 0.10, cite: m_nodosa_params.csv}
+  fire_extent_mode: {value: "stand", cite: m_nodosa_params.csv}
+  fire_stand_cover: {value: 0.9, cite: m_nodosa_params.csv}
+  fire_kill_scalar: {value: 0.30, cite: m_nodosa_params.csv}
+  fire_kill_half_sat:
+    value: 2
+    prior: true
+    min: 1
+    max: 5
+    reason: "Proposed: age (yr) at which fire kill falls halfway from certain death to the ceiling; seedlings almost always die (D3). Unit-test params use 5"
+    cite: m_nodosa_params.csv
+  fire_kill_hill:
+    value: 2
+    prior: true
+    min: 1
+    max: 4
+    reason: "Proposed: 1 = gradual fall with age, 4 = sharp"
+    cite: m_nodosa_params.csv
+  fire_kill_prob:
+    value: 0.35
+    prior: true
+    min: 0.35
+    max: 0.35
+    reason: "Inactive: has no effect with the current settings; fixed at this value (legacy fire mode, used only when fire_p_fimp = 0)"
+    cite: m_nodosa_params.csv
+  resprout_yrs_base: {value: 2, cite: m_nodosa_params.csv}
+  resprout_delay_dist: {value: "fixed", cite: m_nodosa_params.csv}
+  resprout_recovery:
+    value: "countdown"
+    prior: true
+    choices: ["countdown", "geometric"]
+    reason: "countdown matches the fixed resprout window (D3); geometric is the matrix-test alternative"
+    cite: m_nodosa_params.csv
+  resprout_prob_recovery:
+    value: 1/3
+    prior: true
+    min: 1/3
+    max: 1/3
+    reason: "Inactive: has no effect with the current settings; fixed at this value (used only with resprout_recovery = geometric)"
+    cite: m_nodosa_params.csv
+  rust_pressure: {value: 1, cite: m_nodosa_params.csv}
+  microclim_alpha: {value: 20, cite: m_nodosa_params.csv}
+  microclim_beta: {value: 5, cite: m_nodosa_params.csv}
+  annual_env_alpha: {derived: rust_anchor, cite: m_nodosa_params.csv}
+  annual_env_beta: {derived: rust_anchor, cite: m_nodosa_params.csv}
+  rust_site_sd: {value: 0, cite: m_nodosa_params.csv}
+  rust_dose_response:
+    age_peak:
+      value: 0.3
+      prior: true
+      min: 0.1
+      max: 0.6
+      reason: "Proposed: annual rust hazard of the youngest fully susceptible plants at pressure 1"
+      cite: m_nodosa_params.csv
+    age_floor:
+      value: 0.025
+      prior: true
+      min: 0
+      max: 0.1
+      reason: "Proposed: adult rust hazard; includes 0 because adult resprouter mortality may be too high for zero-death plots (V6 open)"
+      cite: m_nodosa_params.csv
+    age_half_sat:
+      value: 2
+      prior: true
+      min: 1
+      max: 8
+      reason: "Proposed: same age scale as juvenile decline"
+      cite: m_nodosa_params.csv
+    age_hill:
+      value: 4
+      prior: true
+      min: 1
+      max: 8
+      reason: "Proposed: 1 = gradual decline with age, 8 = sharp"
+      cite: m_nodosa_params.csv
+    resprout:
+      max_effect: {value: 0.53, cite: m_nodosa_params.csv}
+      form:
+        value: "saturating"
+        prior: true
+        choices: ["saturating", "linear"]
+        reason: "With rust_pressure fixed at 1 the form only rescales max_effect, which V4 calibrates; keep fixed while that holds"
+        cite: m_nodosa_params.csv
+      half_sat:
+        value: 0.2
+        prior: true
+        min: 0.05
+        max: 1
+        reason: "Proposed. Confounded with max_effect while rust_pressure = 1 (realised effect = max_effect / (1 + half_sat)); V4 was calibrated with 0.2"
+        cite: m_nodosa_params.csv
+      hill:
+        value: 1
+        prior: true
+        min: 1
+        max: 1
+        reason: "Inactive: has no effect with the current settings; fixed at this value (the saturating form ignores hill)"
+        cite: m_nodosa_params.csv
+    delay:
+      max_effect: {value: 1.79, cite: m_nodosa_params.csv}
+      form: {value: "linear", cite: m_nodosa_params.csv}
+      half_sat:
+        value: 1
+        prior: true
+        min: 1
+        max: 1
+        reason: "Inactive: has no effect with the current settings; fixed at this value (the linear form ignores half_sat)"
+        cite: m_nodosa_params.csv
+      hill:
+        value: 1
+        prior: true
+        min: 1
+        max: 1
+        reason: "Inactive: has no effect with the current settings; fixed at this value (the linear form ignores hill)"
+        cite: m_nodosa_params.csv
+  rust_flower_dose_response:
+    max_effect: {value: 0, cite: m_nodosa_params.csv}
+    form:
+      value: "saturating"
+      prior: true
+      choices: ["saturating"]
+      reason: "Inactive: has no effect with the current settings; fixed at this value (max_effect = 0: term off)"
+      cite: m_nodosa_params.csv
+    half_sat:
+      value: 0.5
+      prior: true
+      min: 0.5
+      max: 0.5
+      reason: "Inactive: has no effect with the current settings; fixed at this value (max_effect = 0: term off)"
+      cite: m_nodosa_params.csv
+    hill:
+      value: 1
+      prior: true
+      min: 1
+      max: 1
+      reason: "Inactive: has no effect with the current settings; fixed at this value (max_effect = 0: term off)"
+      cite: m_nodosa_params.csv
+  rust_recruit_dose_response:
+    max_effect: {value: 0, cite: m_nodosa_params.csv}
+    form:
+      value: "saturating"
+      prior: true
+      choices: ["saturating"]
+      reason: "Inactive: has no effect with the current settings; fixed at this value (max_effect = 0: term off)"
+      cite: m_nodosa_params.csv
+    half_sat:
+      value: 0.5
+      prior: true
+      min: 0.5
+      max: 0.5
+      reason: "Inactive: has no effect with the current settings; fixed at this value (max_effect = 0: term off)"
+      cite: m_nodosa_params.csv
+    hill:
+      value: 1
+      prior: true
+      min: 1
+      max: 1
+      reason: "Inactive: has no effect with the current settings; fixed at this value (max_effect = 0: term off)"
+      cite: m_nodosa_params.csv
+  resist_locus_effect: {value: 1, cite: m_nodosa_params.csv}
+  resist_dominance: {value: 1, cite: m_nodosa_params.csv}
+  resist_freq0: {value: 0, cite: m_nodosa_params.csv}

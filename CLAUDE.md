@@ -14,6 +14,8 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
 ## Repo layout
 - `plant_ibm/` — the IBM code
 - `species/` — one YAML parameter file per species (created in Phase 2/4)
+- `config/` — `schema.yaml` (every parameter: layer, type, bounds), `landscape.yaml` (shared
+  landscape defaults), `run_defaults.yaml` (run settings); loaded by `plant_ibm/R/species_config.R`
 - `data/rust_species_params.csv` — literature parameters and calibration targets, one row per value,
   each with a source. Columns: species, ibm_module, parameter, role, value, units, evidence_type,
   confidence, source, notes. `role` is one of: parameter | calibration_target | committee_method |

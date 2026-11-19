@@ -1,0 +1,23 @@
+# config/landscape.yaml
+#
+# Landscape properties shared by all species (methodological notes T4, T7):
+# defaults for single-site runs. Range-wide and Pegg runs replace them with
+# each grid cell's values from the site table (runner/site_params.R).
+# Each value needs a 'source' or must be a prior (prior: true, min, max, reason).
+
+params:
+  fire_prob_annual:
+    value: 1/50
+    prior: true
+    min: 0.005
+    max: 0.5
+    reason: "Single-site default. Range = the floor and cap on per-cell fire rates (spatial/fire/fire_config.R; notes D2)"
+  fire_p_fimp:
+    value: 0.6
+    prior: true
+    min: 0.05
+    max: 1
+    reason: "Single-site default. Lower bound = PFIMP_MIN in spatial/fire/fire_config.R (notes D2, D3)"
+  fire_size_sd:
+    value: 0.146
+    source: "docs/methodological_notes.md D3: range-wide median between-fire sd of burnt fraction (105 cells with >= 2 wildfire years, NSW + Qld, Nov 2026)"
