@@ -467,6 +467,71 @@ with wider ranges and 60 seeds; then the per-tree data.
 [open] Background mortality of adult resprouters (~4-5%/yr) may be too high
 to allow zero-death plots; revisit once the data are in.
 
+## T. Testing (multispecies branch)
+
+**T1. Regression references for M. nodosa** [decided, 2026-11-19]
+Six fixed-seed scenarios (`plant_ibm/tests/regression/scenarios.R`):
+- no fire;
+- fixed fire years in stand mode;
+- rust at the anchor pressure, Beta(14, 6);
+- the same at a low-rust cell (7006, mean 0.148);
+- the Pegg scenario;
+- a shortened A4 run with counterfactual.
+
+How the references work:
+- The scenarios are built from `params.R`. The outputs are frozen in
+  `tests/reference/` by `tests/regression/make_reference.R`, which never
+  overwrites.
+- Each reference stores the exact params list it ran with. Re-running the
+  frozen params tests the code. Rebuilding the params from today's
+  `params.R` tests whether the calibration has changed. A ROADMAP
+  recalibration therefore shows up as a params change, not a code failure.
+
+Test scale [assumption]: `params.R` settles at ~13,000 plants, but test runs
+are capped at 500 (CLAUDE.md). The density-dependent parameters are
+multiplied by 0.03, giving ~400 plants:
+- `R_max` and `K_half` (counts of flowering plants);
+- `half_sat` of juvenile decline and of shading (counts of canopy plants).
+
+Per-capita dynamics stay close to the full-size model: the Pegg scenario
+gives 52% of resprouters dead (observed 48%), and the A4 run gives a 52%
+decline (EN), with T_g 22.7 yr. These runs check the code, not the
+assessment.
+
+Exact matching holds for R 4.3.1 with the default RNG. Any change to the
+order of random draws breaks it (`docs/architecture.md` §3.2).
+
+**T2. Second check: 20-seed summary statistics** [decided, 2026-11-19]
+`plant_ibm/tests/regression/stats.R`; baseline frozen in
+`tests/reference/summary_stats.rds` by `make_reference_stats.R`. Three
+statistics:
+- the annual death rate of mature plants without fire (1950-1999);
+- the Pegg fraction of resprouters dead;
+- the annual death rate under anchor rust with fire off (2011-2060).
+
+Each takes the mean over 20 seeds. The test passes if the new mean lies
+within 4 x sqrt(2) x sd/sqrt(20) of the baseline.
+
+Purpose: a refactor that only reorders random draws fails the exact match
+but should pass here.
+
+Tested by deliberately changing a scratch copy of the code:
+
+| Change | Exact-match tests | Statistics |
+|---|---|---|
+| Extra unused draw each year | fail | pass |
+| Rust mortality x 1.2 | fail | `rust_mortality` fails |
+| Senescence x 1.5 | fail | `mature_mortality` fails |
+| Background lambda 60 -> 55 | — | pass |
+
+The lambda 60 -> 55 change shifts mature mortality by ~2.5%, while the
+tolerance is ~5%.
+
+Two candidates were dropped because they hardly respond to real changes:
+the all-plant death rate (mostly juveniles, offset by recruitment) and the
+2009-2060 decline (a 20% rise in rust mortality left it unchanged). This is
+a coarse guard; the exact-match tests are the main check.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -489,3 +554,5 @@ to allow zero-death plots; revisit once the data are in.
 | Nov 2026 | C4 | Current SDM kept; rust uniform along the coast; random-background gradient shown to follow survey effort |
 | Nov 2026 | D3 | Fire-only resprout window fixed at 2 years (was Poisson, mean 3), set before the Phase 2 fit |
 | Nov 2026 | V6 | Phase 2: fit level and between-plot spread of post-fire mortality at seven Pegg plots, by interval |
+| 2026-11-19 | T1 | Six fixed-seed regression scenarios from `params.R` at test scale (density parameters x 0.03); references store their params |
+| 2026-11-19 | T2 | Second check: mature mortality, Pegg fraction dead and rust mortality over 20 seeds, tolerance 4 sd of the difference |

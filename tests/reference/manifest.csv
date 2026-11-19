@@ -1,0 +1,7 @@
+"scenario","seconds","N_alive_max","N_alive_last","fires_reached","md5"
+"no_fire",0.7,438,426,0,"86431c909d59c0b10b59d4ff08e7d8d3"
+"fire",0.5,436,301,1,"97ae40942c0822280ebfd636f23ac7f1"
+"rust_high",0.5,412,220,2,"632ee2d8af689e7100568e64bca9ab99"
+"rust_low",0.5,412,249,4,"63ffe6cd7cd9a840f7eaed5f2459df35"
+"pegg",0.4,397,94,1,"da7655aaa3eadcbb514ab32f8aaf8d38"
+"a4",2.6,415,190,7,"2617bc056f9811a810b137e1089e0a9e"
