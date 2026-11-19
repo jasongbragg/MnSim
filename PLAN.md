@@ -14,25 +14,79 @@ parameters set rather than fitted.
 - [ ] Add `private/` to `.gitignore`; confirm no unpublished resistance data is tracked
 - [ ] Copy `rust_species_params.csv` into `data/`; add `CLAUDE.md`, `PLAN.md`, `.claude/settings.json`
 - [ ] Install R packages (testthat, yaml, abc, data.table, future.apply, renv); `renv::init()`
-- [ ] Time one M. nodosa run and record wall time and peak RAM here: ________
+  - Note (review, 2026-11-19): `abc` and `future.apply` are in `renv/library` but not in `renv.lock` (run `renv::snapshot()`).
+    `renv` is only activated from the repo root (`.Rprofile`), not from `plant_ibm/`, where the tests run.
+- [ ] Time one M. nodosa run and record wall time and peak RAM here: ________ (ROADMAP gives ~8–9 s for a full A4 run)
 
 ## Phase 1 — Regression harness  [agent writes, you check]
 Goal: a safety net, so any refactor that changes M. nodosa's behaviour is caught.
-- [ ] [agent] Read `plant_ibm/` and write `docs/architecture.md`: the modules, the main loop, where each parameter is used
+
+Starting point (`docs/phase1_2_review.md`):
+- `plant_ibm/tests/testthat/` already has 16 test files, all passing in ~25 s. They cover unit tests,
+  matrix-model equivalence, IUCN A4 logic, and the Pegg, fire and ensemble runners.
+- Missing: no test compares output with stored results. The suite loads `parlib/unittests/params.R`
+  (everything off), so the working M. nodosa parameters in `params.R` are never run end to end.
+  Phase 1 adds only that missing piece.
+- Test command: `cd plant_ibm && /opt/R/4.3.1/bin/Rscript tests/testthat.R` (CLAUDE.md rule 3).
+
+- [x] [agent] Read `plant_ibm/` and write `docs/architecture.md`: the modules, the main loop, where each parameter is used (2026-11-19)
 - [ ] [you] Check the architecture note is correct
-- [ ] [agent] Choose 3–4 small fixed-seed scenarios (no fire, fire, high rust, low rust); save outputs to `tests/reference/`
+- [ ] [agent] Choose 3–4 small fixed-seed scenarios built from **`params.R`**, not the unit-test parameters.
+  - Cover: no fire; fire in stand mode; high rust (anchor cell, Beta(14, 6)); low rust (a low-pressure
+    cell's `annual_env_alpha/beta`).
+  - Set rust level through `annual_env_alpha/beta`, not `rust_pressure`, which is not varied by site.
+  - Add a shortened A4-style run (`run_iucn_a4` with a short spin-up) and a Pegg-scenario run, since
+    those are the outputs used for listing.
+  - Save the census, individuals and genotypes to `tests/reference/` with the R version recorded.
 - [ ] [you] Make the reference files read-only (`chmod -R a-w tests/reference`)
-- [ ] [agent] Write testthat tests that re-run each scenario and compare (exact match for the same seed)
-- [ ] [agent] Add a quick test of summary statistics (mean mortality over 20 seeds within tolerance) as a second check
+- [ ] [agent] Write testthat tests that re-run each scenario and compare (exact match for the same seed).
+  - Put them in `plant_ibm/tests/testthat/`, reading from `../tests/reference/`, so the rule 3 command
+    runs them.
+  - Exact matching needs the same R version and RNG settings, and breaks if a refactor reorders random
+    draws. `docs/architecture.md` §3.2 lists the draw order.
+- [ ] [agent] Add a quick test of summary statistics as a second check: mean mortality over 20 seeds, within
+  tolerance. Use an existing statistic: `compute_pegg_stats()` fraction of resprouters dead, or
+  `summarise_run()`.
+- [ ] [you] Decide the procedure for deliberate reference updates.
+  - The ROADMAP's M. nodosa work (Pegg per-tree refit, range_v2) will change `params.R` after the
+    references are frozen, and CLAUDE.md rule 2 forbids editing `tests/reference/`.
+  - Proposal: you regenerate the references yourself, with a dated entry in
+    `docs/methodological_notes.md`.
 - **Done when:** the test suite passes on unchanged code, runs in under 5 minutes, and is committed.
 
 ## Phase 2 — Refactor to species configs  [agent]
 Goal: no M. nodosa constants left in the code; everything is in `species/m_nodosa.yaml`.
-- [ ] [agent] List every hard-coded biological constant (with file:line) in `docs/constants_inventory.md`
+Starting point: all biology is already in one nested list (`get_default_params()` in `plant_ibm/params.R`).
+`runner/params_utils.R` maps that list to and from flat `a__b__c` keys. `docs/architecture.md` §5 lists
+where each parameter is used.
+
+- [ ] [agent] List every hard-coded biological constant (with file:line) in `docs/constants_inventory.md`.
+  - Cover `runner/` and `spatial/` as well as `R/`. That includes `RUST_ANCHOR`, the
+    1600/1810–1910/2010/2026/2210 phasing, the Pegg values (0.48 of 50; 2020/2022),
+    `SITE_PARAMS_PATH` (`mn_site_params.csv`), `QLD_LAT`, `DEFAULT_PARAM_DRAWS`, and the structural
+    constants in `docs/architecture.md` §5.4.
+  - Sort each constant into one of three layers: species biology (YAML), site inputs (site table,
+    anchor), assessment settings (`iucn_assess_spec`).
 - [ ] [you] Review the inventory: which are biology (go into YAML) and which are numerical settings (stay in code)
-- [ ] [agent] Write a YAML schema and loader with validation (required fields, types, ranges)
+- [ ] [you] Decide how `m_nodosa.yaml` meets CLAUDE.md rule 5. `data/rust_species_params.csv` has no
+  M. nodosa rows. Options: add them, or allow citations to `methodological_notes.md` IDs (E1, V4, D3, …).
+- [ ] [you] Decide what happens to `parlib/`. Proposal:
+  - keep `unittests/` as a test fixture and add its missing fields (`resprout_delay_dist`,
+    `fire_extent_mode`, `fire_size_sd`, `fire_stand_cover`, `rust_site_sd`);
+  - remove or archive `diags/*` (five identical, unused, older copies);
+  - adopt the `ensemble/.../param_ranges.R` format for Phase 4 priors.
+- [ ] [agent] Write a YAML schema and loader with validation (required fields, types, ranges).
+  - The YAML mirrors the nested list exactly.
+  - Add a test that `load_species("m_nodosa")` is `identical()` to the old `get_default_params()`
+    before the old file is retired.
+  - Watch types: YAML reads `10000` as integer, not double, which changes `make_run_id` hashes and
+    invalidates result caches. Values computed in code (`1/50`, the anchor Beta) need a defined form.
 - [ ] [agent] Move the constants into `species/m_nodosa.yaml`; the model reads them from config
-- [ ] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment
+- [ ] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment.
+  - Fire already has three modes (legacy, plant, stand).
+  - Response curves are pluggable through `dose_response`.
+  - `ricker()` exists but is not wired into `recruit()`.
+  - Rust pressure currently comes only from the M. nodosa site table.
 - **Done when:** the Phase 1 tests pass with identical outputs, and grepping for the old constants finds nothing.
 
 ## Phase 3 — New model structure  [agent proposes, you decide]
@@ -40,7 +94,9 @@ For each item: design note in `docs/` → [you] approve → implement → add te
 - [ ] **Clonal sucker stage** (*R. psidioides*): canopy death leaves a persisting root-sucker pool with no seed input; suckers get infected at about 30 cm
 - [ ] **Rust-pressure modes:** (a) SDM-scaled (current); (b) saturating/constant. Evidence: no climate predictor of infection for *R. psidioides* (Fensham et al. 2020); strong NSW vs SE Qld contrast for *A. beckleri* (Manea et al. 2019 vs Pegg et al. 2017)
 - [ ] **Accumulating-damage hazard:** death risk rises with consecutive defoliation events (Olney exclusion trial: ~6-month lag, death in <4 yr; Table 10 resurveys)
-- [ ] **Fruit-infection suppression:** fecundity → ~0 under high rust (Tucki Tucki NR; no fruit seen for *R. psidioides* since 2010)
+- [ ] **Fruit-infection suppression:** fecundity → ~0 under high rust (Tucki Tucki NR; no fruit seen for *R. psidioides* since 2010).
+  Partly built: `rust_flower_dose_response` and `rust_recruit_dose_response` exist but are off.
+  The design note may only need to cover their parameterisation (overlaps ROADMAP Phase 2, flowering/seed set).
 - [ ] Check that M. nodosa outputs are unchanged when each new option is switched off (Phase 1 tests still pass)
 
 ## Phase 4 — Species parameter files  [agent, you set priors]
@@ -52,6 +108,8 @@ For each item: design note in `docs/` → [you] approve → implement → add te
 
 ## Phase 5 — Calibration  [agent builds, you judge]
 Targets are the `role == calibration_target` rows in the CSV.
+Overlap: ROADMAP Phase 2 already fits M. nodosa to the Pegg plots (`runner/pegg_sites.R`, mixture
+likelihood over simulated sites). Decide whether that stays the M. nodosa route or moves into this ABC code.
 - [ ] [agent] Write `scripts/targets.R`: turns each species' targets into summary statistics with tolerances
   - *R. rubescens:* 12% dead at ~3.5 yr after arrival (n=669, 43 sites) and the spread across sites; Table 10 paired resurveys 2014→2016; Olney stand 53% dead in <4 yr; mean crown transparency ~0.76
   - *R. psidioides:* 57% dead at ~3.5 yr (n=297, 18 sites) and the spread across sites; by 2018, 23% of populations extinct and 61% reduced to suckers
@@ -63,8 +121,10 @@ Targets are the `role == calibration_target` rows in the CSV.
 
 ## Phase 6 — IUCN comparison and sensitivity  [both]
 - [ ] [agent] Implement "committee mode": a constant exponential decline from the observed 3.5-yr mortality over 3 generations (capped at 100 yr). Check it reproduces NSW TSSC 96.3–98.8% for *R. rubescens*
-- [ ] [agent] For each species, the distribution of IUCN categories under: (1) committee mode, (2) IBM with an A3 window, (3) IBM with an A4 window (fixed window anchored at rust arrival in 2010)
-- [ ] [agent] Global sensitivity analysis (e.g. Sobol or PRCC) on the posterior plus prior-only parameters
+- [ ] [agent] For each species, the distribution of IUCN categories under: (1) committee mode, (2) IBM with an A3 window, (3) IBM with an A4 window (fixed window anchored at rust arrival in 2010).
+  The A3 window is new code: `runner/iucn_a4.R` assesses A4 only, and `collect_iucn_results()` skips non-A4 results.
+- [ ] [agent] Global sensitivity analysis (e.g. Sobol or PRCC) on the posterior plus prior-only parameters.
+  Overlaps ROADMAP Phase 3: Morris screening already exists (`runner/morris.R`), and Sobol is planned there for M. nodosa.
 - [ ] [you] Interpret the results: which unmeasured parameters most change the category? These set the fieldwork priorities.
 
 ## Phase 7 — Independent check  [fresh agent session]
@@ -76,7 +136,7 @@ Targets are the `role == calibration_target` rows in the CSV.
 ## Decisions log
 | Date | Decision | Why |
 |---|---|---|
-| | | |
+| 2026-11-19 | Test command (CLAUDE.md rule 3) is `cd plant_ibm && /opt/R/4.3.1/bin/Rscript tests/testthat.R` | The old command ran the empty root `tests/` with the system R 3.4.4, which cannot load `sf` |
 
 ## Known data issues (from the literature review)
 - *R. psidioides*: NSW TSSC 99% projection can't be reproduced from its stated rate; the same report also says ~10% decline in <5 yr, which conflicts with 57% mortality
