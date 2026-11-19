@@ -312,14 +312,29 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
     v
   }
 
+  # Optional fields (schema 'optional: true'; design_swappable_interfaces.md
+  # section 2.1, notes T12). An optional field that is absent, or set to its
+  # schema 'default', is left out of the list, so adding one to the schema
+  # changes no existing species' list or run IDs. Model code reads it with the
+  # default as fallback. 'required_when: {field: value}' makes it required
+  # when another field (or that field's default) has that value.
+  opt_default <- function(spec) {
+    if (is.null(spec$default)) return(NULL)
+    coerce_config_value(spec$default, spec)$value
+  }
+  is_default <- function(v, spec) !is.null(spec$default) && identical(v, opt_default(spec))
+  for (lf in c(schema_leaves(schema$rust_anchor), schema_leaves(schema$params)))
+    if (isTRUE(lf$spec$optional) && is.null(lf$spec$default) && is.null(lf$spec$required_when))
+      err(paste(lf$path, collapse = "$"), "schema: an optional field needs a 'default' or 'required_when'")
+
   # --- Rust anchor -----------------------------------------------------------
   anchor <- list()
   for (lf in schema_leaves(schema$rust_anchor)) {
     where <- paste0("species/", species, ".yaml: rust_anchor$", paste(lf$path, collapse = "$"))
     e <- cfg_get(sp$rust_anchor, lf$path)
-    if (is.null(e)) { err(where, "missing"); next }
+    if (is.null(e)) { if (!isTRUE(lf$spec$optional)) err(where, "missing"); next }
     v <- read_entry(e, lf$spec, where, paste(c("rust_anchor", lf$path), collapse = "__"), "species")
-    if (!is.null(v)) anchor <- cfg_set(anchor, lf$path, v)
+    if (!is.null(v) && !is_default(v, lf$spec)) anchor <- cfg_set(anchor, lf$path, v)
   }
   anchor_ok <- all(c("mu", "conc") %in% names(anchor))
 
@@ -333,14 +348,29 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
     if (is.null(layer) || !layer %in% names(files)) { err(paste(lf$path, collapse = "$"), "schema: bad layer"); next }
     where <- paste0(fname[[layer]], ": ", paste(lf$path, collapse = "$"))
     e <- cfg_get(files[[layer]], lf$path)
-    if (is.null(e)) { err(where, "missing"); next }   # an empty list ([]) is present, not NULL
+    if (is.null(e)) { if (!isTRUE(lf$spec$optional)) err(where, "missing"); next }   # an empty list ([]) is present, not NULL
     v <- if (layer == "run") {
       cv <- coerce_config_value(e, lf$spec)
       if (!is.null(cv$error)) { err(where, cv$error); NULL } else {
         b <- check_config_bounds(cv$value, lf$spec); if (!is.null(b)) err(where, b); cv$value }
     } else read_entry(e, lf$spec, where, paste(lf$path, collapse = "__"), layer,
                       anchor = if (anchor_ok) anchor else NULL)
+    if (!is.null(v) && isTRUE(lf$spec$optional) && is_default(v, lf$spec)) next
     if (!is.null(v) || layer == "run") params <- cfg_set(params, lf$path, v)
+  }
+  # Optional fields that one option of another field needs (e.g. ricker_r when
+  # recruitment_curve is ricker): required then, and refused otherwise.
+  for (lf in leaves) {
+    rw <- lf$spec$required_when
+    if (is.null(rw)) next
+    f    <- names(rw)[1]
+    cur  <- cfg_get(params, f)
+    if (is.null(cur)) cur <- opt_default(schema$params[[f]])
+    need <- identical(cur, rw[[f]])
+    have <- !is.null(cfg_get(files[[lf$spec$layer]], lf$path))
+    where <- paste0(fname[[lf$spec$layer]], ": ", paste(lf$path, collapse = "$"))
+    if (need && !have) err(where, sprintf("missing: needed when %s is '%s'", f, rw[[f]]))
+    if (!need && have) err(where, sprintf("only used when %s is '%s'; remove it", f, rw[[f]]))
   }
 
   # --- Fields the schema does not know, or in the wrong file -----------------

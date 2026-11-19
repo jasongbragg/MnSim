@@ -18,9 +18,26 @@ bevholt <- function(N, params) {
   (params$R_max * N) / (params$K_half + N)
 }
 
-#' Ricker recruitment (alternative; needs params$ricker_r).
+#' Ricker recruitment (alternative): N * exp(r * (1 - N / K)), with r =
+#' ricker_r and K = ricker_K. Peaks at N = K / r and falls at high N. Its scale
+#' is not comparable with bevholt()'s R_max / K_half, so a species using it
+#' needs its own calibrated values.
 ricker <- function(N, params) {
-  N * exp(params$ricker_r * (1 - N / params$K))
+  N * exp(params$ricker_r * (1 - N / params$ricker_K))
+}
+
+#' Recruitment curves: expected recruits from the effective number of
+#' flowering plants (design_swappable_interfaces.md section 5; notes T12).
+#' params$recruitment_curve picks one; absent means "bevholt". The names are
+#' the schema's recruitment_curve choices (tested).
+RECRUITMENT_CURVES <- list(bevholt = bevholt, ricker = ricker)
+
+recruitment_curve <- function(params) {
+  nm <- if (is.null(params$recruitment_curve)) "bevholt" else params$recruitment_curve
+  f  <- RECRUITMENT_CURVES[[nm]]
+  if (is.null(f)) stop("Unknown recruitment_curve '", nm, "'. Must be one of: ",
+                       paste(names(RECRUITMENT_CURVES), collapse = ", "), ".")
+  f
 }
 
 #' Sample n_rec mother/father ROW INDEX pairs from the flowering pool.
@@ -79,23 +96,12 @@ shade_suppression <- function(N_canopy, params) {
   pmin(dose_response(N_canopy, params$shade_dose_response), 1)
 }
 
-#' Full recruitment step for year t.
-#' annual_env_t: pathogen vertex of the disease triangle (passed from
-#' simulate.R's annual draw). Default 0 → no rust effect on fecundity
-#' (used by tests that call recruit() directly).
-#'
-#' Rust suppresses per-parent fecundity contribution via
-#' rust_recruit_dose_response applied to each adult's effective
-#' susceptibility. The "effective" flowering count fed to bevholt() is
-#' the sum of each adult's (1 - rust_fecundity_suppression) weight,
-#' so a fully resistant adult contributes 1.0 regardless of annual_env_t.
-#'
-#' next_id: id for the first recruit (run_simulation keeps a running
-#' counter because dead rows may have been archived); NULL = max(pop$id) + 1.
-#' Returns list(pop, resist_gt, n_rec).
-recruit <- function(pop, resist_gt, t, params, annual_env_t = 0, next_id = NULL) {
+#' Expected number of recruits in year t: the recruitment curve applied to the
+#' effective number of flowering plants (rust-suppressed fecundity), times
+#' (1 - shade suppression). Uses no random numbers. Later fecundity rules
+#' (e.g. fruit infection) belong here.
+expected_recruits <- function(pop, t, params, annual_env_t = 0) {
   flower_mask <- pop$alive & pop$flowering
-  n_flowering <- sum(flower_mask)
   N_canopy    <- canopy_density(pop)
 
   # Rust-suppressed fecundity: each flowering adult's contribution to the
@@ -110,11 +116,30 @@ recruit <- function(pop, resist_gt, t, params, annual_env_t = 0, next_id = NULL)
                               numeric(1), cfg = params$rust_recruit_dose_response)
     n_flowering_eff <- sum(weights)
   } else {
-    n_flowering_eff <- n_flowering
+    n_flowering_eff <- sum(flower_mask)
   }
 
-  expected_rec <- bevholt(n_flowering_eff, params) *
-                  (1 - shade_suppression(N_canopy, params))
+  recruitment_curve(params)(n_flowering_eff, params) *
+    (1 - shade_suppression(N_canopy, params))
+}
+
+#' Full recruitment step for year t.
+#' annual_env_t: pathogen vertex of the disease triangle (passed from
+#' simulate.R's annual draw). Default 0 → no rust effect on fecundity
+#' (used by tests that call recruit() directly).
+#'
+#' The expected count comes from expected_recruits(): rust suppresses
+#' per-parent fecundity via rust_recruit_dose_response applied to each
+#' adult's effective susceptibility; the "effective" flowering count fed to
+#' the recruitment curve is the sum of each adult's (1 - suppression) weight,
+#' so a fully resistant adult contributes 1.0 regardless of annual_env_t.
+#'
+#' next_id: id for the first recruit (run_simulation keeps a running
+#' counter because dead rows may have been archived); NULL = max(pop$id) + 1.
+#' Returns list(pop, resist_gt, n_rec).
+recruit <- function(pop, resist_gt, t, params, annual_env_t = 0, next_id = NULL) {
+  n_flowering  <- sum(pop$alive & pop$flowering)
+  expected_rec <- expected_recruits(pop, t, params, annual_env_t)
   n_rec <- rpois(1, expected_rec)
 
   if (n_rec == 0 || n_flowering == 0) {

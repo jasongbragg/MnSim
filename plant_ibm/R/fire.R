@@ -41,6 +41,9 @@
 #   trees, not just more total plants).
 #   Non-killed impacted plants → resprout state.
 #
+# Each variant is a function in FIRE_RESPONSES (below); apply_fire() picks one
+# and applies the shared steps (deaths, resprout delays).
+#
 # apply_fire() sets attr(pop, "fire_reached") to FALSE when a "stand" fire
 # misses the stand; run_simulation() records that in the census.
 #
@@ -59,56 +62,76 @@ draw_fire_size <- function(m, s) {
   stats::rbeta(1L, m * k, (1 - m) * k)
 }
 
+# ---- Fire responses (design_swappable_interfaces.md section 3; notes T12) ----
+# Who a fire reaches, kills and leaves to resprout. Each response takes the
+# alive rows and returns list(dead_idx, surv_idx, reached); apply_fire() then
+# records the deaths and starts the survivors' resprouting, the same for all.
+# reached = FALSE: the fire in the cell missed the stand ("stand" variant).
+
+# Legacy: every alive plant dies with flat P = fire_kill_prob.
+fire_legacy <- function(pop, alive_idx, params, t) {
+  killed <- rbinom(length(alive_idx), 1, params$fire_kill_prob) == 1
+  list(dead_idx = alive_idx[killed], surv_idx = alive_idx[!killed], reached = TRUE)
+}
+
+# Stage 2, shared by the two-stage variants: kill vs resprout given impact,
+# with the old-plant kill ceiling 'ceiling'.
+fire_kill_impacted <- function(pop, imp_idx, params, ceiling) {
+  age_i  <- pop$age[imp_idx]
+  p_kill <- ceiling + (1 - ceiling) *
+            hill_weight(age_i, params$fire_kill_half_sat, params$fire_kill_hill)
+  killed <- rbinom(length(imp_idx), 1, p_kill) == 1
+  list(dead_idx = imp_idx[killed], surv_idx = imp_idx[!killed], reached = TRUE)
+}
+
+fire_none_impacted <- list(dead_idx = integer(0), surv_idx = integer(0), reached = TRUE)
+
+# Two-stage, "plant" variant: each plant impacted with P = fire_p_fimp.
+fire_plant <- function(pop, alive_idx, params, t) {
+  impacted <- rbinom(length(alive_idx), 1, params$fire_p_fimp) == 1
+  imp_idx  <- alive_idx[impacted]
+  if (length(imp_idx) == 0) return(fire_none_impacted)
+  fire_kill_impacted(pop, imp_idx, params, params$fire_kill_scalar * params$fire_p_fimp)
+}
+
+# Two-stage, "stand" variant: one fire size f reaches the stand with P = f;
+# then each plant burns with P = fire_stand_cover.
+fire_stand <- function(pop, alive_idx, params, t) {
+  f <- draw_fire_size(params$fire_p_fimp, params$fire_size_sd)
+  if (stats::runif(1) >= f)                  # fire in the cell misses the stand
+    return(list(dead_idx = integer(0), surv_idx = integer(0), reached = FALSE))
+  cover    <- if (is.null(params$fire_stand_cover)) 1 else params$fire_stand_cover
+  impacted <- rbinom(length(alive_idx), 1, cover) == 1
+  imp_idx  <- alive_idx[impacted]
+  if (length(imp_idx) == 0) return(fire_none_impacted)
+  fire_kill_impacted(pop, imp_idx, params, params$fire_kill_scalar * f)
+}
+
+# Registry: fire_extent_mode picks a response ("plant" when the field is
+# absent); fire_p_fimp == 0 selects "legacy" whatever the mode. The schema's
+# fire_extent_mode choices are these names minus "legacy" (tested).
+FIRE_RESPONSES <- list(legacy = fire_legacy, plant = fire_plant, stand = fire_stand)
+
+fire_response_name <- function(params) {
+  if (!(params$fire_p_fimp > 0)) return("legacy")
+  mode <- if (is.null(params$fire_extent_mode)) "plant" else params$fire_extent_mode
+  if (!mode %in% setdiff(names(FIRE_RESPONSES), "legacy"))
+    stop("Unknown fire_extent_mode '", mode, "'. Must be one of: ",
+         paste(setdiff(names(FIRE_RESPONSES), "legacy"), collapse = ", "), ".")
+  mode
+}
+
 apply_fire <- function(pop, params, t) {
   alive_idx <- which(pop$alive)
-  n_alive   <- length(alive_idx)
-  if (n_alive == 0) return(pop)
+  if (length(alive_idx) == 0) return(pop)
 
-
-  mode <- if (is.null(params$fire_extent_mode)) "plant" else params$fire_extent_mode
-
-  if (params$fire_p_fimp > 0 && mode == "stand") {
-    # --- Two-stage, stand variant ---
-    f <- draw_fire_size(params$fire_p_fimp, params$fire_size_sd)
-    if (stats::runif(1) >= f) {               # fire in the cell misses the stand
-      attr(pop, "fire_reached") <- FALSE
-      return(pop)
-    }
-    cover    <- if (is.null(params$fire_stand_cover)) 1 else params$fire_stand_cover
-    impacted <- rbinom(n_alive, 1, cover) == 1
-    imp_idx  <- alive_idx[impacted]
-    if (length(imp_idx) == 0) return(pop)
-
-    age_i   <- pop$age[imp_idx]
-    ceiling <- params$fire_kill_scalar * f
-    p_kill  <- ceiling + (1 - ceiling) *
-               hill_weight(age_i, params$fire_kill_half_sat, params$fire_kill_hill)
-
-    killed   <- rbinom(length(imp_idx), 1, p_kill) == 1
-    dead_idx <- imp_idx[killed]
-    surv_idx <- imp_idx[!killed]
-
-  } else if (params$fire_p_fimp > 0) {
-    # --- Two-stage age-dependent model ("plant" variant) ---
-    impacted  <- rbinom(n_alive, 1, params$fire_p_fimp) == 1
-    imp_idx   <- alive_idx[impacted]
-    if (length(imp_idx) == 0) return(pop)
-
-    age_i   <- pop$age[imp_idx]
-    ceiling <- params$fire_kill_scalar * params$fire_p_fimp
-    p_kill  <- ceiling + (1 - ceiling) *
-               hill_weight(age_i, params$fire_kill_half_sat, params$fire_kill_hill)
-
-    killed   <- rbinom(length(imp_idx), 1, p_kill) == 1
-    dead_idx <- imp_idx[killed]
-    surv_idx <- imp_idx[!killed]
-
-  } else {
-    # --- Legacy flat-probability model ---
-    killed   <- rbinom(n_alive, 1, params$fire_kill_prob) == 1
-    dead_idx <- alive_idx[killed]
-    surv_idx <- alive_idx[!killed]
+  res <- FIRE_RESPONSES[[fire_response_name(params)]](pop, alive_idx, params, t)
+  if (!res$reached) {
+    attr(pop, "fire_reached") <- FALSE
+    return(pop)
   }
+  dead_idx <- res$dead_idx
+  surv_idx <- res$surv_idx
 
   # Dead
   pop$alive[dead_idx]       <- FALSE

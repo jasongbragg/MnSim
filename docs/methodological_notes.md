@@ -778,6 +778,35 @@ The check is a warning, not an error. The assessment still uses the run, because
 length L = 3 T_g is itself still valid; what is in doubt is whether T_g was estimated from an
 equilibrium population. No model output changes.
 
+**T12. Swappable fire response, rust pressure and recruitment** [decided, 2026-11-20]
+Design note `docs/design_swappable_interfaces.md`, approved with its recommendations. Phase 3
+mechanisms will plug into fixed places, chosen per species in its YAML, rather than adding branches
+to the annual loop. Each place is a named list of functions (a registry) chosen by a setting whose
+schema `choices` are the registry's names; a test checks they match.
+- **Fire response** (`R/fire.R`): the three branches of `apply_fire()` are now `fire_legacy`,
+  `fire_plant` and `fire_stand` in `FIRE_RESPONSES`. `fire_extent_mode` still chooses, and
+  `fire_p_fimp == 0` still means legacy. Recording deaths and the resprout delays stay shared.
+- **Rust pressure**: per cell, `RUST_PRESSURE_MODES` in `spatial/rust_pressure.R`, chosen by an
+  optional `mode` in the species' rust anchor (default `sdm`, the only option). Per year, the Beta
+  draw is now `draw_annual_env()`, with no selector until a second mode is designed.
+- **Recruitment** (`R/recruitment.R`): optional `recruitment_curve`, `bevholt` (default) or `ricker`.
+  Ricker uses `ricker_r` and `ricker_K` (the field `K` renamed; `ricker()` was never called). No
+  species uses Ricker: its scale is not comparable with `R_max`/`K_half`, so a species choosing it
+  needs its own calibrated values (Phase 5). The expected-recruit count is `expected_recruits()`,
+  and flowering (with rust suppression) is `update_flowering()`: the places for later fecundity and
+  flowering rules.
+- **Optional schema fields** (`optional: true`, with a `default` or `required_when`). Omitted, or
+  set to the default, they are left out of the params list, so existing species' lists and run IDs
+  are unchanged; the code falls back to the default. `required_when: {field: value}` makes a field
+  required when that option is chosen and refuses it otherwise. Their values follow rule 5 like any
+  other.
+
+No new biology, and no M. nodosa change: the split moves code without adding, removing or
+reordering random draws. Tests: the full suite with `tests/reference/` untouched (exact-match
+regression, frozen params, 20-seed statistics); each fire response against a copy of the pre-split
+`apply_fire()` over several seeds, including the number of draws; registries against the schema;
+the optional-field rules; Ricker's expected recruits computed by hand.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -811,3 +840,4 @@ equilibrium population. No model output changes.
 | 2026-11-19 | T9 | Runner and spatial constants moved to config (assessment.yaml, species assessment/spatial/ensemble_draws blocks, m_nodosa_validation.yaml, landscape spatial); default species in run_defaults.yaml; data in spatial/data/m_nodosa/ |
 | 2026-11-19 | T10 | Qld fire download area derived from all species grids (cells north of border − band, + 0.25° margin); downloads record their area; coverage checked |
 | 2026-11-20 | T11 | A4 runs warn when the gen-time window < 3 T_g or the spin-up before it < 5 T_g (config/assessment.yaml); summaries flag them (`tg_windows_ok`) |
+| 2026-11-20 | T12 | Swappable parts: registries for fire response, cell rust pressure and recruitment curve (Ricker wired in, unused); `draw_annual_env()`, `expected_recruits()`, `update_flowering()`; optional schema fields keep existing species unchanged |

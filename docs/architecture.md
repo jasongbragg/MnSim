@@ -231,10 +231,13 @@ the forms are `linear`, `power`, `saturating`, `sigmoid` and `threshold`.
 `rust_modifiers()` (`:91`) and `weibull_hazard()` (`:18`) are no longer used
 by the model. They are kept for diagnostics and tests.
 
-### 4.2 Fire (`R/fire.R:62`)
+### 4.2 Fire (`R/fire.R`)
 
 Whether a fire happens is decided in `simulate.R` (step 3). `apply_fire()`
-then works in one of three modes:
+then calls one of three response functions, from the registry
+`FIRE_RESPONSES` (`fire_legacy`, `fire_plant`, `fire_stand`; chosen by
+`fire_response_name()`; notes T12). Each returns who died and who survived;
+`apply_fire()` then records the deaths and starts resprouting, the same for all:
 
 | Mode | Selected by | Behaviour |
 |---|---|---|
@@ -243,7 +246,7 @@ then works in one of three modes:
 | stand (params.R default) | `fire_p_fimp > 0`, `fire_extent_mode = "stand"` | fire size `f ~ Beta(mean fire_p_fimp, sd fire_size_sd)` (`draw_fire_size`, `:53`); the fire reaches the stand with probability `f`; each plant burns with probability `fire_stand_cover`; kill as above with `c = fire_kill_scalar × f` (notes D3) |
 
 Burnt plants that survive go into resprout for
-`base + Poisson(rust delay)` years, with a minimum of 1 (`:128`):
+`base + Poisson(rust delay)` years, with a minimum of 1:
 
 - `base` is fixed at `resprout_yrs_base` (`resprout_delay_dist = "fixed"`,
   notes D3), or is Poisson-distributed if that field is absent.
@@ -254,17 +257,19 @@ Burnt plants that survive go into resprout for
 Fire affects juveniles and adults alike. A juvenile that survives also
 resprouts, but it does not count as canopy (see 4.3).
 
-### 4.3 Recruitment (`R/recruitment.R:96`)
+### 4.3 Recruitment (`R/recruitment.R`)
 
 ```
 n_flowering_eff = Σ over flowering plants of (1 - rust fecundity suppression)   [suppression off by default]
-expected        = bevholt(n_flowering_eff) × (1 - shade_suppression(N_canopy))
-n_rec           ~ Poisson(expected)
+expected        = curve(n_flowering_eff) × (1 - shade_suppression(N_canopy))    [expected_recruits()]
+n_rec           ~ Poisson(expected)                                               [recruit()]
 ```
 
-- `bevholt(N) = R_max·N / (K_half + N)` (`:17`).
-- `ricker()` (`:22`) is defined but not wired in: `recruit()` always calls
-  `bevholt()`.
+- `curve` is chosen by the optional `recruitment_curve` from the registry
+  `RECRUITMENT_CURVES` (notes T12):
+  - `bevholt` (default): `R_max·N / (K_half + N)`;
+  - `ricker`: `N·exp(ricker_r·(1 - N/ricker_K))`. No species uses it; its
+    scale is not comparable with Beverton–Holt's.
 - `canopy_density()` (`:64`) is the number of living plants of flowering age
   that are not resprouting, plus resprouting plants of flowering age weighted
   by how far through recovery they are (`1 - remain/total`).
@@ -277,7 +282,7 @@ n_rec           ~ Poisson(expected)
 - Recruits inherit genotypes from their parents but draw age at first
   flowering and microsite afresh.
 
-### 4.4 Flowering (`R/simulate.R:107`)
+### 4.4 Flowering (`update_flowering()`, `R/simulate.R`)
 
 A plant flowers if it is alive, not resprouting and has reached its own
 `age_first_flower`. If `rust_flower_dose_response$max_effect > 0`, flowering
@@ -529,7 +534,7 @@ PLAN Phase 3:
 - rust suppression of flowering (`rust_flower_dose_response`);
 - rust suppression of fecundity (`rust_recruit_dose_response`);
 - canopy shading of establishment (`shade_dose_response`);
-- Ricker recruitment (defined, not wired in);
+- Ricker recruitment (`recruitment_curve: ricker`; no species uses it);
 - three fire modes;
 - resistance architecture with any number of loci.
 
@@ -538,9 +543,24 @@ Not present:
 - a clonal or root-sucker stage;
 - damage or defoliation history per plant (hazard is memoryless except for
   the resprout state);
-- a constant rust-pressure mode separate from the SDM site table;
+- a constant rust-pressure mode separate from the SDM site table (the place
+  for it exists: `RUST_PRESSURE_MODES` in `spatial/rust_pressure.R`, chosen
+  by the rust anchor's optional `mode`; notes T12);
 - an A3 window;
 - committee-style projection.
+
+Swappable parts (notes T12; `docs/design_swappable_interfaces.md`). Each is a
+named list of functions chosen by a setting with schema `choices`; a test
+checks the two match. Optional selectors left at their default are not
+written into the params list, so existing species are unchanged.
+
+| Part | Registry | Chosen by | Options |
+|---|---|---|---|
+| fire response | `FIRE_RESPONSES` (`R/fire.R`) | `fire_extent_mode`; `fire_p_fimp == 0` → legacy | legacy, plant, stand |
+| cell rust pressure | `RUST_PRESSURE_MODES` (`spatial/rust_pressure.R`) | rust anchor `mode` (default `sdm`) | sdm |
+| yearly pathogen draw | `draw_annual_env()` (`R/simulate.R`) | (function only, no selector) | iid Beta |
+| recruitment curve | `RECRUITMENT_CURVES` (`R/recruitment.R`) | `recruitment_curve` (default `bevholt`) | bevholt, ricker |
+| expected recruits, flowering | `expected_recruits()`, `update_flowering()` | (functions only) | |
 
 ---
 

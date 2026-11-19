@@ -29,6 +29,43 @@
 # the order of living plants, so results are identical with it on or off
 # (params$archive_dead = FALSE turns it off).
 
+# Pathogen vertex of the disease triangle for year t: zero before rust
+# arrives, then one Beta(annual_env_alpha, annual_env_beta) draw per year,
+# independent between years. The place for year-to-year structure in rust
+# pressure (design_swappable_interfaces.md section 4.2; notes T12).
+draw_annual_env <- function(params, t) {
+  if (t >= params$rust_start_year) {
+    rbeta(1L, params$annual_env_alpha, params$annual_env_beta)
+  } else {
+    0
+  }
+}
+
+# Flowering status for the year, after fire: alive, not resprouting and old
+# enough, unless rust suppresses it. Rust suppression is a per-year
+# Bernoulli on eligible plants, driven by each plant's effective
+# susceptibility and the year's annual_env_t; off by default (max_effect = 0).
+# The place for later flowering rules (notes T12).
+# NOTE: This is a per-year draw, so a plant can recover flowering in a
+# favourable year (low annual_env_t). Revisit if data suggest flowering
+# suppression should be more persistent once infection is established --
+# e.g. if heavily infected plants fail to set buds for multiple
+# consecutive seasons regardless of annual conditions.
+update_flowering <- function(pop, t, params, annual_env_t) {
+  eligible <- pop$alive & !pop$resprout & pop$age >= pop$age_first_flower
+  if (params$rust_flower_dose_response$max_effect > 0 &&
+      t >= params$rust_start_year && annual_env_t > 0) {
+    eff_susc    <- (1 - pop$resist_score) * pop$env_susceptibility * annual_env_t
+    p_suppress  <- vapply(eff_susc, dose_response,
+                           numeric(1), cfg = params$rust_flower_dose_response)
+    not_suppressed <- rbinom(length(eff_susc), 1L, 1 - p_suppress) == 1L
+    pop$flowering <- eligible & not_suppressed
+  } else {
+    pop$flowering <- eligible
+  }
+  pop
+}
+
 run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALSE) {
   set.seed(params$seed)
 
@@ -60,11 +97,7 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     # year-to-year uncertainty. Tune alpha/beta to represent site
     # pressure. Passes through to nominate_deaths() and recruit() so
     # both mortality and fecundity experience the same year's conditions.
-    annual_env_t <- if (t >= params$rust_start_year) {
-      rbeta(1L, params$annual_env_alpha, params$annual_env_beta)
-    } else {
-      0
-    }
+    annual_env_t <- draw_annual_env(params, t)
 
     # 1. age all living individuals
     pop$age[pop$alive] <- pop$age[pop$alive] + 1L
@@ -104,28 +137,8 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
       attr(pop, "fire_reached") <- NULL
     }
 
-    # 4. update flowering status, post-fire
-    # Basic eligibility: alive, not resprouting, old enough
-    eligible <- pop$alive & !pop$resprout & pop$age >= pop$age_first_flower
-
-    # Rust-suppressed flowering: per-year Bernoulli on eligible individuals,
-    # driven by each individual's effective_susceptibility and the year's
-    # annual_env_t. Off by default (max_effect = 0).
-    # NOTE: This is a per-year draw, so a plant can recover flowering in a
-    # favourable year (low annual_env_t). Revisit if data suggest flowering
-    # suppression should be more persistent once infection is established --
-    # e.g. if heavily infected plants fail to set buds for multiple
-    # consecutive seasons regardless of annual conditions.
-    if (params$rust_flower_dose_response$max_effect > 0 &&
-        t >= params$rust_start_year && annual_env_t > 0) {
-      eff_susc    <- (1 - pop$resist_score) * pop$env_susceptibility * annual_env_t
-      p_suppress  <- vapply(eff_susc, dose_response,
-                             numeric(1), cfg = params$rust_flower_dose_response)
-      not_suppressed <- rbinom(length(eff_susc), 1L, 1 - p_suppress) == 1L
-      pop$flowering <- eligible & not_suppressed
-    } else {
-      pop$flowering <- eligible
-    }
+    # 4. update flowering status, post-fire (rust may suppress it)
+    pop <- update_flowering(pop, t, params, annual_env_t)
 
     # 5. mortality: union of all hazard components
     dead_idx <- nominate_deaths(pop, t, params, annual_env_t)

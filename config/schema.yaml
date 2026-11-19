@@ -13,6 +13,12 @@
 #   min/max hard validity bounds (not priors)
 #   choices allowed values for character fields
 #   derive  how a value marked {derived: rust_anchor} is computed from the species' rust anchor
+#   optional  true: the field may be omitted. Omitted, or set to its 'default', it
+#           is left out of the list (so existing species' lists and run IDs do not
+#           change); model code falls back to the default
+#           (docs/design_swappable_interfaces.md section 2.1; notes T12)
+#   required_when  {field: value}: an optional field required when that field
+#           has that value, and refused otherwise (e.g. Ricker's parameters)
 #
 # The species' rust anchor (RUST_ANCHOR in params.R) is described under rust_anchor.
 
@@ -23,6 +29,9 @@ rust_anchor:
   mu:   {type: double, min: 0, max: 1}
   conc: {type: double, min: 0}
   cap:  {type: double, min: 0, max: 1}
+  # How each grid cell's mean annual pressure is set (spatial/rust_pressure.R,
+  # RUST_PRESSURE_MODES): "sdm" = mu x SDM_cell / SDM_anchor, capped (notes C2).
+  mode: {type: character, choices: [sdm], optional: true, default: sdm}
 
 params:
   N0:      {layer: run, type: double, min: 1}
@@ -48,6 +57,12 @@ params:
 
   R_max:  {layer: species, type: double, min: 0}
   K_half: {layer: species, type: double, min: 0}
+  # Recruitment curve (R/recruitment.R, RECRUITMENT_CURVES): expected recruits
+  # from the effective number of flowering plants. Ricker's scale differs from
+  # Beverton-Holt's (R_max, K_half), so a species using it needs its own values.
+  recruitment_curve: {layer: species, type: character, choices: [bevholt, ricker], optional: true, default: bevholt}
+  ricker_r: {layer: species, type: double, min: 0, optional: true, required_when: {recruitment_curve: ricker}}
+  ricker_K: {layer: species, type: double, min: 0, optional: true, required_when: {recruitment_curve: ricker}}
 
   shade_dose_response:
     max_effect: {layer: species, type: double, min: 0, max: 1}

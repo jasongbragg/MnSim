@@ -46,6 +46,23 @@ rust_pressure_from_sdm <- function(sdm, anchor_index, anchor = RUST_ANCHOR) {
   )
 }
 
+# Rust-pressure modes: how each cell's mean annual pressure is set
+# (design_swappable_interfaces.md section 4.1; notes T12). Each takes the site
+# table, the anchor cell's row index and the anchor, and returns the columns
+# of rust_pressure_from_sdm(). The species' rust_anchor 'mode' picks one
+# (absent = "sdm"); the names are the schema's rust_anchor$mode choices (tested).
+RUST_PRESSURE_MODES <- list(
+  sdm = function(sites, anchor_index, anchor) rust_pressure_from_sdm(sites$sdm_suitability, anchor_index, anchor)
+)
+
+cell_rust_pressure <- function(sites, anchor_index, anchor = RUST_ANCHOR) {
+  mode <- if (is.null(anchor$mode)) "sdm" else anchor$mode
+  f <- RUST_PRESSURE_MODES[[mode]]
+  if (is.null(f)) stop("Unknown rust-pressure mode '", mode, "'. Must be one of: ",
+                       paste(names(RUST_PRESSURE_MODES), collapse = ", "), ".")
+  f(sites, anchor_index, anchor)
+}
+
 # Grid cell polygons (terra) from cell centres; deg = grid size (config/landscape.yaml).
 cell_polygons <- function(lon, lat, deg = GRID_DEG) {
   h <- deg / 2
@@ -91,7 +108,7 @@ apply_sdm_to_sites <- function(sites, sdm = NULL, anchor = RUST_ANCHOR,
                       sum(is.na(old) & !is.na(sites$sdm_suitability))))
   }
   k <- anchor_cell_index(sites$lon_centre, sites$lat_centre, anchor)
-  rp <- rust_pressure_from_sdm(sites$sdm_suitability, k, anchor)
+  rp <- cell_rust_pressure(sites, k, anchor)
   sites[names(rp)] <- rp
   sites$rust_anchor_cell <- seq_len(nrow(sites)) == k
 

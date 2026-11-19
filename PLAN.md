@@ -108,11 +108,14 @@ where each parameter is used.
     blocks, `species/m_nodosa_validation.yaml`, `config/landscape.yaml` `spatial`; data in
     `spatial/data/m_nodosa/`. `QLD_BBOX` now derived from the species grids (notes T10). Open: the
     grid/cell ids for a second species (notes T9).
-- [ ] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment.
+- [x] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment.
   - Fire already has three modes (legacy, plant, stand).
   - Response curves are pluggable through `dose_response`.
   - `ricker()` exists but is not wired into `recruit()`.
   - Rust pressure currently comes only from the M. nodosa site table.
+  - Design note: `docs/design_swappable_interfaces.md`. Approved and built 2026-11-20 (notes T12):
+    registries `FIRE_RESPONSES`, `RUST_PRESSURE_MODES`, `RECRUITMENT_CURVES`; `draw_annual_env()`,
+    `expected_recruits()`, `update_flowering()`; optional schema fields; M. nodosa unchanged.
 - **Done when:** the Phase 1 tests pass with identical outputs, and grepping for the old constants finds nothing.
 
 ## Phase 3 — New model structure  [agent proposes, you decide]
