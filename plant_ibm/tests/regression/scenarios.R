@@ -105,10 +105,14 @@ REGRESSION_SCENARIOS <- list(
   a4 = list(
     description = "Shortened IUCN A4 run with counterfactual: spin-up 1700, gen time 1800-1909, rust 2010, end 2126.",
     build = function(p) { p$seed <- 106L; p },
-    run = function(p) suppressMessages(run_iucn_a4(
-      p, year_spinup = 1700L, year_gentime_start = 1800L, year_gentime_end = 1909L,
-      year_rust = 2010L, year_assess = 2026L, year_end = 2126L,
-      run_counterfactual = TRUE, plot = FALSE, verbose = FALSE))
+    # Shortened on purpose: its 100-yr spin-up is ~4.4 T_g, under the 5 T_g that
+    # check_tg_windows() asks for, so that one warning is muffled (notes T11).
+    run = function(p) withCallingHandlers(
+      suppressMessages(run_iucn_a4(
+        p, year_spinup = 1700L, year_gentime_start = 1800L, year_gentime_end = 1909L,
+        year_rust = 2010L, year_assess = 2026L, year_end = 2126L,
+        run_counterfactual = TRUE, plot = FALSE, verbose = FALSE)),
+      mnsim_tg_window_warning = function(w) invokeRestart("muffleWarning"))
   )
 )
 

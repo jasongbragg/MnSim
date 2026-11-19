@@ -78,8 +78,10 @@ where each parameter is used.
 - [x] [you] Review the inventory: which are biology (go into YAML) and which are numerical settings (stay in code)
   Done 2026-11-19 (inventory §7; notes T4): four layers (species, landscape, assessment, validation);
   `main.R` and `02b_fire_prior_spatial.R` archived.
-- [ ] [agent] Warn when the spin-up or generation-time window is short relative to the run's T_g
+- [x] [agent] Warn when the spin-up or generation-time window is short relative to the run's T_g
   (proposed: gen-time window < 3 T_g, spin-up before it < 5 T_g; inventory §7, decision 3).
+  Done 2026-11-20 (notes T11): thresholds 3 and 5 T_g in `config/assessment.yaml` (`window_checks`);
+  `run_iucn_a4()` warns; `summarise_iucn_a4()` adds `tg_windows_ok`, and the collectors report it.
 - [x] [you] Decide how `m_nodosa.yaml` meets CLAUDE.md rule 5. Done 2026-11-19 (notes T6): a separate
   `data/m_nodosa_params.csv`; 19 untraced values marked as priors.
   Was: `data/rust_species_params.csv` has no

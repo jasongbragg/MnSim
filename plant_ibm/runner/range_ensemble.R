@@ -159,6 +159,7 @@ collect_range_ensemble <- function(results_dir, n_runs = NULL, traj_years = 1950
   df$category <- factor(vapply(df$pct_decline, iucn_category, ""),
                         levels = c("LC/NT", "VU", "EN", "CR"))
   message(sprintf("Collected %d of %d planned runs.", nrow(df), nrow(plan)))
+  report_tg_windows(df$tg_windows_ok)   # run warnings are suppressed above
   list(runs = df, traj = do.call(rbind, traj))
 }
 

@@ -28,6 +28,7 @@
 #   priors <- species_priors()         # data frame, one row per prior
 #   assess <- load_assessment()        # iucn_assess_spec() defaults (notes T9)
 #   cats   <- load_categories()        # IUCN thresholds c(VU, EN, CR)
+#   chk    <- load_window_checks()     # window lengths, in T_g, below which a run warns
 #   draws  <- load_param_draws()       # range-wide parameter draws (was DEFAULT_PARAM_DRAWS)
 #   sp     <- load_species_spatial()   # name, range box, data and figure folders
 #   land   <- load_landscape_spatial() # grid size, border latitude, rust SDM path
@@ -371,7 +372,7 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
   assessment <- read_settings(schema$assessment,
     list(assessment = list(data = af$assessment, label = "config/assessment.yaml: assessment"),
          species    = spf("assessment")), err)
-  extra <- setdiff(names(af), c("assessment", "categories"))
+  extra <- setdiff(names(af), c("assessment", "categories", "window_checks"))
   if (length(extra)) err("config/assessment.yaml", paste("unknown top-level keys:", paste(extra, collapse = ", ")))
   if (length(assessment) == length(schema_leaves(schema$assessment))) {
     a <- assessment
@@ -384,6 +385,8 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
   categories <- unlist(cats)
   if (length(categories) == 3L && is.unsorted(categories, strictly = TRUE))
     err("config/assessment.yaml: categories", "thresholds must increase: VU < EN < CR")
+  window_checks <- read_settings(schema$window_checks,
+    list(assessment = list(data = af$window_checks, label = "config/assessment.yaml: window_checks")), err)
   spatial <- read_settings(schema$spatial, list(species = spf("spatial")), err)
   if (!is.null(spatial$range_box$lon_min) && !is.null(spatial$range_box$lat_min) &&
       (spatial$range_box$lon_min >= spatial$range_box$lon_max || spatial$range_box$lat_min >= spatial$range_box$lat_max))
@@ -422,7 +425,7 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
 
   list(species = sp$species, params = params, rust_anchor = anchor,
        priors = if (length(priors)) do.call(rbind, priors) else NULL,
-       assessment = assessment, categories = categories,
+       assessment = assessment, categories = categories, window_checks = window_checks,
        spatial = c(list(name = sp$species, id = species), spatial,
                    list(data_dir = file.path("spatial", "data", species),
                         fig_dir  = file.path("spatial", "figures", species))),
@@ -434,6 +437,7 @@ load_rust_anchor      <- function(species = NULL, ...) species_config(species, .
 species_priors        <- function(species = NULL, ...) species_config(species, ...)$priors
 load_assessment       <- function(species = NULL, ...) species_config(species, ...)$assessment
 load_categories       <- function(species = NULL, ...) species_config(species, ...)$categories
+load_window_checks    <- function(species = NULL, ...) species_config(species, ...)$window_checks
 load_param_draws      <- function(species = NULL, ...) species_config(species, ...)$draws
 load_species_spatial  <- function(species = NULL, ...) species_config(species, ...)$spatial
 

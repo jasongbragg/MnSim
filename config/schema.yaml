@@ -147,6 +147,12 @@ categories:
   EN: {layer: assessment, type: double, min: 0, max: 100}
   CR: {layer: assessment, type: double, min: 0, max: 100}
 
+# Warnings when a run's windows are short relative to that run's generation
+# time T_g (runner/iucn_a4.R, check_tg_windows(); notes T11). In units of T_g.
+window_checks:
+  gentime_window_min_tg: {layer: assessment, type: double, min: 0}
+  spinup_min_tg:         {layer: assessment, type: double, min: 0}
+
 # Species range for the spatial pipeline (spatial/01_get_melaleuca_occurrences.R).
 # The occurrence query is the species' 'species:' name; its data files are in
 # plant_ibm/spatial/data/<sp>/ and figures in plant_ibm/spatial/figures/<sp>/.

@@ -36,3 +36,13 @@ categories:
   CR:
     value: 80
     source: "IUCN Red List Criteria v3.1, A2-A4: >= 80% reduction"
+
+# A run warns when its windows are short relative to its own T_g (T_g comes out
+# of each run, so it cannot set the windows in advance; notes T4 decision 3, T11).
+window_checks:
+  gentime_window_min_tg:
+    value: 3
+    source: "docs/methodological_notes.md T11: gen-time window (gentime_end - gentime_start) at least 3 T_g; M. nodosa's 100 yr is about 4.4 T_g"
+  spinup_min_tg:
+    value: 5
+    source: "docs/methodological_notes.md T11: spin-up before the gen-time window (gentime_start - spinup) at least 5 T_g; M. nodosa's 210 yr is about 9 T_g"

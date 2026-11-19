@@ -265,7 +265,7 @@ grep -rnE '1600L|1810L|1910L|2010L|2026L|2210L|2020L|2022L|0\.48|nodosa|mn_site_
    - spin-up before rust is 410 yr ≈ 18 T_g.
 
    Proposed thresholds, to be confirmed when built: warn if the gen-time window is < 3 T_g, or if
-   spin-up before it is < 5 T_g.
+   spin-up before it is < 5 T_g. *Built 2026-11-20 with these thresholds (notes T11).*
 4. **Rust arrival is 2010 for all species** (A5). It stays an assessment setting, defined once.
 5. **`main.R` (O4) and `02b_fire_prior_spatial.R` (P19) archived** to `plant_ibm/archive/`.
 

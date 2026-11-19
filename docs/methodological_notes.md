@@ -751,6 +751,33 @@ A guard stops a too-small download from being used without notice:
 No model output changes: the area only selects which polygons are downloaded, and the cell-year
 tables in git are untouched. Still open (T9): cell ids depend on each species' range box.
 
+**T11. Warning when a window is short relative to the run's T_g** [decided, 2026-11-20]
+Carries out T4 decision 3 (inventory §7). T_g comes out of each run, so it cannot set the spin-up
+or the gen-time window in advance. Each A4 run is checked afterwards instead, by
+`check_tg_windows()` in `runner/iucn_a4.R`:
+- gen-time window (`year_gentime_end − year_gentime_start`) must be at least **3 T_g**;
+- spin-up before it (`year_gentime_start − year_spinup`) must be at least **5 T_g**.
+
+The thresholds are assessment settings shared by all species: `window_checks` in
+`config/assessment.yaml`. They are set from M. nodosa's windows, which were judged adequate: with
+T_g ≈ 23 yr, its gen-time window is ≈ 4.4 T_g and its spin-up before it ≈ 9 T_g. So M. nodosa
+runs pass with room to spare. A species with T_g above ≈ 33 yr would fail the 3 T_g test with
+M. nodosa's 100-yr window, and one above 42 yr would also fail the 5 T_g spin-up test.
+
+How a short window shows up:
+- `run_iucn_a4()` gives one warning per short window, of class `mnsim_tg_window_warning`, so a
+  caller can muffle just these. The shortened regression A4 scenario does this: its spin-up is
+  100 yr ≈ 4.4 T_g on purpose.
+- `summarise_iucn_a4()` adds a column `tg_windows_ok`. It is computed from the result's own T_g and
+  years, so results saved before this change are checked too. It is not stored in the result,
+  which keeps the result identical to the frozen reference.
+- `collect_iucn_results()` and `collect_range_ensemble()` print how many runs had a short window.
+  `range_ensemble.R` suppresses run warnings, so this count is where such runs are reported.
+
+The check is a warning, not an error. The assessment still uses the run, because the window
+length L = 3 T_g is itself still valid; what is in doubt is whether T_g was estimated from an
+equilibrium population. No model output changes.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -783,3 +810,4 @@ tables in git are untouched. Still open (T9): cell ids depend on each species' r
 | 2026-11-19 | T8 | params.R switched to the loader (same interface, identical output) |
 | 2026-11-19 | T9 | Runner and spatial constants moved to config (assessment.yaml, species assessment/spatial/ensemble_draws blocks, m_nodosa_validation.yaml, landscape spatial); default species in run_defaults.yaml; data in spatial/data/m_nodosa/ |
 | 2026-11-19 | T10 | Qld fire download area derived from all species grids (cells north of border − band, + 0.25° margin); downloads record their area; coverage checked |
+| 2026-11-20 | T11 | A4 runs warn when the gen-time window < 3 T_g or the spin-up before it < 5 T_g (config/assessment.yaml); summaries flag them (`tg_windows_ok`) |

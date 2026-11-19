@@ -306,8 +306,9 @@ params:
 # M. nodosa, T_g ~ 23 yr (notes T1): the gen-time window (100 yr) is ~4.4 T_g,
 # spin-up before it (210 yr) ~9 T_g, spin-up before rust (410 yr) ~18 T_g;
 # judged adequate (inventory section 7, decision 3). A longer-lived species
-# needs proportionally longer windows (proposed warning: window < 3 T_g, or
-# spin-up before it < 5 T_g; PLAN.md Phase 2).
+# needs proportionally longer windows: each A4 run warns if the gen-time window
+# is < 3 T_g or the spin-up before it < 5 T_g (config/assessment.yaml,
+# window_checks; notes T11).
 assessment:
   year_spinup:
     value: 1600

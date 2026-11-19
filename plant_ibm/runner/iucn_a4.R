@@ -61,6 +61,9 @@
 #   year_rust          rust arrives (2010)        ─┤ reference: 11 yr ending 2009
 #   year_assess        the present (2026)         ─┤ window must straddle this
 #   year_end           end of run                 ─┘ must be >= 2009 + 3*T_g
+# The spin-up and gen-time window must be long relative to T_g, which is known
+# only after the run: run_iucn_a4() warns when they are not (check_tg_windows();
+# config/assessment.yaml, window_checks; notes T11).
 #
 # FIRE NOTE
 # ---------
@@ -85,6 +88,7 @@ source("R/species_config.R")
 .iucn_cfg       <- species_config()       # default species: config/run_defaults.yaml
 IUCN_ASSESSMENT <- .iucn_cfg$assessment   # iucn_assess_spec() defaults
 IUCN_CATEGORIES <- .iucn_cfg$categories   # c(VU = 30, EN = 50, CR = 80): % decline
+IUCN_WINDOW_CHECKS <- .iucn_cfg$window_checks  # minimum window lengths in T_g (check_tg_windows())
 rm(.iucn_cfg)
 IUCN_CRITERION <- IUCN_ASSESSMENT$criterion
 
@@ -191,6 +195,43 @@ iucn_assess_spec <- function(year_spinup        = IUCN_ASSESSMENT$year_spinup,
 # Cache/file ID for one assessment run: hash of params + assessment settings.
 iucn_run_id <- function(params, assess = iucn_assess_spec()) {
   make_run_id(list(params = params, assess = assess))
+}
+
+# Windows that are short relative to this run's T_g (notes T4 decision 3, T11).
+# T_g comes out of the run, so it cannot set the windows in advance; instead
+# each run is checked afterwards. Returns one message per short window
+# (character(0) if none, or if T_g is NA). Thresholds are in units of T_g:
+#   gen-time window     year_gentime_end - year_gentime_start >= gentime_window_min_tg * T_g
+#   spin-up before it   year_gentime_start - year_spinup      >= spinup_min_tg * T_g
+check_tg_windows <- function(T_g, assess, checks = IUCN_WINDOW_CHECKS) {
+  if (is.na(T_g) || T_g <= 0) return(character(0))
+  win  <- c(gentime = assess$year_gentime_end - assess$year_gentime_start,
+            spinup  = assess$year_gentime_start - assess$year_spinup)
+  need <- c(gentime = checks$gentime_window_min_tg, spinup = checks$spinup_min_tg)
+  what <- c(gentime = sprintf("gen-time window (%d-%d)", assess$year_gentime_start, assess$year_gentime_end),
+            spinup  = sprintf("spin-up before it (%d-%d)", assess$year_spinup, assess$year_gentime_start))
+  short <- win < need * T_g
+  sprintf("%s is %d yr = %.1f T_g, short of %g T_g (T_g = %.1f yr); lengthen it in the species file's 'assessment' block",
+          what[short], as.integer(win[short]), win[short] / T_g, need[short], T_g)
+}
+
+# Signal those messages as warnings of class 'mnsim_tg_window_warning', so a
+# caller can muffle just these (e.g. deliberately shortened test runs).
+warn_tg_windows <- function(msgs) {
+  for (m in msgs)
+    warning(structure(class = c("mnsim_tg_window_warning", "warning", "condition"),
+                      list(message = m, call = NULL)))
+  invisible(msgs)
+}
+
+# For collectors of many runs (whose warnings are often suppressed): one
+# message counting the runs with a window short relative to their T_g.
+report_tg_windows <- function(ok) {
+  n_short <- sum(!ok, na.rm = TRUE)
+  if (n_short > 0L)
+    message(sprintf("%d of %d runs had a window short relative to their T_g (tg_windows_ok = FALSE; check_tg_windows()).",
+                    n_short, length(ok)))
+  invisible(n_short)
 }
 
 # IUCN category from a percent decline (A2/A3/A4 thresholds, IUCN_CATEGORIES:
@@ -349,6 +390,7 @@ run_iucn_a4 <- function(
                           window_end   = year_gentime_end,
                           year_spinup  = year_spinup)
   T_g <- gt$T_g
+  warn_tg_windows(check_tg_windows(T_g, assess))   # not stored: summarise_iucn_a4() recomputes it
 
   # --- A4 assessment -----------------------------------------------------
   # The window length comes from THIS run's own T_g, estimated above from
@@ -429,6 +471,9 @@ summarise_iucn_a4 <- function(result) {
     iucn_en        = as.integer(result$pct_decline >= IUCN_CATEGORIES[["EN"]]),
     iucn_cr        = as.integer(result$pct_decline >= IUCN_CATEGORIES[["CR"]]),
     n_offspring_gt = result$n_offspring_gt,
+    # FALSE: a window was short relative to this run's T_g (check_tg_windows(),
+    # from the result's own T_g and years, so old results are checked too).
+    tg_windows_ok  = length(check_tg_windows(result$T_g, result)) == 0L,
     N_ref_flowering       = .or_na(result$N_ref_flowering),
     N_compare_flowering   = .or_na(result$N_compare_flowering),
     pct_decline_flowering = .or_na(result$pct_decline_flowering),
@@ -474,6 +519,7 @@ collect_iucn_results <- function(results_dirs) {
   out  <- out[!duplicated(out$run_id), ]
   rownames(out) <- NULL
   message(sprintf("Collected %d unique IUCN %s runs.", nrow(out), IUCN_CRITERION))
+  report_tg_windows(out$tg_windows_ok)
   out
 }
 
