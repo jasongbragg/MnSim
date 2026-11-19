@@ -108,7 +108,8 @@ where each parameter is used.
     blocks, `species/m_nodosa_validation.yaml`, `config/landscape.yaml` `spatial`; data in
     `spatial/data/m_nodosa/`. `QLD_BBOX` now derived from the species grids (notes T10). Cell ids:
     one Australia-wide master grid, fire tables shared over all species' cells, prior per species
-    (2026-11-20, notes T13). **Open: NSW fire tables misassigned (notes T14); rebuild pending.**
+    (2026-11-20, notes T13). NSW fire tables misassigned and rebuilt (notes T14); range-wide,
+    Pegg-site and V4 runs to redo on the workstation.
 - [x] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment.
   - Fire already has three modes (legacy, plant, stand).
   - Response curves are pluggable through `dose_response`.

@@ -842,7 +842,7 @@ inputs are unchanged. Pegg site runs store the cell id in their params (`pegg_si
 run IDs and cache change once; range-ensemble run IDs do not use the id. Tests:
 `tests/testthat/test-cell-ids.R`.
 
-**T14. NSW cell-year tables: fire records attached to the wrong cells** [found 2026-11-20; tables not yet rebuilt]
+**T14. NSW cell-year tables: fire records attached to the wrong cells** [found and corrected 2026-11-20]
 Found while checking T13's incremental build. `cell_year_fractions()` clipped the cells to NSW
 land with `st_intersection()`, which drops a cell with no land in the state. One M. nodosa NSW
 cell has none: id 125413, position 23 of 256 in grid order. Every later cell was then matched to
@@ -854,16 +854,34 @@ through the same code. The Qld tables are not affected: `cells_on_land()` would 
 length mismatch, and the Qld pieces carry their `cell_id`.
 
 The code is fixed: the pieces are matched back by position, and a cell with no land stays empty;
-`test-cell-ids.R` covers this. New cells added under T13 are computed correctly. The committed NSW
-tables, and everything derived from them, are still the shifted ones until rebuilt:
-- the NSW columns of `site_params.csv`;
-- the fitted fire priors;
-- range-wide results and talk figures;
-- the Pegg-site runs at NSW cells.
+`test-cell-ids.R` covers this.
 
-Rebuilding the three NSW tables takes about 20 minutes. It changes M. nodosa's model inputs, so it
-waits for a decision. D1's earlier cross-check against the previous `02` reported 255/256 cells
-matching; why it did not catch this has not been traced.
+**Rebuilt (approved 2026-11-20).** The three NSW tables were recomputed with the fixed code (about
+30 minutes), then `02`, `02c` and `03` were rerun.
+- *Tables.* Same rows (3,369 / 1,773 / 4,355): the same fires, now on the right cells. No rows
+  fall on the zero-land cell.
+- *Site table.* Every NSW cell's fire values changed, with each cell's annual fire probability
+  moving by a factor of 0.2–3.9 (5–95%; median ×1.12). Qld cells' records are unchanged, but their
+  estimates moved slightly because the prior is pooled over both states (D2). Non-fire columns are
+  identical.
+- *Across the range.* The abundance-weighted mean fire probability went from 0.033 to 0.036, and
+  the mean burnt fraction `fire_p_fimp` from 0.287 to 0.243.
+- *Rust anchor cell (Yarringully).* Fire probability 0.067 → 0.082, `fire_p_fimp` 0.28 → 0.44.
+- *Prior (wildfire, pooled).* Gamma(0.69, 16.7) → Gamma(0.82, 20.6), mean 0.041 → 0.040 per year.
+- *D2 and D4 still hold.* The shared-prior test gives p = 0.85 → 0.89. The border check still
+  rejects the automated Qld record: Qld/NSW rate ratio 4.96 → 4.66 (95% CI 3.25–6.88), against
+  0.96 → 0.90 for the edited 2014–2024 record.
+
+What must be rerun on the workstation, because their fire inputs changed:
+- range-wide ensembles and talk figures;
+- the Pegg-site fit (V6);
+- the Pegg anchor-cell runs behind V4. The Pegg scenario sets the 2020 fire itself, but the
+  spin-up fire regime comes from the anchor cell.
+
+No parameter was refitted here (CLAUDE.md rule 4). If V4's `max_effect` range needs revisiting, that
+goes through the calibration code. The single-site regression references use `params.R` defaults,
+not the site table, so they are unaffected. D1's earlier cross-check against the previous `02`
+reported 255/256 cells matching; why it did not catch this has not been traced.
 
 ## Decision log
 
@@ -900,4 +918,4 @@ matching; why it did not catch this has not been traced.
 | 2026-11-20 | T11 | A4 runs warn when the gen-time window < 3 T_g or the spin-up before it < 5 T_g (config/assessment.yaml); summaries flag them (`tg_windows_ok`) |
 | 2026-11-20 | T12 | Swappable parts: registries for fire response, cell rust pressure and recruitment curve (Ricker wired in, unused); `draw_annual_env()`, `expected_recruits()`, `update_flowering()`; optional schema fields keep existing species unchanged |
 | 2026-11-20 | T13 | One Australia-wide master grid (110–160 E, 45–9 S, 0.1°) for cell ids; fire tables shared over all species' cells and built incrementally; fire prior fitted per species |
-| 2026-11-20 | T14 | Error found: NSW cell-year tables shifted by one cell after a zero-land cell (234/256 NSW cells hold another cell's record); code fixed, tables not yet rebuilt |
+| 2026-11-20 | T14 | Error found and corrected: NSW cell-year tables were shifted by one cell after a zero-land cell (234/256 NSW cells held another cell's record); tables, site table and fire checks rebuilt; D2/D4 still hold; range, Pegg-site and V4 runs to redo |
