@@ -22,17 +22,23 @@ state_polygons <- function() {
         geometry = c(st_intersection(aus, north), st_intersection(aus, south)))
 }
 
-# Cell polygons with: state (by cell centre), whole-cell area, and the land
-# area within that state (the base for burnt fractions when area_base = "land").
-load_cells <- function(grid_csv = SPECIES_GRID_CSV) {
-  g <- read.csv(grid_csv)
-  h <- GRID_DEG / 2
+# Cell polygons (lon/lat) for a table with lon_centre, lat_centre.
+cell_squares <- function(g, deg = GRID_DEG) {
+  h <- deg / 2
   polys <- lapply(seq_len(nrow(g)), function(i) {
     x <- g$lon_centre[i]; y <- g$lat_centre[i]
     st_polygon(list(matrix(c(x - h, y - h, x + h, y - h, x + h, y + h, x - h, y + h, x - h, y - h),
                            ncol = 2, byrow = TRUE)))
   })
-  cells <- st_sf(g, geometry = st_sfc(polys, crs = 4326))
+  st_sf(g, geometry = st_sfc(polys, crs = 4326))
+}
+
+# Cell polygons with: state (by cell centre), whole-cell area, and the land
+# area within that state (the base for burnt fractions when area_base = "land").
+# 'g': a grid table (cell_id, lon_centre, lat_centre) or the path of one.
+load_cells <- function(g = SPECIES_GRID_CSV) {
+  if (is.character(g)) g <- read.csv(g)
+  cells <- cell_squares(g)
   states <- state_polygons()
 
   ctr <- st_as_sf(g, coords = c("lon_centre", "lat_centre"), crs = 4326)

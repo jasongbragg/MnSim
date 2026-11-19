@@ -206,7 +206,8 @@ records start 1987 instead of 1970. With the old conventions the new code
 reproduced `02`'s NSW table exactly (fire-year counts 255/256 cells
 identical; burnt fractions within 0.03).
 Outputs: `spatial/data/fire/cell_years_<state>_<type>.csv` (state nsw/qld;
-type wild/planned/all), built by `spatial/fire/02_fire_cell_years.R`.
+type wild/planned/all), built by `spatial/fire/02_fire_cell_years.R`. Since T13 the tables are
+shared by all species; see T14 for an error in the NSW tables.
 
 **D2. Fire frequency** [calibrated, Nov 2026]
 Annual probability of a fire year per cell = posterior mean
@@ -718,8 +719,8 @@ Not moved (inventory: keep in code), and open points:
   regimes; D1–D5): already in one shared file.
 - ~~Open: `QLD_BBOX`~~ (the Qld download extent, drawn by hand around the M. nodosa cells): now
   derived from the grids, T10.
-- **Open: cell ids and fire tables.** `cell_id` is the cell number in a raster spanning the
-  species' range box. The fire cell-year tables and `spatial/data/fire/cells.rds` are built for the
+- ~~**Open: cell ids and fire tables.**~~ Decided in T13 (master grid, shared tables). Was: `cell_id`
+  is the cell number in a raster spanning the species' range box. The fire cell-year tables and `spatial/data/fire/cells.rds` are built for the
   M. nodosa grid. A second species needs its own (or a common, fixed) grid before the fire tables
   can be shared.
 - `talk/` keeps its M. nodosa references (talk figures); only its paths and the renamed constants
@@ -749,7 +750,8 @@ A guard stops a too-small download from being used without notice:
   the old box.
 
 No model output changes: the area only selects which polygons are downloaded, and the cell-year
-tables in git are untouched. Still open (T9): cell ids depend on each species' range box.
+tables in git are untouched. Still open (T9): cell ids depend on each species' range box (decided
+in T13).
 
 **T11. Warning when a window is short relative to the run's T_g** [decided, 2026-11-20]
 Carries out T4 decision 3 (inventory §7). T_g comes out of each run, so it cannot set the spin-up
@@ -807,6 +809,62 @@ regression, frozen params, 20-seed statistics); each fire response against a cop
 `apply_fire()` over several seeds, including the number of draws; registries against the schema;
 the optional-field rules; Ricker's expected recruits computed by hand.
 
+**T13. One master grid for all species; shared fire tables; per-species fire prior** [decided, 2026-11-20]
+Options were proposed in conversation and approved with the recommendations (A + X + per-species
+prior).
+- **Master grid.** A cell's `cell_id` is its number in one fixed 0.1° raster over all of
+  Australia: 110–160 E, 45–9 S, 500 × 360 cells (`config/landscape.yaml`, `spatial$grid_extent`;
+  `spatial/cell_ids.R`). The extent includes Tasmania, the Torres Strait islands and Lord Howe
+  Island. It was made Australia-wide, not just eastern Australia, so that any later species fits
+  without renumbering ("master list"). The loader checks that each species' range box lies inside
+  it. Before T13, ids were numbers in a raster spanning each species' range box. The cell centres
+  are unchanged: both grids sit on 0.1° steps.
+- **Renumbering (one-off).** M. nodosa's ids were mapped from the old box raster
+  (148–155 E, 38–24 S) to the master grid by cell centre. Only the `cell_id` field was rewritten,
+  in `spatial/data/m_nodosa/{grid,thinned,site_params}.csv`, the six cell-year tables and
+  `qld_chronic_cells.csv`; every other byte is unchanged, and row order is kept (range plans pick
+  rows by position).
+- **Shared tables.** The cell-year tables in `spatial/data/fire/` cover the union of all species'
+  cells. `cells.csv` (in git; replaces the `cells.rds` cache) lists the cells covered, with state
+  and land area. `02_fire_cell_years.R` adds only cells not yet covered. Each cell's burnt fraction
+  depends only on that cell, so adding cells leaves existing rows unchanged. A table's rows for a
+  batch are replaced, not duplicated, if a run is interrupted, and `cells.csv` is updated last.
+- **Per-species prior.** `load_fire_cells()` returns the species' own cells. The fire regime and
+  its empirical-Bayes prior (D2) are fitted over those cells only, as before, so adding a species
+  does not change another species' site table. The fire checks (`03`), which are also
+  per species, now write to `spatial/data/<sp>/fire_checks/` and figures to
+  `spatial/figures/<sp>/fire/`.
+
+Check: `cells.csv`, built with `load_cells()`, agrees with the site table's states and with
+`qld_chronic_cells.csv`'s land fractions. Rebuilding with `02` + `02c` then reproduces
+`site_params.csv` byte for byte, and `03` reproduces all four check files byte for byte. M. nodosa's
+inputs are unchanged. Pegg site runs store the cell id in their params (`pegg_site_cell`), so their
+run IDs and cache change once; range-ensemble run IDs do not use the id. Tests:
+`tests/testthat/test-cell-ids.R`.
+
+**T14. NSW cell-year tables: fire records attached to the wrong cells** [found 2026-11-20; tables not yet rebuilt]
+Found while checking T13's incremental build. `cell_year_fractions()` clipped the cells to NSW
+land with `st_intersection()`, which drops a cell with no land in the state. One M. nodosa NSW
+cell has none: id 125413, position 23 of 256 in grid order. Every later cell was then matched to
+the next cell's clipped geometry, and its burnt fraction was divided by its own land area. The
+committed `cell_years_nsw_wild.csv` is reproduced exactly by this shift: all 3,369 rows, values
+within 3e-15. **234 of the 256 NSW cells hold another cell's fire record.** Because `grid.csv` is
+not sorted by location, the "next" cell is often far away. `nsw_planned` and `nsw_all` went
+through the same code. The Qld tables are not affected: `cells_on_land()` would have stopped on a
+length mismatch, and the Qld pieces carry their `cell_id`.
+
+The code is fixed: the pieces are matched back by position, and a cell with no land stays empty;
+`test-cell-ids.R` covers this. New cells added under T13 are computed correctly. The committed NSW
+tables, and everything derived from them, are still the shifted ones until rebuilt:
+- the NSW columns of `site_params.csv`;
+- the fitted fire priors;
+- range-wide results and talk figures;
+- the Pegg-site runs at NSW cells.
+
+Rebuilding the three NSW tables takes about 20 minutes. It changes M. nodosa's model inputs, so it
+waits for a decision. D1's earlier cross-check against the previous `02` reported 255/256 cells
+matching; why it did not catch this has not been traced.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -841,3 +899,5 @@ the optional-field rules; Ricker's expected recruits computed by hand.
 | 2026-11-19 | T10 | Qld fire download area derived from all species grids (cells north of border − band, + 0.25° margin); downloads record their area; coverage checked |
 | 2026-11-20 | T11 | A4 runs warn when the gen-time window < 3 T_g or the spin-up before it < 5 T_g (config/assessment.yaml); summaries flag them (`tg_windows_ok`) |
 | 2026-11-20 | T12 | Swappable parts: registries for fire response, cell rust pressure and recruitment curve (Ricker wired in, unused); `draw_annual_env()`, `expected_recruits()`, `update_flowering()`; optional schema fields keep existing species unchanged |
+| 2026-11-20 | T13 | One Australia-wide master grid (110–160 E, 45–9 S, 0.1°) for cell ids; fire tables shared over all species' cells and built incrementally; fire prior fitted per species |
+| 2026-11-20 | T14 | Error found: NSW cell-year tables shifted by one cell after a zero-land cell (234/256 NSW cells hold another cell's record); code fixed, tables not yet rebuilt |

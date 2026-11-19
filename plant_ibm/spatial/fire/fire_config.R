@@ -4,18 +4,23 @@
 # the two external sources can be overridden with environment variables.
 # Methods and the reasons for each choice: docs/methodological_notes.md, D1-D5.
 # The species (whose grid cells are used), the grid size and the border
-# latitude come from the configuration (notes T9).
+# latitude come from the configuration (notes T9). Cells are numbered on the
+# master grid (spatial/cell_ids.R), and the cell-year tables cover every
+# species' cells, listed in FIRE_CELLS_CSV (notes T13).
 
 source("R/species_config.R")
+source("spatial/cell_ids.R")
 SPECIES_SPATIAL <- load_species_spatial()     # default species: config/run_defaults.yaml
 LANDSCAPE       <- load_landscape_spatial()   # config/landscape.yaml, 'spatial'
 
 # ---- Paths ---------------------------------------------------------------------
 NPWS_SHP      <- Sys.getenv("NPWS_SHP", "/home/jgb/projects/melsims/utilities/fire/NPWSFireHistory.shp")
 SPECIES_GRID_CSV <- file.path(SPECIES_SPATIAL$data_dir, "grid.csv")  # occupied cells (01)
-FIRE_DATA_DIR <- "spatial/data/fire"                 # cell-year tables (kept in git)
+FIRE_DATA_DIR <- "spatial/data/fire"                 # cell-year tables, all species (kept in git)
+FIRE_CELLS_CSV <- file.path(FIRE_DATA_DIR, "cells.csv")  # cells the tables cover: state, land area (git)
+FIRE_CHECKS_DIR <- file.path(SPECIES_SPATIAL$data_dir, "fire_checks")  # 03's outputs, per species
 FIRE_RAW_DIR  <- Sys.getenv("FIRE_RAW_DIR", file.path(FIRE_DATA_DIR, "raw"))  # Qld downloads (not in git)
-FIRE_FIG_DIR  <- "spatial/figures/fire"
+FIRE_FIG_DIR  <- file.path(SPECIES_SPATIAL$fig_dir, "fire")
 GRID_DEG      <- LANDSCAPE$grid_deg
 
 # ---- Queensland services (ArcGIS REST) -----------------------------------------

@@ -8,13 +8,28 @@
 read_cy <- function(name, dir = FIRE_DATA_DIR)
   utils::read.csv(file.path(dir, paste0("cell_years_", name, ".csv")))
 
-# Cells with state and land area, cached (geometry work takes a minute).
-load_fire_cells <- function(cache = file.path(FIRE_DATA_DIR, "cells.rds"), grid_csv = SPECIES_GRID_CSV) {
-  if (file.exists(cache)) return(readRDS(cache))
-  cells <- load_cells(grid_csv)
-  dir.create(dirname(cache), recursive = TRUE, showWarnings = FALSE)
-  saveRDS(cells, cache)
-  cells
+# Cells the cell-year tables cover (all species; notes T13), without geometry:
+# cell_id, lon_centre, lat_centre, state, area_cell_m2, area_land_m2, land_frac.
+# Written by spatial/fire/02_fire_cell_years.R as it adds cells.
+FIRE_CELL_COLUMNS <- c("cell_id", "lon_centre", "lat_centre", "state",
+                       "area_cell_m2", "area_land_m2", "land_frac")
+read_fire_cells <- function(path = FIRE_CELLS_CSV) {
+  if (!file.exists(path)) return(NULL)
+  utils::read.csv(path)
+}
+
+# One species' cells from the shared table, as polygons (in the species
+# grid's order). The fire regime and its prior are fitted over these cells
+# only (notes T13: per-species prior, as D2). Stops if the tables do not
+# cover the species yet.
+load_fire_cells <- function(grid_csv = SPECIES_GRID_CSV, path = FIRE_CELLS_CSV) {
+  fc <- read_fire_cells(path)
+  g  <- utils::read.csv(grid_csv)
+  miss <- if (is.null(fc)) g$cell_id else setdiff(g$cell_id, fc$cell_id)
+  if (length(miss))
+    stop(length(miss), " of the species' ", nrow(g), " cells are not in ", path,
+         ": run spatial/fire/02_fire_cell_years.R to add them to the fire tables")
+  cell_squares(fc[match(g$cell_id, fc$cell_id), FIRE_CELL_COLUMNS])
 }
 
 # One scenario (fire_scenario() in fire_config.R): the estimate_fire_regime()

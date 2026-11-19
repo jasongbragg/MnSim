@@ -18,7 +18,9 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
 - `config/` — `schema.yaml` (every parameter and setting: layer, type, bounds), `landscape.yaml`
   (shared landscape defaults and spatial settings), `assessment.yaml` (shared IUCN settings),
   `run_defaults.yaml` (default species, run settings); loaded by `plant_ibm/R/species_config.R`
-- `plant_ibm/spatial/data/<sp>/` — per-species occurrence and site tables
+- `plant_ibm/spatial/data/<sp>/` — per-species occurrence and site tables, fire checks
+- `plant_ibm/spatial/data/fire/` — fire cell-year tables shared by all species (`cells.csv` lists the
+  cells covered); cells are numbered on one master grid (`plant_ibm/spatial/cell_ids.R`)
 - `data/rust_species_params.csv` — literature parameters and calibration targets, one row per value,
   each with a source. Columns: species, ibm_module, parameter, role, value, units, evidence_type,
   confidence, source, notes. `role` is one of: parameter | calibration_target | committee_method |

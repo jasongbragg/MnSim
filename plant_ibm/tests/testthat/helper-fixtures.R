@@ -29,7 +29,7 @@ source("spatial/rust_pressure.R")    # rust_pressure_from_sdm(), apply_sdm_to_si
 source("runner/range_ensemble.R")   # plan_range_run(), draw_params(), range_category_shares()
 source("runner/pegg_sites.R")       # multi-plot Pegg fit (interval mortality, mixture likelihood)
 source("spatial/fire/fire_config.R")  # fire pipeline settings (D1-D5)
-for (.f in c("estimate", "regime", "cell_years"))  # estimator, site fire table, burnt fractions
+for (.f in c("grid", "estimate", "regime", "cell_years"))  # cell polygons, estimator, site fire table, burnt fractions
   source(file.path("spatial/fire/R", paste0(.f, ".R")))
 # Test files run with wd = tests/testthat: point data paths at the project root.
 assign("SITE_PARAMS_PATH", file.path(proj_root, SITE_PARAMS_PATH), envir = globalenv())

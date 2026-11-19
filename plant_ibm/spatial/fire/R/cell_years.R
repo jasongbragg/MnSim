@@ -32,9 +32,13 @@ cell_year_fractions <- function(fires, cells, years, area_base = c("land", "cell
   cells_a <- st_transform(cells, AREA_CRS)
   if (!is.null(state_poly)) {             # clip cells to their state's land
     sp <- st_union(st_transform(state_poly, AREA_CRS))
-    clipped <- suppressWarnings(st_intersection(st_geometry(cells_a), sp))
-    # keep cells with no land intersection as empty (rare)
-    cells_geom <- clipped
+    # st_intersection() drops cells with no land in the state, so match the
+    # pieces back by position; such cells stay empty (and never burn). Before
+    # notes T14 the dropped cell shifted every later cell onto its neighbour.
+    idx <- seq_len(nrow(cells_a))
+    cl  <- suppressWarnings(st_intersection(st_sf(i = idx, geometry = st_geometry(cells_a)), sp))
+    cells_geom <- st_sfc(lapply(idx, function(i) st_polygon()), crs = st_crs(cells_a))
+    cells_geom[cl$i] <- st_geometry(cl)
   } else cells_geom <- st_geometry(cells_a)
   if (!is.null(remove)) remove <- st_transform(remove, AREA_CRS)
   base <- if (area_base == "cell") cells$area_cell_m2 else cells$area_land_m2

@@ -29,6 +29,24 @@ spatial:
   grid_deg:
     value: 0.1
     source: "spatial/01_get_melaleuca_occurrences.R header: 0.1 degree (~10 km), where fire and rust layers vary meaningfully"
+  # The master grid: one raster for all species, so a cell has the same
+  # cell_id whatever species occupies it, and the fire tables are shared
+  # (plant_ibm/spatial/cell_ids.R; notes T13). Covers mainland Australia,
+  # Tasmania, the Torres Strait islands and Lord Howe Island, so any species
+  # can use it. Changing it renumbers every cell.
+  grid_extent:
+    lon_min:
+      value: 110
+      source: "notes T13: west of Steep Point (113.2 E)"
+    lon_max:
+      value: 160
+      source: "notes T13: east of Cape Byron (153.6 E) and Lord Howe Island (159.1 E)"
+    lat_min:
+      value: -45
+      source: "notes T13: south of South East Cape, Tasmania (43.6 S)"
+    lat_max:
+      value: -9
+      source: "notes T13: north of the Torres Strait islands (9.2 S)"
   qld_border_lat:
     value: -28.16
     source: "Approximate NSW/Qld border on the coast; labels cells by state when a table has no fire_state, and splits states when ozmaps is unavailable (notes D4)"

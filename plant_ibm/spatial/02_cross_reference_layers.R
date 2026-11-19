@@ -102,10 +102,8 @@ need <- file.path(FIRE_DATA_DIR, paste0("cell_years_", c("nsw_wild", "nsw_planne
 if (!all(file.exists(need)))
   stop("Fire cell-year tables missing: run spatial/fire/02_fire_cell_years.R first\n  ",
        paste(need[!file.exists(need)], collapse = "\n  "))
-fire_cells <- load_fire_cells()
-if (!setequal(fire_cells$cell_id, sp_grid$cell_id))
-  stop("spatial/data/fire/cells.rds is from a different grid: delete it and rerun spatial/fire/02_fire_cell_years.R")
-fire_reg <- site_fire_regime(fire_cells)
+fire_cells <- load_fire_cells()   # this species' cells of the shared tables (notes T13)
+fire_reg <- site_fire_regime(fire_cells)   # prior fitted over these cells only
 pri <- attr(fire_reg, "priors")
 for (i in seq_len(nrow(pri)))
   message(sprintf("  prior (%s, %s): Gamma(%.2f, %.1f), mean %.0f yr between fire years",

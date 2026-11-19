@@ -181,6 +181,11 @@ spatial:
 # Shared landscape settings for the spatial pipeline and site table.
 landscape_spatial:
   grid_deg:       {layer: landscape, type: double, min: 0}
+  grid_extent:
+    lon_min: {layer: landscape, type: double, min: -180, max: 180}
+    lon_max: {layer: landscape, type: double, min: -180, max: 180}
+    lat_min: {layer: landscape, type: double, min: -90, max: 90}
+    lat_max: {layer: landscape, type: double, min: -90, max: 90}
   qld_border_lat: {layer: landscape, type: double, min: -90, max: 90}
   qld_bbox_margin: {layer: landscape, type: double, min: 0}
   rust_sdm:       {layer: landscape, type: character}

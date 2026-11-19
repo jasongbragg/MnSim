@@ -9,13 +9,16 @@
 #   3. Qld record year by year: the step after 2013, and the "chronic" cells
 #      marked burnt in (nearly) every automated year (figures/fire/qld_by_year.png)
 #   4. wildfire vs planned burns, per state
-# Writes spatial/data/fire/fire_scenarios_summary.csv, fire_priors.csv,
-# border_summary.csv and qld_chronic_cells.csv.
+# Over the default species' cells (notes T13). Writes
+# spatial/data/<sp>/fire_checks/: fire_scenarios_summary.csv, fire_priors.csv,
+# border_summary.csv and qld_chronic_cells.csv; figures in
+# spatial/figures/<sp>/fire/.
 source("spatial/fire/fire_config.R")
 for (f in c("grid", "estimate", "regime", "border"))
   source(file.path("spatial/fire/R", paste0(f, ".R")))
 suppressPackageStartupMessages(library(ggplot2))
 dir.create(FIRE_FIG_DIR, recursive = TRUE, showWarnings = FALSE)
+dir.create(FIRE_CHECKS_DIR, recursive = TRUE, showWarnings = FALSE)
 cells <- load_fire_cells()
 
 # ---- 1. Scenarios -----------------------------------------------------------------
@@ -34,8 +37,8 @@ summ <- do.call(rbind, Map(function(name, reg) {
 }, names(regs), regs))
 pri <- do.call(rbind, Map(function(name, reg) { p <- attr(reg, "priors"); p$scenario <- name; p },
                           names(regs), regs))
-utils::write.csv(summ, file.path(FIRE_DATA_DIR, "fire_scenarios_summary.csv"), row.names = FALSE)
-utils::write.csv(pri, file.path(FIRE_DATA_DIR, "fire_priors.csv"), row.names = FALSE)
+utils::write.csv(summ, file.path(FIRE_CHECKS_DIR, "fire_scenarios_summary.csv"), row.names = FALSE)
+utils::write.csv(pri, file.path(FIRE_CHECKS_DIR, "fire_priors.csv"), row.names = FALSE)
 cat("Fitted priors (Gamma(alpha, beta) on the annual fire-year rate):\n")
 print(transform(pri[, c("scenario", "group", "alpha", "beta", "type")],
                 alpha = round(alpha, 2), beta = round(beta, 1),
@@ -57,7 +60,7 @@ for (name in names(regs)) {
   bs[[name]] <- s
 }
 bs <- do.call(rbind, bs)
-utils::write.csv(bs, file.path(FIRE_DATA_DIR, "border_summary.csv"), row.names = FALSE)
+utils::write.csv(bs, file.path(FIRE_CHECKS_DIR, "border_summary.csv"), row.names = FALSE)
 cat(sprintf("\nBorder band (+/- %.1f deg): Qld/NSW fire-year rate\n", BORDER_BAND))
 rr <- unique(bs[, c("scenario", "qld_nsw_rate_ratio", "rr_lo", "rr_hi")])
 print(transform(rr, qld_nsw_rate_ratio = round(qld_nsw_rate_ratio, 2),
@@ -89,7 +92,7 @@ q$k_automated <- cnt(qld, auto)
 q$fire_last_automated_year <- cnt(qld, min(QLD_YEARS) - 1L)
 q$k_used <- cnt(qld, QLD_YEARS)
 q$chronic <- q$k_automated >= round(0.75 * length(auto))
-utils::write.csv(q, file.path(FIRE_DATA_DIR, "qld_chronic_cells.csv"), row.names = FALSE)
+utils::write.csv(q, file.path(FIRE_CHECKS_DIR, "qld_chronic_cells.csv"), row.names = FALSE)
 cat(sprintf("\nQld: %d of %d cells marked burnt in >= 75%% of the automated years %d-%d.\n",
             sum(q$chronic), nrow(q), min(auto), max(auto)))
 cat(sprintf("  chronic cells: fire in %d %.0f%%, fire years %d-%d per cell %.2f\n",

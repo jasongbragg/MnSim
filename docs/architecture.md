@@ -501,16 +501,20 @@ These scripts build `spatial/data/m_nodosa/site_params.csv`, one row per occupie
 0.1° cell (375 cells). Each row holds the fire regime per source and regime,
 the rust Beta parameters and the abundance weight.
 
+- Cells: one master grid, 0.1° over all of Australia; `cell_id` is the cell's
+  number in it, the same for every species (`spatial/cell_ids.R`; notes T13).
 - Occurrences: `01_get_melaleuca_occurrences.R`.
 - Fire: `spatial/fire/`, from NSW NPWS and Qld fire-scar records. It gives
   the burnt fraction per cell-year and a negative-binomial prior fitted by
-  maximum likelihood (notes D1–D5).
+  maximum likelihood (notes D1–D5). The cell-year tables
+  (`spatial/data/fire/`) are shared by all species and extended
+  incrementally; the prior is fitted over each species' own cells (T13).
 - Rust: `rust_pressure.R`. A cell's mean pressure is
   `μ · SDM_cell / SDM_anchor-cell`, capped at 0.95, so the anchor cell
   always gets μ = 0.70.
 
-Everything here is specific to M. nodosa: the occurrence grid, the anchor,
-and file names starting `mn_`.
+Specific to each species: its occurrence grid, anchor, site table and fire
+checks (`spatial/data/<sp>/`). Shared: the master grid and the fire tables.
 
 ---
 

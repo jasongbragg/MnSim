@@ -106,8 +106,9 @@ where each parameter is used.
     thresholds, Pegg validation set-up (layer V), grid size, range box, file names; remove duplicates.
     Done 2026-11-19 (notes T9): `config/assessment.yaml`, species `assessment`/`spatial`/`ensemble_draws`
     blocks, `species/m_nodosa_validation.yaml`, `config/landscape.yaml` `spatial`; data in
-    `spatial/data/m_nodosa/`. `QLD_BBOX` now derived from the species grids (notes T10). Open: the
-    grid/cell ids for a second species (notes T9).
+    `spatial/data/m_nodosa/`. `QLD_BBOX` now derived from the species grids (notes T10). Cell ids:
+    one Australia-wide master grid, fire tables shared over all species' cells, prior per species
+    (2026-11-20, notes T13). **Open: NSW fire tables misassigned (notes T14); rebuild pending.**
 - [x] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment.
   - Fire already has three modes (legacy, plant, stand).
   - Response curves are pluggable through `dose_response`.

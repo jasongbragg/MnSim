@@ -6,8 +6,10 @@
 # box and grid size come from the configuration (notes T9):
 #   species/<sp>.yaml         'species' (the ALA query) and spatial$range_box
 #   config/landscape.yaml     spatial$grid_deg
-# NOTE: cell_id is the cell number in a raster spanning the range box, so a
-# different box gives different cell ids (the fire tables are keyed by them).
+# cell_id is the cell number in the master grid (config/landscape.yaml,
+# spatial$grid_extent; spatial/cell_ids.R; notes T13): the same for every
+# species, so the shared fire tables are keyed by it. The range box only
+# limits the records.
 #
 # OUTPUTS (<sp> = the species file name, e.g. m_nodosa)
 # -------
@@ -42,6 +44,7 @@
 
 # ---- Configuration --------------------------------------------------------
 source("R/species_config.R")
+source("spatial/cell_ids.R")                     # master grid (notes T13)
 SP          <- load_species_spatial()            # species/<sp>.yaml
 ALA_EMAIL   <- "your.email@institution.edu.au"  # EDIT: your ALA-registered email
 GRID_DEG    <- load_landscape_spatial()$grid_deg # grid cell size in degrees (see note above)
@@ -182,11 +185,8 @@ message("  Saved: ", file.path(DATA_DIR, "clean.csv"))
 message(sprintf("Step 4: Grid thinning at %.2f degrees (~%.0f km)...",
                 GRID_DEG, GRID_DEG * 111))
 
-# Build reference raster over the species range
-bbox <- c(xmin = BOX$lon_min, xmax = BOX$lon_max, ymin = BOX$lat_min, ymax = BOX$lat_max)
-r <- rast(xmin = bbox["xmin"], xmax = bbox["xmax"],
-          ymin = bbox["ymin"], ymax = bbox["ymax"],
-          resolution = GRID_DEG, crs = "EPSG:4326")
+# The master grid: the same cells and ids for every species (notes T13)
+r <- master_raster()
 
 # Assign each record to a cell
 coords  <- cbind(occ_clean$longitude, occ_clean$latitude)

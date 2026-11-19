@@ -451,6 +451,14 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
     draws[[nm]] <- list(path = path, min = lo, max = hi, label = d$label, note = d$note)
   }
 
+  # The range box must lie inside the master grid (notes T13).
+  ext <- tryCatch(load_landscape_spatial(root)$grid_extent, error = function(e) NULL)
+  b   <- spatial$range_box
+  if (!is.null(ext) && length(b) == 4L &&
+      (b$lon_min < ext$lon_min || b$lon_max > ext$lon_max || b$lat_min < ext$lat_min || b$lat_max > ext$lat_max))
+    err(paste0(fname[["species"]], ": spatial$range_box"),
+        "must lie inside the master grid (config/landscape.yaml, spatial$grid_extent)")
+
   if (length(errs)) config_error(sprintf("species '%s'", species), errs)
 
   list(species = sp$species, params = params, rust_anchor = anchor,
@@ -480,6 +488,14 @@ load_landscape_spatial <- function(root = mnsim_root()) {
   err    <- function(where, msg) errs <<- c(errs, sprintf("%s: %s", where, msg))
   out    <- read_settings(schema$landscape_spatial,
               list(landscape = list(data = lf$spatial, label = "config/landscape.yaml: spatial")), err)
+  e <- out$grid_extent
+  if (!is.null(e$lon_min) && !is.null(e$lat_min) && !is.null(out$grid_deg)) {
+    if (e$lon_min >= e$lon_max || e$lat_min >= e$lat_max)
+      err("config/landscape.yaml: spatial$grid_extent", "needs lon_min < lon_max and lat_min < lat_max")
+    n <- c(e$lon_max - e$lon_min, e$lat_max - e$lat_min) / out$grid_deg
+    if (any(abs(n - round(n)) > 1e-6))
+      err("config/landscape.yaml: spatial$grid_extent", "must be a whole number of grid_deg cells wide and high")
+  }
   if (length(errs)) config_error("config/landscape.yaml", errs)
   out$rust_sdm <- Sys.getenv("MN_SDM_TIFF", out$rust_sdm)
   out
