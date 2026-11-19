@@ -532,6 +532,28 @@ the all-plant death rate (mostly juveniles, offset by recruitment) and the
 2009-2060 decline (a 20% rise in rust mortality left it unchanged). This is
 a coarse guard; the exact-match tests are the main check.
 
+**T3. Procedure for updating the references** [decided, 2026-11-19]
+Full procedure: `docs/reference_updates.md`.
+- Which test fails says what changed, and whether an update is allowed:
+  - recalibration;
+  - intended behaviour change;
+  - draw-order refactor;
+  - R upgrade.
+  An unintended behaviour change is a bug, never an update.
+- The 20-seed stats baseline is kept across draw-order refactors, so small shifts cannot add up
+  unseen. It is regenerated only for deliberate behaviour changes or an R upgrade.
+- The agent generates candidates into scratch and compares them with
+  `tests/regression/compare_references.R`. The owner logs the reason here (T4, T5, ...), installs
+  the whole set and commits it with the change, prefixed `REFERENCE UPDATE vN:`. The previous set is
+  tagged `ref-vN`. The current set is v1 (commit `2cf1bb8`).
+- Phase 4 species get subdirectories of `tests/reference/`.
+
+Comparison tested on scratch sets, 2026-11-19:
+- A calibration change (rust resprout `max_effect` 0.53 -> 0.54) was classed row 1.
+- An extra unused draw per year was classed row 3: statistics within 0.2 tolerance.
+- The same draw change moved the single-seed A4 run from EN to CR. Single-seed outputs after a
+  random-stream change are a new draw, not evidence of a behaviour change.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -556,3 +578,4 @@ a coarse guard; the exact-match tests are the main check.
 | Nov 2026 | V6 | Phase 2: fit level and between-plot spread of post-fire mortality at seven Pegg plots, by interval |
 | 2026-11-19 | T1 | Six fixed-seed regression scenarios from `params.R` at test scale (density parameters x 0.03); references store their params |
 | 2026-11-19 | T2 | Second check: mature mortality, Pegg fraction dead and rust mortality over 20 seeds, tolerance 4 sd of the difference |
+| 2026-11-19 | T3 | Reference-update procedure (docs/reference_updates.md); stats baseline kept across draw-order refactors; owner installs references |

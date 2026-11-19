@@ -17,49 +17,13 @@ source(file.path(proj_root, "tests", "regression", "scenarios.R"), local = TRUE)
 
 source(file.path(proj_root, "tests", "regression", "stats.R"), local = TRUE)
 
+source(file.path(proj_root, "tests", "regression", "compare.R"), local = TRUE)   # first_difference()
+
 # MNSIM_REFERENCE_DIR points the tests at another copy of the references
 # (e.g. a dry run); default: tests/reference at the repo root.
 ref_dir     <- Sys.getenv("MNSIM_REFERENCE_DIR",
                           normalizePath(file.path(proj_root, "..", "tests", "reference"), mustWork = FALSE))
 params_file <- file.path(proj_root, "params.R")
-
-# Where two outputs first differ, as a readable message (instead of
-# expect_identical's dump of large data frames).
-first_difference <- function(new, ref, path = "output") {
-  if (identical(new, ref)) return(NULL)
-  if (is.data.frame(ref) && is.data.frame(new)) {
-    if (!identical(names(new), names(ref)))
-      return(sprintf("%s: columns differ (new: %s)", path, paste(setdiff(names(new), names(ref)), collapse = ", ")))
-    if (nrow(new) != nrow(ref))
-      return(sprintf("%s: %d rows, reference %d", path, nrow(new), nrow(ref)))
-    for (col in names(ref)) {
-      a <- new[[col]]; b <- ref[[col]]
-      if (!identical(a, b)) {
-        i <- which(!(a == b | (is.na(a) & is.na(b))) | xor(is.na(a), is.na(b)))[1]
-        yr <- if ("year" %in% names(ref)) sprintf(" (year %s)", ref$year[i]) else ""
-        return(sprintf("%s$%s: first difference at row %s%s: new %s, reference %s",
-                       path, col, i, yr, format(a[i]), format(b[i])))
-      }
-    }
-    return(sprintf("%s: attributes differ", path))
-  }
-  if (is.list(ref) && is.list(new)) {
-    if (!identical(names(new), names(ref)))
-      return(sprintf("%s: elements differ (new only: %s; reference only: %s)", path,
-                     paste(setdiff(names(new), names(ref)), collapse = ", "),
-                     paste(setdiff(names(ref), names(new)), collapse = ", ")))
-    # Census first: its rows are dated, so the message gives the first year that differs.
-    for (k in order(names(ref) != "census")) {
-      d <- first_difference(new[[k]], ref[[k]],
-                            paste0(path, "$", if (is.null(names(ref))) k else names(ref)[k]))
-      if (!is.null(d)) return(d)
-    }
-    return(sprintf("%s: attributes differ", path))
-  }
-  sprintf("%s: new %s, reference %s", path,
-          paste(utils::head(format(new), 5), collapse = " "),
-          paste(utils::head(format(ref), 5), collapse = " "))
-}
 
 test_that("every regression scenario has a reference file, made with this R version", {
   set.seed(1)

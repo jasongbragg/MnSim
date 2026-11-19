@@ -40,7 +40,7 @@ Starting point (`docs/phase1_2_review.md`):
   - Add a shortened A4-style run (`run_iucn_a4` with a short spin-up) and a Pegg-scenario run, since
     those are the outputs used for listing.
   - Save the census, individuals and genotypes to `tests/reference/` with the R version recorded.
-- [ ] [you] Make the reference files read-only (`chmod -R a-w tests/reference`)
+- [x] [you] Make the reference files read-only (`chmod -R a-w tests/reference`) (2026-11-19)
 - [x] [agent] Write testthat tests that re-run each scenario and compare (exact match for the same seed).
   Done 2026-11-19: `plant_ibm/tests/testthat/test-regression.R`. For each scenario it checks that the
   frozen params reproduce the frozen output, and that `params.R` still builds the frozen params.
@@ -53,11 +53,11 @@ Starting point (`docs/phase1_2_review.md`):
   `summarise_run()`.
   Done 2026-11-19 (notes T2): `tests/regression/stats.R` and `make_reference_stats.R`.
 - [x] [you] Generate the statistics baseline: `cd plant_ibm && /opt/R/4.3.1/bin/Rscript tests/regression/make_reference_stats.R`. Done 2026-11-19 (summary_stats.rds md5 f0a968bd99fcfb9aa1b7d589665154af); tests/reference made read-only.
-- [ ] [you] Decide the procedure for deliberate reference updates.
-  - The ROADMAP's M. nodosa work (Pegg per-tree refit, range_v2) will change `params.R` after the
-    references are frozen, and CLAUDE.md rule 2 forbids editing `tests/reference/`.
-  - Proposal: you regenerate the references yourself, with a dated entry in
-    `docs/methodological_notes.md`.
+- [x] [you] Decide the procedure for deliberate reference updates.
+  Done 2026-11-19: `docs/reference_updates.md` (notes T3). Comparison script built:
+  `tests/regression/compare_references.R`.
+- [ ] [agent] At the first reference update: add `ref_version` and md5 sums of `params.R` and `R/*.R`
+  to the generators' `meta` (`docs/reference_updates.md`, decision 4).
 - **Done when:** the test suite passes on unchanged code, runs in under 5 minutes, and is committed.
 
 ## Phase 2 — Refactor to species configs  [agent]
