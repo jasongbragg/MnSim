@@ -13,9 +13,12 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
 
 ## Repo layout
 - `plant_ibm/` — the IBM code
-- `species/` — one YAML parameter file per species (created in Phase 2/4)
-- `config/` — `schema.yaml` (every parameter: layer, type, bounds), `landscape.yaml` (shared
-  landscape defaults), `run_defaults.yaml` (run settings); loaded by `plant_ibm/R/species_config.R`
+- `species/` — one YAML parameter file per species (created in Phase 2/4): parameters, rust anchor,
+  assessment windows, range box, range-wide draws; `<sp>_validation.yaml` holds its validation set-up
+- `config/` — `schema.yaml` (every parameter and setting: layer, type, bounds), `landscape.yaml`
+  (shared landscape defaults and spatial settings), `assessment.yaml` (shared IUCN settings),
+  `run_defaults.yaml` (default species, run settings); loaded by `plant_ibm/R/species_config.R`
+- `plant_ibm/spatial/data/<sp>/` — per-species occurrence and site tables
 - `data/rust_species_params.csv` — literature parameters and calibration targets, one row per value,
   each with a source. Columns: species, ibm_module, parameter, role, value, units, evidence_type,
   confidence, source, notes. `role` is one of: parameter | calibration_target | committee_method |

@@ -675,6 +675,55 @@ The comments that documented values in the old file are covered by the CSV notes
 D, E and V of this file. Loading takes about 0.3 s per source.
 
 Still to do (PLAN Phase 2): the constants in `runner/` and `spatial/` (inventory sections 3–4).
+Done in T9.
+
+**T9. Runner and spatial constants moved to the configuration** [decided, 2026-11-19]
+The constants listed in `docs/constants_inventory.md` sections 3–4 now come from configuration files,
+following the four layers of T4. The loader (`R/species_config.R`) reads and checks them.
+
+| What | Was | Now |
+|---|---|---|
+| Rust year, present, end of run, 11-yr averaging, 100-yr cap, criterion | `iucn_a4.R` (3 copies), `range_ensemble.R` | `config/assessment.yaml` (shared) |
+| Spin-up 1600, gen-time window 1810–1910 | same | `assessment:` block of `species/m_nodosa.yaml` (species settings, decision 3) |
+| Category thresholds 30/50/80 | `iucn_a4.R` (5 places), `range_ensemble.R` | `config/assessment.yaml`, `categories:`; read as `IUCN_CATEGORIES` |
+| Pegg years, observed 0.48 of 50, site, fire overrides, plot file, `n_post` | `pegg_validation.R`, `pegg_sites.R` (twice) | `species/m_nodosa_validation.yaml` (layer V); read as `PEGG`. The observed value is read from its CSV row; the rust year is the assessment's |
+| `DEFAULT_PARAM_DRAWS` (max_effect U(0.32, 0.78)) | `range_ensemble.R` | `ensemble_draws:` block of the species file; the range must match `RANGE [0.32, 0.78]` in the notes of the parameter's CSV row |
+| ALA query, range box (3 copies) | `spatial/01_…` | the species file's `species:` name and `spatial: range_box:` |
+| Grid size (5 copies), NSW/Qld border latitude (2 copies), rust SDM path (3 copies) | `spatial/`, `range_ensemble.R` | `config/landscape.yaml`, `spatial:` (`MN_SDM_TIFF` still overrides the SDM path) |
+| `mn_*` data files and figures | `spatial/data/mn_*.csv`, `spatial/figures/mn_*.png` | `spatial/data/m_nodosa/` and `spatial/figures/m_nodosa/` (`git mv`; names without the prefix) |
+| Age at first flowering draw (2 copies) | `R/individuals.R` | one helper, `draw_age_first_flower()`, same draws |
+
+Further rules and changes:
+- **Default species.** `config/run_defaults.yaml` names it (`species: m_nodosa`). The runners and
+  `params.R` use it when no species is given, so the code names no species.
+- **Settings need a source.** CLAUDE.md rule 5 covers parameter values (`params`, `rust_anchor`),
+  which must cite a CSV row or be priors. Settings outside the params list (assessment windows,
+  range box, validation set-up, grid size) are not parameter values. Each needs a `source:` string,
+  as landscape values do, or must take its value from a CSV row (`cite:` + `row:`). The schema
+  (`config/schema.yaml`, new sections) declares their types and bounds. The loader also checks that
+  the assessment years are in order, that the thresholds increase, and that a draw range contains
+  the parameter's value.
+- **Repo root.** `mnsim_root()` now searches up from the working directory for
+  `config/schema.yaml`, so tests and scripts find the configuration from any folder inside the repo.
+
+Identity: every moved value is the same number and type as before (integer years, double
+thresholds), so run IDs and stored results are unchanged. Tests check:
+- `iucn_assess_spec()`, `DEFAULT_PARAM_DRAWS` and the Pegg settings are `identical()` to the old
+  literals;
+- every regression test passes (the a4 and pegg scenarios use the defaults that moved).
+
+Not moved (inventory: keep in code), and open points:
+- numerical settings and model structure (inventory section 2; V9–V10, S8–S10, P8–P11, P14);
+- the fire-pipeline settings in `spatial/fire/fire_config.R` (record years, threshold, floors,
+  regimes; D1–D5): already in one shared file.
+- **Open: `QLD_BBOX`** (the Qld download extent) is drawn around the M. nodosa cells. A more northern
+  species needs a wider box.
+- **Open: cell ids and fire tables.** `cell_id` is the cell number in a raster spanning the
+  species' range box. The fire cell-year tables and `spatial/data/fire/cells.rds` are built for the
+  M. nodosa grid. A second species needs its own (or a common, fixed) grid before the fire tables
+  can be shared.
+- `talk/` keeps its M. nodosa references (talk figures); only its paths and the renamed constants
+  were updated.
 
 ## Decision log
 
@@ -706,3 +755,4 @@ Still to do (PLAN Phase 2): the constants in `runner/` and `spatial/` (inventory
 | 2026-11-19 | T6 | M. nodosa values in data/m_nodosa_params.csv (rule 5 names both CSVs); 19 untraced active values marked as priors |
 | 2026-11-19 | T7 | YAML schema + loader (config/, species/m_nodosa.yaml, R/species_config.R); identical to get_default_params(); rule 5 checked at load; remaining 18 untraced rows made priors |
 | 2026-11-19 | T8 | params.R switched to the loader (same interface, identical output) |
+| 2026-11-19 | T9 | Runner and spatial constants moved to config (assessment.yaml, species assessment/spatial/ensemble_draws blocks, m_nodosa_validation.yaml, landscape spatial); default species in run_defaults.yaml; data in spatial/data/m_nodosa/ |

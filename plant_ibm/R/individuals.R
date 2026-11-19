@@ -21,14 +21,19 @@
 #   (death_cause: NA while alive; "fire" if killed by apply_fire(),
 #    "mortality" if killed by nominate_deaths())
 
+#' Age at first flowering for n plants (founders and recruits alike): a rounded
+#' Normal(age_first_flower_mean, age_first_flower_sd) draw, at least 1.
+draw_age_first_flower <- function(n, params) {
+  pmax(round(rnorm(n, params$age_first_flower_mean, params$age_first_flower_sd)), 1L)
+}
+
 #' Create the founding population and its genotypes. year0 = first calendar
 #' year of the run (run_simulation passes it); founders' birth_year = year0 - 1 - age.
 #' Returns list(pop = data.frame, resist_gt = matrix).
 create_population <- function(params, year0 = 0L) {
   n <- params$N0
 
-  age_first_flower <- pmax(round(rnorm(n, params$age_first_flower_mean,
-                                           params$age_first_flower_sd)), 1L)
+  age_first_flower <- draw_age_first_flower(n, params)
 
   age <- rgeom(n, 1 / params$weibull_lambda)
 
@@ -71,8 +76,7 @@ make_recruit_rows <- function(n_rec, t, mother_idx, father_idx, pop, params,
   if (n_rec == 0) return(NULL)
 
   if (is.null(start_id)) start_id <- max(pop$id) + 1L
-  age_first_flower <- pmax(round(rnorm(n_rec, params$age_first_flower_mean,
-                                           params$age_first_flower_sd)), 1L)
+  age_first_flower <- draw_age_first_flower(n_rec, params)
 
   # Each recruit gets its own env_susceptibility from the same site
   # distribution as founders -- microclimate is determined by where the

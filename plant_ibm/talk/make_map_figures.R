@@ -30,8 +30,8 @@ SDM_TIFF <- Sys.getenv("MN_SDM_TIFF",
   "/home/jgb/projects/mrsdm/output/projections/AP_suitability_current.tif")
 FIG_DIR   <- Sys.getenv("MN_FIG_DIR", "talk/figures/")
 CACHE_DIR <- Sys.getenv("MN_MAP_CACHE", "results/talk_maps/")
-SITE_CSV  <- "spatial/data/mn_site_params.csv"
-OCC_CSV   <- "spatial/data/mn_clean.csv"
+SITE_CSV  <- "spatial/data/m_nodosa/site_params.csv"
+OCC_CSV   <- "spatial/data/m_nodosa/clean.csv"
 LAMBDA_TIF <- "spatial/data/fire_lambda_raw.tif"
 
 # Map window: NSW part of the range (set XLIM/YLIM to c(148, 154.2), c(-37.6, -24)

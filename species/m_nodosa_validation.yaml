@@ -1,0 +1,46 @@
+# species/m_nodosa_validation.yaml
+#
+# Validation of Melaleuca nodosa against Pegg et al. 2025 (layer V,
+# methodological notes T4, T9; V1-V6): the scenario, the observation and the
+# plot data used by runner/pegg_validation.R and runner/pegg_sites.R.
+# The rust year is the assessment's (config/assessment.yaml).
+# Each value needs a 'source', or is read from its CSV row (cite + row).
+
+species: "Melaleuca nodosa"
+
+pegg:
+  year_spinup:
+    value: 1910
+    source: "docs/methodological_notes.md V2"
+  year_fire:
+    value: 2020
+    source: "docs/methodological_notes.md V2: the Dec 2019 - Jan 2020 fire = the fire step of model year 2020"
+  year_survey:
+    value: 2022
+    source: "docs/methodological_notes.md V1, V2: Jan 2022 follow-up = end of model year 2021"
+  observed:
+    cite: m_nodosa_params.csv
+    row: pegg_yarringully_resprout_dead
+  observed_n:
+    value: 50
+    source: "docs/methodological_notes.md V1: 50 tagged trees (data/m_nodosa_params.csv, pegg_yarringully_resprout_dead)"
+  site:
+    value: "anchor"
+    source: "docs/methodological_notes.md V2: run at the rust anchor cell (C2)"
+  n_post:
+    value: 3
+    source: "docs/methodological_notes.md V6: plot intervals end within 36 months of the fire"
+  plots:
+    value: "runner/data/pegg2025_mnodosa_plots.csv"
+    source: "data/m_nodosa_params.csv, pegg_plots_interval_mortality; path relative to plant_ibm/"
+  # Every surveyed tree was burnt: these override the cell's fire values.
+  scenario:
+    fire_p_fimp:
+      value: 1
+      source: "docs/methodological_notes.md V2: one fire burning every tree"
+    fire_size_sd:
+      value: 0
+      source: "As fire_p_fimp: the fire burns the whole stand every time"
+    fire_stand_cover:
+      value: 1
+      source: "As fire_p_fimp: no unburnt patches"

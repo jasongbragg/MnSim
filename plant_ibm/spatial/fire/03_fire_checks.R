@@ -1,6 +1,6 @@
 # spatial/fire/03_fire_checks.R -- the evidence behind the fire choices
 # (docs/methodological_notes.md D1-D5). Run from plant_ibm/ after
-# 02_fire_cell_years.R; not needed to build mn_site_params.csv.
+# 02_fire_cell_years.R; not needed to build the site table.
 #
 #   1. every regime and sensitivity scenario: fire years, fitted prior, and a
 #      test of one shared prior against one per state

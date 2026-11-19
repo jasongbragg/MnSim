@@ -9,6 +9,8 @@
 # ------------------------------------------------------
 # Within a model year the order is: age -> resprout recovery -> FIRE ->
 # flowering -> MORTALITY -> recruitment -> census. So:
+# The years, the observation and the fire overrides are in
+# species/<species>_validation.yaml (layer V; notes T9), read as PEGG below.
 #   year_fire = 2020   the fire step of model year 2020 is the Jan 2020 fire;
 #                      the mortality step of 2020 is the first post-fire year.
 #   year_survey = 2022 the Jan 2022 survey = state at the END of model year
@@ -69,7 +71,7 @@
 #   result <- run_pegg_validation(get_default_params())          # single run
 #   df <- run_pegg_seeds(get_default_params(), seeds = 1:100,
 #                        results_dir = "results/pegg_seeds_v2/")
-#   plot_pegg_ensemble(df, observed = 0.48)
+#   plot_pegg_ensemble(df)
 #
 # Seed results are cached by pegg_run_id(), which hashes the params, the
 # scenario years and PEGG_VALIDATION_VERSION, so results from earlier
@@ -78,6 +80,17 @@
 source("runner/site_params.R")   # load_site_params(), anchor_site_row(), build_site_params()
 
 PEGG_VALIDATION_VERSION <- "v3-anchor-site"
+
+# Scenario years (year_rust: the assessment's), observation, plot data and the
+# fire overrides (every surveyed tree burnt), from species/<sp>_validation.yaml.
+PEGG <- validation_config()$pegg
+
+# The Pegg fire: burns every plant in the whole stand (PEGG$scenario overrides
+# the cell's fire values: fire_p_fimp, fire_size_sd, fire_stand_cover).
+apply_pegg_fire <- function(p, scenario = PEGG$scenario) {
+  for (nm in names(scenario)) p[[nm]] <- scenario[[nm]]
+  p
+}
 
 # ----------------------------------------------------------------------------
 # Site: the Pegg runs use the Yarringully grid cell's own values from the
@@ -89,7 +102,7 @@ PEGG_VALIDATION_VERSION <- "v3-anchor-site"
 #   site = "anchor"   the rust anchor cell (default)
 #   site = NULL       use 'params' as given
 #   site = <row>      any one-row data.frame from the cell table
-pegg_site_params <- function(params, site = "anchor") {
+pegg_site_params <- function(params, site = PEGG$site) {
   if (is.null(site)) return(params)
   if (identical(site, "anchor")) {
     if (!file.exists(SITE_PARAMS_PATH)) {
@@ -184,12 +197,12 @@ compute_pegg_stats <- function(pop, census, year_fire, year_survey, year_spinup)
 # ============================================================================
 run_pegg_validation <- function(
     params,
-    year_spinup = 1910L,
-    year_rust   = 2010L,
-    year_fire   = 2020L,
-    year_survey = 2022L,   # Jan 2022 survey = end of model year 2021
-    observed    = 0.48,    # Pegg et al.: 48% of resprouting trees dead by Jan 2022
-    site        = "anchor",
+    year_spinup = PEGG$year_spinup,
+    year_rust   = PEGG$year_rust,
+    year_fire   = PEGG$year_fire,
+    year_survey = PEGG$year_survey,   # Jan 2022 survey = end of model year 2021
+    observed    = PEGG$observed,      # Pegg et al.: 48% of resprouting trees dead by Jan 2022
+    site        = PEGG$site,
     save_rds    = NULL,
     plot        = TRUE,
     verbose     = TRUE
@@ -206,11 +219,9 @@ run_pegg_validation <- function(
   p$fire_prob_annual <- 0
   # Run ends at the end of year_survey - 1 (last t = year0 + n_years - 1).
   p$n_years          <- as.integer(year_survey - year_spinup)
-  # All trees at the survey sites burned: fire_p_fimp = 1 (not a free parameter).
-  p$fire_p_fimp      <- 1.0
-  # ... and the fire reached and burnt the whole stand (stand mode: size 1, full cover).
-  p$fire_size_sd     <- 0
-  p$fire_stand_cover <- 1
+  # All trees at the survey sites burned: fire_p_fimp = 1 (not a free parameter),
+  # and the fire reached and burnt the whole stand (stand mode: size 1, full cover).
+  p                  <- apply_pegg_fire(p)
 
   if (verbose) message(sprintf(
     "Pegg validation: spin=%d  rust=%d  fire=%d  survey=Jan %d (end of %d)  p_fimp=1",
@@ -318,7 +329,7 @@ run_pegg_seeds <- function(
 ) {
   dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
   extra    <- list(...)
-  site     <- if ("site" %in% names(extra)) extra$site else "anchor"
+  site     <- if ("site" %in% names(extra)) extra$site else PEGG$site
   defaults <- formals(run_pegg_validation)
   pick     <- function(nm) as.integer(if (!is.null(extra[[nm]])) extra[[nm]] else eval(defaults[[nm]]))
   scenario <- list(year_spinup = pick("year_spinup"), year_rust = pick("year_rust"),
@@ -490,7 +501,7 @@ plot_pegg_validation <- function(result, save_path = NULL,
 # to 1; medians of each share need not). Panel A shades the 95% binomial
 # interval of the observation (observed_n = 50 trees in Pegg et al.; set
 # observed_n = NULL to omit it).
-plot_pegg_ensemble <- function(df, observed = 0.48, observed_n = 50L,
+plot_pegg_ensemble <- function(df, observed = PEGG$observed, observed_n = PEGG$observed_n,
                                 save_path = NULL,
                                 width_in = 10, height_in = 5, res = 150) {
   if (nrow(df) == 0L) stop("No results to plot.")

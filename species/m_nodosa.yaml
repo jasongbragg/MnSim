@@ -296,3 +296,46 @@ params:
   resist_locus_effect: {value: 1, cite: m_nodosa_params.csv}
   resist_dominance: {value: 1, cite: m_nodosa_params.csv}
   resist_freq0: {value: 0, cite: m_nodosa_params.csv}
+
+# ---- Settings outside the params list (notes T9) -----------------------------
+# Not parameter values: each needs a 'source' (config/schema.yaml).
+
+# IUCN assessment: the species' part (the rest: config/assessment.yaml).
+# These windows must be long relative to the generation time T_g, which is
+# emergent (estimated in each run), so it cannot set them in advance. For
+# M. nodosa, T_g ~ 23 yr (notes T1): the gen-time window (100 yr) is ~4.4 T_g,
+# spin-up before it (210 yr) ~9 T_g, spin-up before rust (410 yr) ~18 T_g;
+# judged adequate (inventory section 7, decision 3). A longer-lived species
+# needs proportionally longer windows (proposed warning: window < 3 T_g, or
+# spin-up before it < 5 T_g; PLAN.md Phase 2).
+assessment:
+  year_spinup:
+    value: 1600
+    source: "docs/methodological_notes.md E4"
+  year_gentime_start:
+    value: 1810
+    source: "docs/methodological_notes.md E4, A3"
+  year_gentime_end:
+    value: 1910
+    source: "docs/methodological_notes.md E4, A3"
+
+# Range for the occurrence download (spatial/01_get_melaleuca_occurrences.R).
+spatial:
+  range_box:
+    lon_min: {value: 148, source: "Generous box around the coastal NSW/Qld range (spatial/01, Oct 2026)"}
+    lon_max: {value: 155, source: "As lon_min"}
+    lat_min: {value: -38, source: "As lon_min"}
+    lat_max: {value: -24, source: "As lon_min"}
+
+# Parameter uncertainty in range-wide runs (runner/range_ensemble.R; notes B3):
+# each run draws the parameter uniformly on [min, max]. The name is the column
+# in range_plan.csv. The range must match 'RANGE [min, max]' in the notes of the
+# parameter's CSV row.
+ensemble_draws:
+  resprout_rust_mortality:
+    param: rust_dose_response__resprout__max_effect
+    min: 0.32
+    max: 0.78
+    label: "Extra rust mortality of resprouting plants (max_effect)"
+    note: "values whose Pegg-scenario median lies in the 95% CI of 24/50 dead (0.34-0.63), at the Yarringully cell"
+    cite: m_nodosa_params.csv

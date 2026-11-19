@@ -244,11 +244,11 @@ fig_trajectories <- function(R) {
     geom_ribbon(data = q, aes(year, ymin = q25, ymax = q75), fill = "#2a78d6", alpha = 0.25) +
     geom_line(data = q, aes(year, med), colour = "#1d5fae", linewidth = 1.2) +
     geom_hline(yintercept = 1, colour = "#2f6b2a", linetype = "dotted") +
-    geom_vline(xintercept = YEAR_RUST, colour = "#d6452f", linetype = "dashed", linewidth = 0.8) +
-    geom_vline(xintercept = YEAR_ASSESS, colour = "#4a3aa7", linewidth = 0.8) +
-    annotate("text", x = YEAR_RUST - 1, y = 0.08, label = "rust\n2010", hjust = 1,
+    geom_vline(xintercept = ASSESS$year_rust, colour = "#d6452f", linetype = "dashed", linewidth = 0.8) +
+    geom_vline(xintercept = ASSESS$year_assess, colour = "#4a3aa7", linewidth = 0.8) +
+    annotate("text", x = ASSESS$year_rust - 1, y = 0.08, label = "rust\n2010", hjust = 1,
              colour = "#d6452f", size = 4) +
-    annotate("text", x = YEAR_ASSESS + 1, y = 0.08, label = "now", hjust = 0,
+    annotate("text", x = ASSESS$year_assess + 1, y = 0.08, label = "now", hjust = 0,
              colour = "#4a3aa7", size = 4) +
     scale_y_continuous(limits = c(0, ymax), expand = c(0, 0),
                        labels = function(x) paste0(round(100 * x), "%")) +
@@ -334,10 +334,10 @@ fig_map <- function(R) {
   ggplot() +
     geom_polygon(data = aus, aes(long, lat, group = group), fill = "#f1efe9", colour = "#bdb6a6",
                  linewidth = 0.3) +
-    geom_hline(yintercept = QLD_LAT, colour = "#9a9a9a", linetype = "dashed", linewidth = 0.4) +
-    annotate("text", x = 148.3, y = QLD_LAT + 0.25, label = "Qld",
+    geom_hline(yintercept = QLD_BORDER_LAT, colour = "#9a9a9a", linetype = "dashed", linewidth = 0.4) +
+    annotate("text", x = 148.3, y = QLD_BORDER_LAT + 0.25, label = "Qld",
              hjust = 0, size = 3.8, colour = "#777777") +
-    annotate("text", x = 148.3, y = QLD_LAT - 0.25, label = "NSW", hjust = 0, size = 3.8,
+    annotate("text", x = 148.3, y = QLD_BORDER_LAT - 0.25, label = "NSW", hjust = 0, size = 3.8,
              colour = "#777777") +
     geom_point(data = sites, aes(lon_centre, lat_centre), colour = "#c9c9c9", size = 0.8) +
     geom_point(data = cell, aes(lon, lat, colour = med, size = n), alpha = 0.9) +

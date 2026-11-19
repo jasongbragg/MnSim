@@ -43,7 +43,7 @@ plant_ibm/
 │                                         #   the figures/numbers below
 ├── runner/                # IUCN A4 runs, Pegg validation, range-wide
 │                          #   ensemble (range_ensemble.R), site params
-├── spatial/               # per-cell inputs -> spatial/data/mn_site_params.csv
+├── spatial/               # per-cell inputs -> spatial/data/<sp>/site_params.csv
 │   ├── 01_get_melaleuca_occurrences.R   # occurrence grid (0.1 degree)
 │   ├── 02_cross_reference_layers.R      # site table: fire regime, rust, weights
 │   ├── 02c_update_rust_pressure.R       # refresh the rust columns only

@@ -3,20 +3,26 @@
 # and the tests. Paths are relative to plant_ibm/ (run everything from there);
 # the two external sources can be overridden with environment variables.
 # Methods and the reasons for each choice: docs/methodological_notes.md, D1-D5.
+# The species (whose grid cells are used), the grid size and the border
+# latitude come from the configuration (notes T9).
+
+source("R/species_config.R")
+SPECIES_SPATIAL <- load_species_spatial()     # default species: config/run_defaults.yaml
+LANDSCAPE       <- load_landscape_spatial()   # config/landscape.yaml, 'spatial'
 
 # ---- Paths ---------------------------------------------------------------------
 NPWS_SHP      <- Sys.getenv("NPWS_SHP", "/home/jgb/projects/melsims/utilities/fire/NPWSFireHistory.shp")
-MN_GRID_CSV   <- "spatial/data/mn_grid.csv"          # occupied 0.1-degree cells (01)
+SPECIES_GRID_CSV <- file.path(SPECIES_SPATIAL$data_dir, "grid.csv")  # occupied cells (01)
 FIRE_DATA_DIR <- "spatial/data/fire"                 # cell-year tables (kept in git)
 FIRE_RAW_DIR  <- Sys.getenv("FIRE_RAW_DIR", file.path(FIRE_DATA_DIR, "raw"))  # Qld downloads (not in git)
 FIRE_FIG_DIR  <- "spatial/figures/fire"
-GRID_DEG      <- 0.1
+GRID_DEG      <- LANDSCAPE$grid_deg
 
 # ---- Queensland services (ArcGIS REST) -----------------------------------------
 QLD_SCARS_URL  <- "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Environment/FireScarMapping/MapServer"
 QLD_QPWS_URL   <- "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Environment/ParksFireHistory/MapServer/0"
 QLD_SCAR_YEARS <- 1987:2025      # layer id = year - 1986 (all downloaded; see QLD_YEARS for what is used)
-QLD_BBOX       <- c(xmin = 147.9, ymin = -29.3, xmax = 154.2, ymax = -23.9)  # Qld cells + margin
+QLD_BBOX       <- c(xmin = 147.9, ymin = -29.3, xmax = 154.2, ymax = -23.9)  # Qld M. nodosa cells + margin: widen for a more northern species
 
 AREA_CRS <- 3577                 # Australian Albers: all areas computed in this CRS
 
@@ -46,7 +52,7 @@ fire_scenario <- function(nsw = NSW_YEARS, qld = QLD_YEARS, fire = "wild", area_
   list(nsw = nsw, qld = qld, fire = fire, area_base = area_base, prior = prior,
        prior_by = prior_by, fire_min = fire_min)
 
-# Written to mn_site_params.csv by 02: 'wild' under the standard column names,
+# Written to the site table (spatial/data/<sp>/site_params.csv) by 02: 'wild' under the standard column names,
 # the others with a suffix (_all, _planned).
 FIRE_REGIMES <- list(
   wild    = fire_scenario(),
@@ -71,5 +77,5 @@ cy_table <- function(state, fire, area_base = "land") {
 }
 
 # ---- Border check (D4) -------------------------------------------------------------
-QLD_BORDER_LAT <- -28.16         # used only if ozmaps is unavailable
+QLD_BORDER_LAT <- LANDSCAPE$qld_border_lat   # used only if ozmaps is unavailable
 BORDER_BAND    <- 1.0            # degrees of latitude either side of the border

@@ -21,7 +21,7 @@ R <- collect_range_ensemble(out)
 range_category_shares(R$runs)          # % of runs per category, overall and NSW / Qld
 plot_range_drivers(R, file.path(out, "drivers.png"))
 
-# Parameter uncertainty: DEFAULT_PARAM_DRAWS in runner/range_ensemble.R.
+# Parameter uncertainty: the ensemble_draws block of species/<sp>.yaml (DEFAULT_PARAM_DRAWS).
 # Switch off (site + seed variation only):
 #   run_range_ensemble(300, "results/range_noparam/", param_draws = list())
 

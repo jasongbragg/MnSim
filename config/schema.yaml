@@ -114,3 +114,68 @@ params:
   resist_locus_effect: {layer: species, type: double_vector, min: 0, max: 1}
   resist_dominance:    {layer: species, type: double_vector, min: 0, max: 1}
   resist_freq0:        {layer: species, type: double_vector, min: 0, max: 1}
+
+# ============================================================================
+# Settings outside the params list (PLAN.md Phase 2; notes T9)
+# ============================================================================
+# Same leaf format. Layers:
+#   assessment  config/assessment.yaml        (shared by all species)
+#   species     species/<sp>.yaml             (that species' block of the same name)
+#   validation  species/<sp>_validation.yaml  (layer V, notes T4)
+#   landscape   config/landscape.yaml         (shared by all species)
+# An entry is {value: X, source: "..."} (where the value comes from), or
+# {cite: <csv in data/>, row: <parameter>} to take the value from that CSV row
+# of the species (any role, e.g. a calibration target).
+
+# IUCN assessment settings, in the order of iucn_assess_spec() (runner/iucn_a4.R),
+# which hashes them into run IDs.
+assessment:
+  criterion:          {layer: assessment, type: character, choices: [A4]}
+  year_spinup:        {layer: species, type: integer}
+  year_gentime_start: {layer: species, type: integer}
+  year_gentime_end:   {layer: species, type: integer}
+  year_rust:          {layer: assessment, type: integer}
+  year_assess:        {layer: assessment, type: integer}
+  year_end:           {layer: assessment, type: integer}
+  avg_years:          {layer: assessment, type: integer, min: 1}
+  max_future:         {layer: assessment, type: integer, min: 1, max: 100}
+
+# IUCN A2-A4 category thresholds: percent decline at or above which a run is
+# VU, EN, CR.
+categories:
+  VU: {layer: assessment, type: double, min: 0, max: 100}
+  EN: {layer: assessment, type: double, min: 0, max: 100}
+  CR: {layer: assessment, type: double, min: 0, max: 100}
+
+# Species range for the spatial pipeline (spatial/01_get_melaleuca_occurrences.R).
+# The occurrence query is the species' 'species:' name; its data files are in
+# plant_ibm/spatial/data/<sp>/ and figures in plant_ibm/spatial/figures/<sp>/.
+spatial:
+  range_box:
+    lon_min: {layer: species, type: double, min: -180, max: 180}
+    lon_max: {layer: species, type: double, min: -180, max: 180}
+    lat_min: {layer: species, type: double, min: -90, max: 90}
+    lat_max: {layer: species, type: double, min: -90, max: 90}
+
+# Shared landscape settings for the spatial pipeline and site table.
+landscape_spatial:
+  grid_deg:       {layer: landscape, type: double, min: 0}
+  qld_border_lat: {layer: landscape, type: double, min: -90, max: 90}
+  rust_sdm:       {layer: landscape, type: character}
+
+# Validation against Pegg et al. 2025 (runner/pegg_validation.R, runner/pegg_sites.R).
+# The rust year is the assessment's year_rust.
+validation:
+  pegg:
+    year_spinup: {layer: validation, type: integer}
+    year_fire:   {layer: validation, type: integer}
+    year_survey: {layer: validation, type: integer}
+    observed:    {layer: validation, type: double, min: 0, max: 1}
+    observed_n:  {layer: validation, type: integer, min: 1}
+    site:        {layer: validation, type: character}
+    n_post:      {layer: validation, type: integer, min: 1}
+    plots:       {layer: validation, type: character}
+    scenario:
+      fire_p_fimp:      {layer: validation, type: double, min: 0, max: 1}
+      fire_size_sd:     {layer: validation, type: double, min: 0}
+      fire_stand_cover: {layer: validation, type: double, min: 0, max: 1}

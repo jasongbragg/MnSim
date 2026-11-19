@@ -1,5 +1,5 @@
 # spatial/fire/R/regime.R -- from cell-year tables to the per-cell fire regime
-# that 02 writes into mn_site_params.csv (docs/methodological_notes.md D2, D5).
+# that 02 writes into the site table (site_params.csv) (docs/methodological_notes.md D2, D5).
 #
 # Needs: fire_config.R, R/estimate.R; cell-year tables in FIRE_DATA_DIR
 # (spatial/fire/02_fire_cell_years.R); cells with cell_id and state
@@ -9,7 +9,7 @@ read_cy <- function(name, dir = FIRE_DATA_DIR)
   utils::read.csv(file.path(dir, paste0("cell_years_", name, ".csv")))
 
 # Cells with state and land area, cached (geometry work takes a minute).
-load_fire_cells <- function(cache = file.path(FIRE_DATA_DIR, "cells.rds"), grid_csv = MN_GRID_CSV) {
+load_fire_cells <- function(cache = file.path(FIRE_DATA_DIR, "cells.rds"), grid_csv = SPECIES_GRID_CSV) {
   if (file.exists(cache)) return(readRDS(cache))
   cells <- load_cells(grid_csv)
   dir.create(dirname(cache), recursive = TRUE, showWarnings = FALSE)
@@ -35,7 +35,7 @@ run_fire_scenario <- function(sc, cells, dir = FIRE_DATA_DIR) {
   reg
 }
 
-# Per-cell table for mn_site_params.csv:
+# Per-cell table for the site table (site_params.csv):
 #   wildfire (the default regime) under the standard names that the model
 #   reads (fire_prob_annual, fire_p_fimp, sd_frac_burned, ...), plus the
 #   record behind it (fire_state, fire_T_obs, fire_record);

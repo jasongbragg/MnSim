@@ -52,6 +52,9 @@
 #
 # SIMULATION PHASING (calendar years, single continuous run)
 # ----------------------------------------------------------
+# Defaults: config/assessment.yaml (shared) and the 'assessment' block of the
+# species file (spin-up, gen-time window); notes T9. Read here as
+# IUCN_ASSESSMENT; IUCN category thresholds as IUCN_CATEGORIES.
 #   year_spinup        start of run (e.g. 1600)  ─┐ spin-up: discard
 #   year_gentime_start                            ─┤ gen-time window
 #   year_gentime_end                              ─┤ pre-rust equilibrium
@@ -78,7 +81,12 @@
 #   plot_iucn_a4(result)
 #   summarise_iucn_a4(result)
 
-IUCN_CRITERION <- "A4"
+source("R/species_config.R")
+.iucn_cfg       <- species_config()       # default species: config/run_defaults.yaml
+IUCN_ASSESSMENT <- .iucn_cfg$assessment   # iucn_assess_spec() defaults
+IUCN_CATEGORIES <- .iucn_cfg$categories   # c(VU = 30, EN = 50, CR = 80): % decline
+rm(.iucn_cfg)
+IUCN_CRITERION <- IUCN_ASSESSMENT$criterion
 
 # ============================================================================
 # compute_gen_time()
@@ -161,14 +169,14 @@ compute_gen_time <- function(pop, window_start, window_end, year_spinup) {
 # ============================================================================
 # The settings that define an assessment, in one list. Used both to run the
 # assessment and to build the cache ID, so the two can never disagree.
-iucn_assess_spec <- function(year_spinup        = 1600L,
-                             year_gentime_start = 1810L,
-                             year_gentime_end   = 1910L,
-                             year_rust          = 2010L,
-                             year_assess        = 2026L,
-                             year_end           = 2210L,
-                             avg_years          = 11L,
-                             max_future         = 100L) {
+iucn_assess_spec <- function(year_spinup        = IUCN_ASSESSMENT$year_spinup,
+                             year_gentime_start = IUCN_ASSESSMENT$year_gentime_start,
+                             year_gentime_end   = IUCN_ASSESSMENT$year_gentime_end,
+                             year_rust          = IUCN_ASSESSMENT$year_rust,
+                             year_assess        = IUCN_ASSESSMENT$year_assess,
+                             year_end           = IUCN_ASSESSMENT$year_end,
+                             avg_years          = IUCN_ASSESSMENT$avg_years,
+                             max_future         = IUCN_ASSESSMENT$max_future) {
   list(criterion          = IUCN_CRITERION,
        year_spinup        = as.integer(year_spinup),
        year_gentime_start = as.integer(year_gentime_start),
@@ -185,12 +193,13 @@ iucn_run_id <- function(params, assess = iucn_assess_spec()) {
   make_run_id(list(params = params, assess = assess))
 }
 
-# IUCN category from a percent decline (A2/A3/A4 thresholds: 30/50/80%).
-iucn_category <- function(pct_decline) {
-  if (is.na(pct_decline))    return(NA_character_)
-  if (pct_decline >= 80)     return("CR")
-  if (pct_decline >= 50)     return("EN")
-  if (pct_decline >= 30)     return("VU")
+# IUCN category from a percent decline (A2/A3/A4 thresholds, IUCN_CATEGORIES:
+# 30/50/80%).
+iucn_category <- function(pct_decline, thresholds = IUCN_CATEGORIES) {
+  if (is.na(pct_decline))                  return(NA_character_)
+  if (pct_decline >= thresholds[["CR"]])   return("CR")
+  if (pct_decline >= thresholds[["EN"]])   return("EN")
+  if (pct_decline >= thresholds[["VU"]])   return("VU")
   "LC/NT"
 }
 
@@ -204,7 +213,8 @@ iucn_category <- function(pct_decline) {
 # reproductive age, including those suppressed from flowering by fire or
 # rust; the headline metric) or "N_flowering" (plants flowering that year).
 assess_a4 <- function(census, T_g, year_rust, year_assess,
-                      avg_years = 11L, max_future = 100L, n_col = "N_IUCN") {
+                      avg_years = IUCN_ASSESSMENT$avg_years,
+                      max_future = IUCN_ASSESSMENT$max_future, n_col = "N_IUCN") {
 
   na_out <- function(L, ...) {
     list(window_len = L, ref_start = NA_integer_, ref_end = NA_integer_,
@@ -283,14 +293,14 @@ assess_a4 <- function(census, T_g, year_rust, year_assess,
 # ============================================================================
 run_iucn_a4 <- function(
     params,
-    year_spinup          = 1600L,
-    year_gentime_start   = 1810L,
-    year_gentime_end     = 1910L,
-    year_rust            = 2010L,
-    year_assess          = 2026L,
-    year_end             = 2210L,
-    avg_years            = 11L,   # years averaged at each end of the window
-    max_future           = 100L,  # A4: window may reach at most this far ahead
+    year_spinup          = IUCN_ASSESSMENT$year_spinup,
+    year_gentime_start   = IUCN_ASSESSMENT$year_gentime_start,
+    year_gentime_end     = IUCN_ASSESSMENT$year_gentime_end,
+    year_rust            = IUCN_ASSESSMENT$year_rust,
+    year_assess          = IUCN_ASSESSMENT$year_assess,
+    year_end             = IUCN_ASSESSMENT$year_end,
+    avg_years            = IUCN_ASSESSMENT$avg_years,   # years averaged at each end of the window
+    max_future           = IUCN_ASSESSMENT$max_future,  # A4: window may reach at most this far ahead
     run_counterfactual   = FALSE, # also run with rust disabled (slower)
     save_rds             = NULL,  # path to save .rds; NULL = don't save
     plot                 = TRUE,
@@ -397,7 +407,8 @@ run_iucn_a4 <- function(
 # summarise_iucn_a4()
 # ============================================================================
 # One-row data.frame of the key scalars, for batch accumulation.
-# Threshold flags (1 = met): iucn_vu >= 30%, iucn_en >= 50%, iucn_cr >= 80%.
+# Threshold flags (1 = met): iucn_vu >= 30%, iucn_en >= 50%, iucn_cr >= 80%
+# (IUCN_CATEGORIES).
 .or_na <- function(x) if (is.null(x)) NA_real_ else x
 
 summarise_iucn_a4 <- function(result) {
@@ -414,9 +425,9 @@ summarise_iucn_a4 <- function(result) {
     N_ref          = result$N_ref,
     N_compare      = result$N_compare,
     pct_decline    = result$pct_decline,
-    iucn_vu        = as.integer(result$pct_decline >= 30),
-    iucn_en        = as.integer(result$pct_decline >= 50),
-    iucn_cr        = as.integer(result$pct_decline >= 80),
+    iucn_vu        = as.integer(result$pct_decline >= IUCN_CATEGORIES[["VU"]]),
+    iucn_en        = as.integer(result$pct_decline >= IUCN_CATEGORIES[["EN"]]),
+    iucn_cr        = as.integer(result$pct_decline >= IUCN_CATEGORIES[["CR"]]),
     n_offspring_gt = result$n_offspring_gt,
     N_ref_flowering       = .or_na(result$N_ref_flowering),
     N_compare_flowering   = .or_na(result$N_compare_flowering),
@@ -670,7 +681,7 @@ plot_iucn_a4 <- function(result, save_path = NULL,
 # USAGE
 #   df <- run_iucn_seeds(get_default_params(), seeds = 1:50,
 #                        results_dir = "results/iucn_seeds_a4/", n_cores = 8L,
-#                        year_spinup = 1600L, year_assess = 2026L, year_end = 2210L)
+#                        year_end = 2150L)   # any iucn_assess_spec() setting overrides the config
 #   plot_iucn_ensemble(df)
 run_iucn_seeds <- function(
     params,
@@ -733,11 +744,12 @@ plot_iucn_ensemble <- function(df, save_path = NULL,
               quantile(df$pct_decline, 0.75, na.rm = TRUE),
               min(df$pct_decline, na.rm = TRUE),
               max(df$pct_decline, na.rm = TRUE)))
+  th <- IUCN_CATEGORIES
   cat(sprintf("  Outcome frequencies:  LC/NT=%d%%  VU=%d%%  EN=%d%%  CR=%d%%\n",
-              round(100 * mean(df$pct_decline <  30, na.rm = TRUE)),
-              round(100 * mean(df$pct_decline >= 30 & df$pct_decline < 50, na.rm = TRUE)),
-              round(100 * mean(df$pct_decline >= 50 & df$pct_decline < 80, na.rm = TRUE)),
-              round(100 * mean(df$pct_decline >= 80, na.rm = TRUE))))
+              round(100 * mean(df$pct_decline <  th[["VU"]], na.rm = TRUE)),
+              round(100 * mean(df$pct_decline >= th[["VU"]] & df$pct_decline < th[["EN"]], na.rm = TRUE)),
+              round(100 * mean(df$pct_decline >= th[["EN"]] & df$pct_decline < th[["CR"]], na.rm = TRUE)),
+              round(100 * mean(df$pct_decline >= th[["CR"]], na.rm = TRUE))))
   cat(sprintf("  T_g: median=%.1f yr   3*T_g window: median=%.0f yr\n",
               median(df$T_g, na.rm = TRUE), median(df$window_len, na.rm = TRUE)))
 
@@ -783,11 +795,11 @@ plot_iucn_ensemble <- function(df, save_path = NULL,
                             alpha = 0.9, na.rm = TRUE) +
     ggplot2::scale_fill_manual(values = cat_col, drop = FALSE, name = NULL,
                                labels = sprintf("%s  %d%%", cat_lv, shares)) +
-    ggplot2::geom_vline(xintercept = c(30, 50, 80),
+    ggplot2::geom_vline(xintercept = unname(IUCN_CATEGORIES),
                         colour = c("#eda100", "#e34948", "#8b0000"),
                         linetype = "dashed", linewidth = 0.8) +
-    ggplot2::annotate("text", x = c(30, 50, 80), y = Inf,
-                      label = c("VU", "EN", "CR"),
+    ggplot2::annotate("text", x = unname(IUCN_CATEGORIES), y = Inf,
+                      label = names(IUCN_CATEGORIES),
                       hjust = -0.1, vjust = 1.4, size = 3,
                       colour = c("#eda100", "#e34948", "#8b0000")) +
     ggplot2::geom_vline(xintercept = med, colour = "#333333", linewidth = 1) +
@@ -842,7 +854,7 @@ plot_iucn_ensemble <- function(df, save_path = NULL,
        col = "#2a78d6", border = "white",
        xlab = "Decline, reference to comparison (%)", ylab = "Runs",
        main = sprintf("IUCN A4 ensemble (n=%d), median %.0f%%", nrow(df), med), las = 1)
-  abline(v = c(30, 50, 80), col = c("#eda100", "#e34948", "#8b0000"), lty = 2, lwd = 1.5)
+  abline(v = IUCN_CATEGORIES, col = c("#eda100", "#e34948", "#8b0000"), lty = 2, lwd = 1.5)
   abline(v = med, col = "#333333", lwd = 2)
 
   boxplot(list("Reference\n(pre-rust)" = df$N_ref, "Comparison\n(3 gen on)" = df$N_compare),

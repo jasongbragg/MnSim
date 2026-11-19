@@ -1,4 +1,4 @@
-# spatial/fire/R/grid.R -- the M. nodosa grid cells as polygons, with state and land area.
+# spatial/fire/R/grid.R -- the species' grid cells as polygons, with state and land area.
 
 suppressPackageStartupMessages(library(sf))
 sf_use_s2(FALSE)
@@ -24,7 +24,7 @@ state_polygons <- function() {
 
 # Cell polygons with: state (by cell centre), whole-cell area, and the land
 # area within that state (the base for burnt fractions when area_base = "land").
-load_cells <- function(grid_csv = MN_GRID_CSV) {
+load_cells <- function(grid_csv = SPECIES_GRID_CSV) {
   g <- read.csv(grid_csv)
   h <- GRID_DEG / 2
   polys <- lapply(seq_len(nrow(g)), function(i) {

@@ -32,7 +32,7 @@ source("spatial/fire/fire_config.R")  # fire pipeline settings (D1-D5)
 for (.f in c("estimate", "regime", "cell_years"))  # estimator, site fire table, burnt fractions
   source(file.path("spatial/fire/R", paste0(.f, ".R")))
 # Test files run with wd = tests/testthat: point data paths at the project root.
-assign("SITE_PARAMS_PATH", file.path(proj_root, "spatial/data/mn_site_params.csv"), envir = globalenv())
+assign("SITE_PARAMS_PATH", file.path(proj_root, SITE_PARAMS_PATH), envir = globalenv())
 
 # --- Minimal-population params for unit tests (fast, small) ---------------
 make_toy_params <- function(...) {

@@ -14,7 +14,7 @@
 #   year-to-year (Beta concentration, notes C3) or persistent (rust_site_sd).
 #
 # OBSERVATION MODEL
-#   Data (runner/data/pegg2025_mnodosa_plots.csv): for each plot, intervals
+#   Data (PEGG$plots, species/<sp>_validation.yaml): for each plot, intervals
 #   [t1, t2] in months since the fire, with n_at_risk trees alive at t1 and
 #   the deaths by t2. Tagged trees are adult resprouters, so the model cohort
 #   is plants of reproductive age (age >= their age at first flowering) alive
@@ -42,7 +42,10 @@
 
 source("runner/site_params.R")
 
-PEGG_PLOTS_PATH <- "runner/data/pegg2025_mnodosa_plots.csv"
+# Scenario years, plot data and fire overrides (species/<sp>_validation.yaml,
+# layer V; notes T9). Also set by runner/pegg_validation.R.
+PEGG <- validation_config()$pegg
+PEGG_PLOTS_PATH <- PEGG$plots
 PEGG_SITES_VERSION <- "v1-interval-mixture"
 
 load_pegg_plots <- function(path = PEGG_PLOTS_PATH) {
@@ -64,7 +67,8 @@ pegg_plot_cells <- function(plots, sites) {
 # scenario, a Beta concentration, and a persistent site effect drawn from
 # the seed (no draw when site_sd = 0).
 pegg_site_scenario <- function(base, site_row, seed, conc = NULL, site_sd = 0,
-                               year_spinup = 1910L, year_rust = 2010L, year_fire = 2020L) {
+                               year_spinup = PEGG$year_spinup, year_rust = PEGG$year_rust,
+                               year_fire = PEGG$year_fire) {
   p <- build_site_params(base, site_row)
   if (!is.null(conc)) p <- set_rust_concentration(p, conc)
   p$rust_site_sd <- site_sd
@@ -74,15 +78,13 @@ pegg_site_scenario <- function(base, site_row, seed, conc = NULL, site_sd = 0,
   p$rust_start_year  <- year_rust
   p$fire_years       <- as.integer(year_fire)
   p$fire_prob_annual <- 0
-  p$fire_p_fimp      <- 1
-  p$fire_size_sd     <- 0
-  p$fire_stand_cover <- 1
+  for (nm in names(PEGG$scenario)) p[[nm]] <- PEGG$scenario[[nm]]   # every plant burnt
   p
 }
 
 # Cohort survival S(12k months), k = 1..n_post, for each max_effect value.
-pegg_cohort_survival <- function(p, max_effects, n_post = 3L, cohort = c("mature", "all"),
-                                 year_spinup = 1910L, year_fire = 2020L) {
+pegg_cohort_survival <- function(p, max_effects, n_post = PEGG$n_post, cohort = c("mature", "all"),
+                                 year_spinup = PEGG$year_spinup, year_fire = PEGG$year_fire) {
   cohort <- match.arg(cohort)
   p_spin <- p
   p_spin$n_years <- as.integer(year_fire - year_spinup)

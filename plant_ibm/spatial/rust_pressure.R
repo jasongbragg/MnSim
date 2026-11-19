@@ -7,7 +7,7 @@
 # ASSUMPTION (docs/methodological_notes.md, "Rust pressure"):
 #   mean annual pressure in cell i = mu * s_i / s_anchor, capped at 'cap'
 # where s is the SDM value extracted the same way for every cell: the
-# area-weighted mean of the raster over the 0.1-degree cell (its land, since
+# area-weighted mean of the raster over the grid cell (its land, since
 # the SDM is NA at sea; notes B4, C2), and the anchor cell is the occupied
 # cell nearest the anchor site. Until Nov 2026 s was read at the cell centre,
 # which left 16 coastal cells (centre at sea) without a value; that reading
@@ -19,7 +19,10 @@
 # The normaliser is computed from the data each time; it is never typed in.
 #
 # Functions only; sourced by 02_cross_reference_layers.R,
-# 02c_update_rust_pressure.R and the tests.
+# 02c_update_rust_pressure.R and the tests. Grid size: config/landscape.yaml.
+
+source("R/species_config.R")
+GRID_DEG <- load_landscape_spatial()$grid_deg   # also set by spatial/fire/fire_config.R
 
 # Index (row) of the occupied cell nearest the anchor site.
 anchor_cell_index <- function(lon, lat, anchor = RUST_ANCHOR) {
@@ -43,8 +46,8 @@ rust_pressure_from_sdm <- function(sdm, anchor_index, anchor = RUST_ANCHOR) {
   )
 }
 
-# 0.1-degree cell polygons (terra) from cell centres.
-cell_polygons <- function(lon, lat, deg = 0.1) {
+# Grid cell polygons (terra) from cell centres; deg = grid size (config/landscape.yaml).
+cell_polygons <- function(lon, lat, deg = GRID_DEG) {
   h <- deg / 2
   terra::vect(lapply(seq_along(lon), function(i)
     rbind(c(lon[i] - h, lat[i] - h), c(lon[i] + h, lat[i] - h), c(lon[i] + h, lat[i] + h),
@@ -54,9 +57,10 @@ cell_polygons <- function(lon, lat, deg = 0.1) {
 
 # SDM value per cell, on a 0-1 scale (biomod2 writes 0-1000).
 #   "cell_mean": area-weighted mean over the raster cells inside the
-#                0.1-degree cell, ignoring NA (sea) -- the default
+#                grid cell, ignoring NA (sea) -- the default
 #   "centre":    the raster value at the cell centre (pre-Nov-2026)
-extract_sdm_cells <- function(sdm, lon, lat, extract = c("cell_mean", "centre"), deg = 0.1) {
+extract_sdm_cells <- function(sdm, lon, lat, extract = c("cell_mean", "centre"),
+                              deg = GRID_DEG) {
   extract <- match.arg(extract)
   sdm <- terra::classify(sdm[[1]], cbind(-Inf, -1e30, NA))   # nodata written as a huge negative
   vals <- if (extract == "centre") {

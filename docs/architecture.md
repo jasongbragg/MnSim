@@ -39,7 +39,7 @@ plant_ibm/
     census.R            census_year(), pct_decline()
     matrix_model.R      Leslie/Lefkovitch builders, used only by the tests
   runner/             scenarios and assessments (section 6)
-  spatial/            per-cell inputs -> spatial/data/mn_site_params.csv (section 7)
+  spatial/            per-cell inputs -> spatial/data/m_nodosa/site_params.csv (section 7)
   parlib/             alternative get_default_params() files (section 5.2)
   diagnostics/        plausibility plots; source params.R directly
   talk/               figures for talks
@@ -324,7 +324,7 @@ A run's parameter list is built in layers. Later layers override earlier ones.
    - `parlib/unittests/params.R`: used by the tests;
    - a `parlib/ensemble/...` file: used for Morris screening.
 2. **Site overrides: `build_site_params()` (`runner/site_params.R:51`).**
-   Values from one row of `spatial/data/mn_site_params.csv`:
+   Values from one row of `spatial/data/m_nodosa/site_params.csv`:
    - `fire_prob_annual` (× `fire_scale`), `fire_p_fimp`, `fire_size_sd` for
      the chosen fire regime (`wild`/`all`);
    - `annual_env_alpha/beta` (rust pressure).
@@ -404,22 +404,21 @@ Values: P = `params.R` (working M. nodosa); U = `parlib/unittests/params.R`.
 These are a starting point for the Phase 2 inventory, not the full list:
 
 - `R/individuals.R`
-  - `:30`, `:74`: age at first flowering is at least 1.
+  - `draw_age_first_flower()`: age at first flowering is at least 1.
   - `:33`: founder ages are geometric with rate `1/weibull_lambda`.
 - `R/fire.R`
   - `:57`: the Beta variance of fire size is capped at 0.9·m(1−m).
   - `:128`: the resprout window is at least 1 year.
 - `R/mortality.R:21`: age floor of 0.01 in `weibull_hazard`.
 - `R/simulate.R:163`: archive threshold of 1000.
-- Runner settings that are specific to M. nodosa or to the assessment:
-  - calendar phasing 1600 / 1810–1910 / 2010 / 2026 / 2210 and 11-year
-    averaging (`runner/iucn_a4.R:164`, `runner/range_ensemble.R:29-35`);
-  - Pegg scenario 1910 / 2010 / 2020 / 2022, observed 0.48 of 50
-    (`runner/pegg_validation.R:185`);
-  - `SITE_PARAMS_PATH = "spatial/data/mn_site_params.csv"`;
-  - `QLD_LAT`;
-  - `DEFAULT_PARAM_DRAWS`;
-  - the plot table `runner/data/pegg2025_mnodosa_plots.csv`.
+- Runner and spatial settings that are specific to a species or to the assessment are read from
+  the configuration (notes T9), not hard-coded:
+  - calendar phasing and averaging: `config/assessment.yaml` plus the species file's `assessment`
+    block (`IUCN_ASSESSMENT`, `iucn_assess_spec()`); category thresholds `IUCN_CATEGORIES`;
+  - the Pegg scenario, observation and plot table: `species/<sp>_validation.yaml` (`PEGG`);
+  - `SITE_PARAMS_PATH` = `spatial/data/<sp>/site_params.csv` for the default species;
+  - `QLD_BORDER_LAT`, grid size and rust SDM path: `config/landscape.yaml` (`spatial`);
+  - `DEFAULT_PARAM_DRAWS`: the species file's `ensemble_draws` block.
 
 ---
 
@@ -493,7 +492,7 @@ They call `/opt/R/4.3.1/bin/Rscript`.
 
 ## 7. Spatial inputs (`spatial/`)
 
-These scripts build `spatial/data/mn_site_params.csv`, one row per occupied
+These scripts build `spatial/data/m_nodosa/site_params.csv`, one row per occupied
 0.1° cell (375 cells). Each row holds the fire regime per source and regime,
 the rust Beta parameters and the abundance weight.
 

@@ -23,7 +23,7 @@
 # planned burns, where many cells are simply never burnt by an agency).
 # 'prior_group': optional vector (one per cell, e.g. state); the prior is then
 # fitted separately in each group. NULL = one prior for all cells.
-# Output columns match those 02 writes to mn_site_params.csv, plus T_obs and
+# Output columns match those 02 writes to site_params.csv, plus T_obs and
 # prior_group.
 
 # Negative-binomial (Gamma-Poisson) log likelihood, exposure T per cell.

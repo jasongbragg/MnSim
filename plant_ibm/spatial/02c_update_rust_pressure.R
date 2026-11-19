@@ -1,23 +1,24 @@
 # spatial/02c_update_rust_pressure.R
 #
 # Re-run ONLY the rust step of 02_cross_reference_layers.R: refresh the SDM
-# and rust-pressure columns of spatial/data/mn_site_params.csv, leaving the
-# fire columns and weights untouched. Use after an SDM update.
+# and rust-pressure columns of the default species' site table
+# (spatial/data/<sp>/site_params.csv), leaving the fire columns and weights
+# untouched. Use after an SDM update.
 #
 #   cd plant_ibm
 #   MN_SDM_TIFF=/path/to/AP_suitability_current.tif \
 #     /opt/R/4.3.1/bin/Rscript spatial/02c_update_rust_pressure.R
 #
-# Without MN_SDM_TIFF (or if the file is missing) the existing
-# sdm_suitability column is re-normalised, which only refreshes the derived
-# columns (useful after changing RUST_ANCHOR in params.R).
+# The SDM path is config/landscape.yaml (spatial$rust_sdm), or MN_SDM_TIFF.
+# If the file is missing, the existing sdm_suitability column is
+# re-normalised, which only refreshes the derived columns (useful after
+# changing the species' rust_anchor).
 
 source("params.R")
 source("spatial/rust_pressure.R")
 
-SITE_CSV <- "spatial/data/mn_site_params.csv"
-SDM_TIFF <- Sys.getenv("MN_SDM_TIFF",
-  "/home/jgb/projects/mrsdm/output/projections/AP_suitability_current.tif")
+SITE_CSV <- file.path(load_species_spatial()$data_dir, "site_params.csv")
+SDM_TIFF <- load_landscape_spatial()$rust_sdm
 
 sites <- read.csv(SITE_CSV)
 sdm <- if (file.exists(SDM_TIFF)) {

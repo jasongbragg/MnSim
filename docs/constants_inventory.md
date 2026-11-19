@@ -1,6 +1,7 @@
 # Constants inventory (PLAN.md Phase 2)
 
-Status: **reviewed 2026-11-19**; decisions in §7 (methodological notes T4). Lists every hard-coded constant in `plant_ibm/` that a second
+Status: **reviewed 2026-11-19**; decisions in §7 (methodological notes T4); **§3–4 carried out
+2026-11-19** (§8; notes T9). Lists every hard-coded constant in `plant_ibm/` that a second
 species could need to change, with `file:line`, and proposes a layer for each. Line numbers are for
 commit `dbbde63`.
 
@@ -267,3 +268,25 @@ grep -rnE '1600L|1810L|1910L|2010L|2026L|2210L|2020L|2022L|0\.48|nodosa|mn_site_
    spin-up before it is < 5 T_g.
 4. **Rust arrival is 2010 for all species** (A5). It stays an assessment setting, defined once.
 5. **`main.R` (O4) and `02b_fire_prior_spatial.R` (P19) archived** to `plant_ibm/archive/`.
+
+## 8. Carried out (2026-11-19, notes T9)
+
+- **Assessment** (A1–A5, A7–A8): one source. Shared settings and thresholds are in
+  `config/assessment.yaml`; spin-up and gen-time window are in the species file's `assessment`
+  block. `iucn_assess_spec()`, `run_iucn_a4()`, `assess_a4()`, `range_ensemble.R` and the plots all
+  read `IUCN_ASSESSMENT` / `IUCN_CATEGORIES`.
+- **Validation** (V1–V4, V6–V8): `species/m_nodosa_validation.yaml`, read as `PEGG`.
+- **Range-wide** (S1, S6, S7): the site table path comes from the default species. The border
+  latitude comes from `config/landscape.yaml`. The draws are in the species file's
+  `ensemble_draws` block.
+- **Spatial** (P1, P2, P5, P6, P7, P17):
+  - the species name and range box come from the species file;
+  - grid size, border latitude and SDM path come from `config/landscape.yaml`;
+  - the data files are in `spatial/data/m_nodosa/`.
+- **R1:** `draw_age_first_flower()`.
+- **Not moved:** the items marked Keep. Two remain open (notes T9): `QLD_BBOX` (P13) and the
+  grid/cell ids for a second species.
+- **§6 grep:** no hits on code lines outside config, tests and docs. The remaining hits are:
+  - comments that describe M. nodosa, mostly in the Pegg runners, which are M. nodosa validation code;
+  - the `GRID_DEG <-` lines, which now read the configuration;
+  - the `QLD_BBOX` comment.

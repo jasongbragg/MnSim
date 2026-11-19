@@ -1,0 +1,38 @@
+# config/assessment.yaml
+#
+# IUCN assessment settings shared by all species (methodological notes T4, T9;
+# layer A). The spin-up and generation-time window are species settings: the
+# 'assessment' block of species/<sp>.yaml. Read by assessment_config()
+# (plant_ibm/R/species_config.R) for iucn_assess_spec() in runner/iucn_a4.R.
+# Each value needs a 'source'.
+
+assessment:
+  criterion:
+    value: "A4"
+    source: "CLAUDE.md IUCN framing; docs/methodological_notes.md A1"
+  year_rust:
+    value: 2010
+    source: "docs/methodological_notes.md A6, E4; the same for all species (T4, decision 4)"
+  year_assess:
+    value: 2026
+    source: "docs/methodological_notes.md E4: the present"
+  year_end:
+    value: 2210
+    source: "docs/methodological_notes.md E4. Must reach year_rust - 1 + 3 T_g; the comparison is capped at year_assess + max_future (2126), so 2210 covers any T_g"
+  avg_years:
+    value: 11
+    source: "docs/methodological_notes.md A2: reference and comparison are 11-year means"
+  max_future:
+    value: 100
+    source: "IUCN Guidelines: A3/A4 windows reach at most 100 years ahead (CLAUDE.md IUCN framing)"
+
+categories:
+  VU:
+    value: 30
+    source: "IUCN Red List Criteria v3.1, A2-A4: >= 30% reduction"
+  EN:
+    value: 50
+    source: "IUCN Red List Criteria v3.1, A2-A4: >= 50% reduction"
+  CR:
+    value: 80
+    source: "IUCN Red List Criteria v3.1, A2-A4: >= 80% reduction"

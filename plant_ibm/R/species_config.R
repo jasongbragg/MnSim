@@ -6,7 +6,9 @@
 #   config/schema.yaml        every field: layer, type, bounds, order
 #   species/<sp>.yaml         species biology + rust anchor (layer "species")
 #   config/landscape.yaml     shared landscape defaults (layer "landscape")
-#   config/run_defaults.yaml  run settings (layer "run")
+#   config/run_defaults.yaml  run settings (layer "run"), and the default species
+#   config/assessment.yaml    IUCN assessment settings (layer "assessment")
+#   species/<sp>_validation.yaml  validation set-up (layer V; validation_config())
 #
 # The assembled list follows the schema's order, so for M. nodosa it is
 # identical() to the old get_default_params() in params.R (and gives the same
@@ -16,15 +18,41 @@
 # coerced to the schema type, so 10000 is a double where the schema says double.
 # A value may also be written as a fraction ("1/3"). '.inf' is Inf.
 #
-# Paths are relative to the repo root: MNSIM_ROOT, or the parent of the
-# working directory (scripts run from plant_ibm/).
+# Paths are relative to the repo root: MNSIM_ROOT, or the nearest directory at
+# or above the working directory that holds config/schema.yaml (scripts run
+# from plant_ibm/, so usually its parent).
 #
-# Usage:
-#   params <- load_species("m_nodosa")
-#   anchor <- load_rust_anchor("m_nodosa")      # was RUST_ANCHOR
-#   priors <- species_priors("m_nodosa")        # data frame, one row per prior
+# Usage (species = NULL: the default species in config/run_defaults.yaml):
+#   params <- load_species()
+#   anchor <- load_rust_anchor()       # was RUST_ANCHOR
+#   priors <- species_priors()         # data frame, one row per prior
+#   assess <- load_assessment()        # iucn_assess_spec() defaults (notes T9)
+#   cats   <- load_categories()        # IUCN thresholds c(VU, EN, CR)
+#   draws  <- load_param_draws()       # range-wide parameter draws (was DEFAULT_PARAM_DRAWS)
+#   sp     <- load_species_spatial()   # name, range box, data and figure folders
+#   land   <- load_landscape_spatial() # grid size, border latitude, rust SDM path
+#   val    <- validation_config()      # e.g. val$pegg (layer V)
 
-mnsim_root <- function() Sys.getenv("MNSIM_ROOT", normalizePath("..", mustWork = FALSE))
+mnsim_root <- function() {
+  env <- Sys.getenv("MNSIM_ROOT")
+  if (nzchar(env)) return(env)
+  d <- normalizePath(".", mustWork = FALSE)
+  repeat {
+    if (file.exists(file.path(d, "config", "schema.yaml"))) return(d)
+    up <- dirname(d)
+    if (identical(up, d)) break
+    d <- up
+  }
+  normalizePath("..", mustWork = FALSE)   # not found: the old default (fails with a clear message)
+}
+
+# The species used when none is named (config/run_defaults.yaml, 'species').
+default_species <- function(root = mnsim_root()) {
+  s <- read_config_yaml(file.path(root, "config", "run_defaults.yaml"))$species
+  if (!is.character(s) || length(s) != 1L || !nzchar(s))
+    stop("config/run_defaults.yaml needs 'species: <name of a file in species/>'")
+  s
+}
 
 read_config_yaml <- function(path) {
   if (!file.exists(path)) stop("config file not found: ", path)
@@ -137,9 +165,79 @@ csv_prior_range <- function(note) {
   else list(choices = items)
 }
 
+# "RANGE [a, b]" anywhere in a CSV note (range of a range-wide draw), or NULL.
+csv_draw_range <- function(note) {
+  m <- regmatches(note, regexec("RANGE \\[([^]]*)\\]", note))[[1]]
+  if (length(m) != 2L) return(NULL)
+  items <- trimws(strsplit(m[2], ",")[[1]])
+  c(config_number(items[1]), config_number(items[2]))
+}
+
+# Cached reader for the CSV files in data/.
+csv_reader <- function(root) {
+  csvs <- list()
+  function(f) {
+    if (is.null(csvs[[f]])) {
+      p <- file.path(root, "data", f)
+      csvs[[f]] <<- if (file.exists(p)) utils::read.csv(p, colClasses = "character") else NA
+    }
+    csvs[[f]]
+  }
+}
+
+# Settings outside the params list (config/schema.yaml, notes T9). 'files' maps
+# each layer to list(data = <the block in that file>, label = "<file>: <block>").
+# An entry is {value, source} or {cite, row} (value from that CSV row of
+# 'species_name'). Returns the values in schema order; problems go to err().
+is_setting <- function(x) is.list(x) && !is.null(names(x)) && any(c("value", "cite") %in% names(x))
+read_settings <- function(schema_block, files, err, csv_of = NULL, species_name = NULL) {
+  out    <- list()
+  leaves <- schema_leaves(schema_block)
+  for (lf in leaves) {
+    f     <- files[[lf$spec$layer]]
+    where <- paste0(f$label, "$", paste(lf$path, collapse = "$"))
+    e     <- cfg_get(f$data, lf$path)
+    if (is.null(e)) { err(where, "missing"); next }
+    if (!is_setting(e)) { err(where, "expected a mapping with 'value' and 'source' (or 'cite' and 'row')"); next }
+    if (!is.null(e$cite)) {
+      tab <- if (is.null(csv_of)) NA else csv_of(e$cite)
+      if (is.null(e$row)) { err(where, "'cite' needs 'row: <parameter>'"); next }
+      if (!is.data.frame(tab)) { err(where, sprintf("cited file data/%s not found", e$cite)); next }
+      row <- tab[tab$species %in% species_name & tab$parameter == e$row, ]
+      if (nrow(row) != 1L) {
+        err(where, sprintf("%d rows in data/%s for %s / %s (need exactly 1)", nrow(row), e$cite,
+                           format(species_name), e$row)); next
+      }
+      raw <- row$value
+    } else {
+      if (is.null(e$source) || !nzchar(e$source)) err(where, "needs a 'source'")
+      raw <- e$value
+    }
+    cv <- coerce_config_value(raw, lf$spec)
+    if (!is.null(cv$error)) { err(where, cv$error); next }
+    b <- check_config_bounds(cv$value, lf$spec); if (!is.null(b)) err(where, b)
+    out <- cfg_set(out, lf$path, cv$value)
+  }
+  for (layer in names(files)) {
+    known <- vapply(Filter(function(lf) identical(lf$spec$layer, layer), leaves),
+                    function(lf) paste(lf$path, collapse = "$"), "")
+    for (p in config_paths(files[[layer]]$data, is_setting))
+      if (length(p) && !paste(p, collapse = "$") %in% known)
+        err(paste0(files[[layer]]$label, "$", paste(p, collapse = "$")),
+            "not a setting of this file in config/schema.yaml")
+  }
+  out
+}
+
+config_error <- function(what, errs)
+  stop(sprintf("Invalid configuration for %s (%d problem%s):\n  - %s", what,
+               length(errs), if (length(errs) > 1L) "s" else "", paste(errs, collapse = "\n  - ")),
+       call. = FALSE)
+
 # Read one species' configuration; check_sources also checks citations and
 # priors against the CSV files (CLAUDE.md rule 5).
-species_config <- function(species = "m_nodosa", root = mnsim_root(), check_sources = TRUE) {
+species_config <- function(species = NULL, root = mnsim_root(), check_sources = TRUE) {
+  if (is.null(species)) species <- default_species(root)
   schema <- read_config_yaml(file.path(root, "config", "schema.yaml"))
   sp     <- read_config_yaml(file.path(root, "species", paste0(species, ".yaml")))
   files  <- list(species   = sp$params,
@@ -147,14 +245,7 @@ species_config <- function(species = "m_nodosa", root = mnsim_root(), check_sour
                  run       = read_config_yaml(file.path(root, "config", "run_defaults.yaml"))$params)
   errs   <- character()
   err    <- function(where, msg) errs <<- c(errs, sprintf("%s: %s", where, msg))
-  csvs   <- list()
-  csv_of <- function(f) {
-    if (is.null(csvs[[f]])) {
-      p <- file.path(root, "data", f)
-      csvs[[f]] <<- if (file.exists(p)) utils::read.csv(p, colClasses = "character") else NA
-    }
-    csvs[[f]]
-  }
+  csv_of <- csv_reader(root)
   priors <- list()
 
   # One entry (species or landscape layer): value, citation or prior. Returns the value.
@@ -266,7 +357,7 @@ species_config <- function(species = "m_nodosa", root = mnsim_root(), check_sour
     if (length(p) && !paste(p, collapse = "$") %in% vapply(schema_leaves(schema$rust_anchor),
                                                           function(lf) paste(lf$path, collapse = "$"), ""))
       err(paste0(fname[["species"]], ": rust_anchor$", paste(p, collapse = "$")), "not in config/schema.yaml")
-  extra <- setdiff(names(sp), c("species", "rust_anchor", "params"))
+  extra <- setdiff(names(sp), c("species", "rust_anchor", "params", "assessment", "spatial", "ensemble_draws"))
   if (length(extra)) err(fname[["species"]], paste("unknown top-level keys:", paste(extra, collapse = ", ")))
   if (is.null(sp$species) || !is.character(sp$species)) err(fname[["species"]], "needs 'species: <name>'")
 
@@ -274,15 +365,116 @@ species_config <- function(species = "m_nodosa", root = mnsim_root(), check_sour
   nl <- vapply(params[c("resist_locus_effect", "resist_dominance", "resist_freq0")], length, 1L)
   if (length(unique(nl)) > 1L) err("resistance", "resist_locus_effect, resist_dominance and resist_freq0 need the same length (one per locus)")
 
-  if (length(errs))
-    stop(sprintf("Invalid configuration for species '%s' (%d problem%s):\n  - %s", species,
-                 length(errs), if (length(errs) > 1L) "s" else "", paste(errs, collapse = "\n  - ")),
-         call. = FALSE)
+  # --- Assessment, spatial range and parameter draws (notes T9) ---------------
+  af   <- read_config_yaml(file.path(root, "config", "assessment.yaml"))
+  spf  <- function(block) list(data = sp[[block]], label = paste0(fname[["species"]], ": ", block))
+  assessment <- read_settings(schema$assessment,
+    list(assessment = list(data = af$assessment, label = "config/assessment.yaml: assessment"),
+         species    = spf("assessment")), err)
+  extra <- setdiff(names(af), c("assessment", "categories"))
+  if (length(extra)) err("config/assessment.yaml", paste("unknown top-level keys:", paste(extra, collapse = ", ")))
+  if (length(assessment) == length(schema_leaves(schema$assessment))) {
+    a <- assessment
+    if (!(a$year_spinup < a$year_gentime_start && a$year_gentime_start <= a$year_gentime_end &&
+          a$year_gentime_end < a$year_rust && a$year_rust <= a$year_assess && a$year_assess < a$year_end))
+      err("assessment", "years must run spin-up < gen-time start <= gen-time end < rust <= present < end")
+  }
+  cats <- read_settings(schema$categories,
+    list(assessment = list(data = af$categories, label = "config/assessment.yaml: categories")), err)
+  categories <- unlist(cats)
+  if (length(categories) == 3L && is.unsorted(categories, strictly = TRUE))
+    err("config/assessment.yaml: categories", "thresholds must increase: VU < EN < CR")
+  spatial <- read_settings(schema$spatial, list(species = spf("spatial")), err)
+  if (!is.null(spatial$range_box$lon_min) && !is.null(spatial$range_box$lat_min) &&
+      (spatial$range_box$lon_min >= spatial$range_box$lon_max || spatial$range_box$lat_min >= spatial$range_box$lat_max))
+    err(paste0(fname[["species"]], ": spatial$range_box"), "needs lon_min < lon_max and lat_min < lat_max")
+
+  draws <- list()
+  draw_fields <- c("param", "min", "max", "label", "note", "cite")
+  for (nm in names(sp$ensemble_draws)) {
+    d     <- sp$ensemble_draws[[nm]]
+    where <- paste0(fname[["species"]], ": ensemble_draws$", nm)
+    if (!is.list(d) || !all(draw_fields %in% names(d))) {
+      err(where, paste("needs", paste(draw_fields, collapse = ", "))); next
+    }
+    if (length(setdiff(names(d), draw_fields))) err(where, paste("unknown fields:", paste(setdiff(names(d), draw_fields), collapse = ", ")))
+    path <- strsplit(d$param, "__", fixed = TRUE)[[1]]
+    spec <- cfg_get(schema$params, path)
+    if (is.null(spec$type) || spec$type != "double" || !identical(spec$layer, "species")) {
+      err(where, sprintf("'%s' is not a numeric species parameter", d$param)); next
+    }
+    lo <- config_number(d$min); hi <- config_number(d$max)
+    if (is.na(lo) || is.na(hi) || lo > hi) { err(where, "needs numeric min <= max"); next }
+    b <- check_config_bounds(c(lo, hi), spec); if (!is.null(b)) err(where, b)
+    v <- cfg_get(params, path)
+    if (is.numeric(v) && (v < lo || v > hi)) err(where, sprintf("the parameter's value %s is outside [%s, %s]", v, lo, hi))
+    if (check_sources) {
+      tab <- csv_of(d$cite)
+      row <- if (is.data.frame(tab)) tab[tab$species == sp$species & tab$parameter == d$param & tab$role == "parameter", ] else NULL
+      if (is.null(row) || nrow(row) != 1L) err(where, sprintf("no single row for %s in data/%s", d$param, d$cite))
+      else if (!isTRUE(all.equal(csv_draw_range(row$notes), c(lo, hi))))
+        err(where, sprintf("range differs from 'RANGE [min, max]' in the notes of data/%s", d$cite))
+    }
+    draws[[nm]] <- list(path = path, min = lo, max = hi, label = d$label, note = d$note)
+  }
+
+  if (length(errs)) config_error(sprintf("species '%s'", species), errs)
 
   list(species = sp$species, params = params, rust_anchor = anchor,
-       priors = if (length(priors)) do.call(rbind, priors) else NULL)
+       priors = if (length(priors)) do.call(rbind, priors) else NULL,
+       assessment = assessment, categories = categories,
+       spatial = c(list(name = sp$species, id = species), spatial,
+                   list(data_dir = file.path("spatial", "data", species),
+                        fig_dir  = file.path("spatial", "figures", species))),
+       draws = draws)
 }
 
-load_species     <- function(species = "m_nodosa", ...) species_config(species, ...)$params
-load_rust_anchor <- function(species = "m_nodosa", ...) species_config(species, ...)$rust_anchor
-species_priors   <- function(species = "m_nodosa", ...) species_config(species, ...)$priors
+load_species          <- function(species = NULL, ...) species_config(species, ...)$params
+load_rust_anchor      <- function(species = NULL, ...) species_config(species, ...)$rust_anchor
+species_priors        <- function(species = NULL, ...) species_config(species, ...)$priors
+load_assessment       <- function(species = NULL, ...) species_config(species, ...)$assessment
+load_categories       <- function(species = NULL, ...) species_config(species, ...)$categories
+load_param_draws      <- function(species = NULL, ...) species_config(species, ...)$draws
+load_species_spatial  <- function(species = NULL, ...) species_config(species, ...)$spatial
+
+# Shared landscape settings for the spatial pipeline (config/landscape.yaml,
+# 'spatial'). The MN_SDM_TIFF environment variable overrides rust_sdm.
+load_landscape_spatial <- function(root = mnsim_root()) {
+  schema <- read_config_yaml(file.path(root, "config", "schema.yaml"))
+  lf     <- read_config_yaml(file.path(root, "config", "landscape.yaml"))
+  errs   <- character()
+  err    <- function(where, msg) errs <<- c(errs, sprintf("%s: %s", where, msg))
+  out    <- read_settings(schema$landscape_spatial,
+              list(landscape = list(data = lf$spatial, label = "config/landscape.yaml: spatial")), err)
+  if (length(errs)) config_error("config/landscape.yaml", errs)
+  out$rust_sdm <- Sys.getenv("MN_SDM_TIFF", out$rust_sdm)
+  out
+}
+
+# A species' validation set-up (layer V): species/<sp>_validation.yaml, one
+# block per validation in config/schema.yaml ('validation'). NULL if the
+# species has no validation file. The Pegg block also gets the assessment's
+# year_rust (one rust year for everything; notes T4).
+validation_config <- function(species = NULL, root = mnsim_root()) {
+  if (is.null(species)) species <- default_species(root)
+  path <- file.path(root, "species", paste0(species, "_validation.yaml"))
+  if (!file.exists(path)) return(NULL)
+  schema <- read_config_yaml(file.path(root, "config", "schema.yaml"))
+  v      <- read_config_yaml(path)
+  name   <- read_config_yaml(file.path(root, "species", paste0(species, ".yaml")))$species
+  label  <- paste0("species/", species, "_validation.yaml")
+  errs   <- character()
+  err    <- function(where, msg) errs <<- c(errs, sprintf("%s: %s", where, msg))
+  if (!identical(v$species, name)) err(label, sprintf("'species' must be \"%s\", as in species/%s.yaml", name, species))
+  extra <- setdiff(names(v), c("species", names(schema$validation)))
+  if (length(extra)) err(label, paste("unknown top-level keys:", paste(extra, collapse = ", ")))
+  csv_of <- csv_reader(root)
+  out <- list()
+  for (blk in intersect(names(schema$validation), names(v)))
+    out[[blk]] <- read_settings(schema$validation[[blk]],
+                   list(validation = list(data = v[[blk]], label = paste0(label, ": ", blk))),
+                   err, csv_of, name)
+  if (length(errs)) config_error(label, errs)
+  if (!is.null(out$pegg)) out$pegg$year_rust <- load_assessment(species, root = root)$year_rust
+  out
+}

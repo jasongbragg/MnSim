@@ -1,6 +1,7 @@
 # runner/range_ensemble.R
 #
-# Range-wide IUCN A4 ensemble for M. nodosa (replaces spatial/03_range_wide_iucn.R).
+# Range-wide IUCN A4 ensemble for the default species (config/run_defaults.yaml;
+# replaces spatial/03_range_wide_iucn.R).
 #
 # DESIGN (docs/methodological_notes.md B1-B3)
 #   run i has its own random-number stream (master_seed + i), so adding runs
@@ -27,31 +28,18 @@
 source("runner/site_params.R")
 
 # ---- Simulation phasing (calendar years) -----------------------------------
-YEAR_SPINUP        <- 1600L
-YEAR_GENTIME_START <- 1810L
-YEAR_GENTIME_END   <- 1910L
-YEAR_RUST          <- 2010L
-YEAR_ASSESS        <- 2026L   # the present
-YEAR_END           <- 2210L   # >= 2009 + 3*T_g; comparison capped at YEAR_ASSESS + 100
-AVG_YEARS          <- 11L     # reference and comparison averaging windows
+# The assessment settings (config/assessment.yaml and the species file's
+# 'assessment' block; notes T9), as used by every run and its run ID.
+ASSESS <- iucn_assess_spec()
 
-ASSESS <- iucn_assess_spec(
-  year_spinup = YEAR_SPINUP, year_gentime_start = YEAR_GENTIME_START,
-  year_gentime_end = YEAR_GENTIME_END, year_rust = YEAR_RUST,
-  year_assess = YEAR_ASSESS, year_end = YEAR_END, avg_years = AVG_YEARS)
-
-QLD_LAT <- -28.16   # approx. NSW/Qld border on the coast
+# Approximate NSW/Qld border (config/landscape.yaml), for tables without fire_state.
+QLD_BORDER_LAT <- load_landscape_spatial()$qld_border_lat
 
 # ---- Parameter uncertainty --------------------------------------------------
 # Drawn independently per run, uniform on [min, max]; 'path' locates the value
 # in the params list. list() switches parameter uncertainty off.
-DEFAULT_PARAM_DRAWS <- list(
-  resprout_rust_mortality = list(
-    path  = c("rust_dose_response", "resprout", "max_effect"),
-    min   = 0.32, max = 0.78,
-    label = "Extra rust mortality of resprouting plants (max_effect)",
-    note  = "values whose Pegg-scenario median lies in the 95% CI of 24/50 dead (0.34-0.63), at the Yarringully cell")
-)
+# From the species file's 'ensemble_draws' block (notes B3, T9).
+DEFAULT_PARAM_DRAWS <- load_param_draws()
 
 # Apply one run's parameter draws (uses the current RNG stream).
 draw_params <- function(p, param_draws = DEFAULT_PARAM_DRAWS) {
@@ -78,7 +66,7 @@ draws_caption <- function(param_draws = DEFAULT_PARAM_DRAWS) {
 load_range_sites <- function(path = SITE_PARAMS_PATH) {
   s <- load_site_params(path, drop_incomplete = TRUE)
   s$region <- if ("fire_state" %in% names(s)) s$fire_state else
-    ifelse(s$lat_centre > QLD_LAT, "Qld", "NSW")
+    ifelse(s$lat_centre > QLD_BORDER_LAT, "Qld", "NSW")
   s
 }
 
@@ -135,9 +123,10 @@ run_range_ensemble <- function(n_runs, results_dir,
     tryCatch(
       suppressWarnings(run_iucn_a4(
         plans[[i]]$params,
-        year_spinup = YEAR_SPINUP, year_gentime_start = YEAR_GENTIME_START,
-        year_gentime_end = YEAR_GENTIME_END, year_rust = YEAR_RUST,
-        year_assess = YEAR_ASSESS, year_end = YEAR_END, avg_years = AVG_YEARS,
+        year_spinup = ASSESS$year_spinup, year_gentime_start = ASSESS$year_gentime_start,
+        year_gentime_end = ASSESS$year_gentime_end, year_rust = ASSESS$year_rust,
+        year_assess = ASSESS$year_assess, year_end = ASSESS$year_end,
+        avg_years = ASSESS$avg_years, max_future = ASSESS$max_future,
         save_rds = out, plot = FALSE, verbose = FALSE)),
       error = function(e) message("  range run ", i, ": ", conditionMessage(e)))
     invisible(NULL)
@@ -194,7 +183,7 @@ plot_range_drivers <- function(R, save_path = NULL, param_draws = DEFAULT_PARAM_
   df <- R$runs
   gg <- ggplot2::ggplot; aes <- ggplot2::aes
   th <- ggplot2::theme_minimal(base_size = 12)
-  hl <- ggplot2::geom_hline(yintercept = c(30, 50, 80), colour = "#9a9a9a", linetype = "dashed")
+  hl <- ggplot2::geom_hline(yintercept = unname(IUCN_CATEGORIES), colour = "#9a9a9a", linetype = "dashed")
   pA <- gg(df, aes(1 / site_fire_prob, pct_decline, colour = site_rust)) +
     hl + ggplot2::geom_point(alpha = 0.7, size = 1.8) +
     ggplot2::scale_x_log10() +

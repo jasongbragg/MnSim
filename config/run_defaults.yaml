@@ -8,6 +8,9 @@
 # N0 is the stand size that R_max, K_half and the canopy half_sat values
 # in the species file are scaled to (notes T1).
 
+# The species the runners use when none is given (species/<species>.yaml).
+species: m_nodosa
+
 params:
   N0: 10000
   n_years: 200

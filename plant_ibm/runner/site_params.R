@@ -3,9 +3,12 @@
 # Shared helpers for site-specific runs: the per-cell table written by
 # spatial/02_cross_reference_layers.R and how a cell's values override the
 # base parameters. Used by the range-wide ensemble, the talk figures and the
-# Pegg et al. validation (which runs at the Yarringully anchor cell).
+# Pegg et al. validation (which runs at the rust anchor cell).
+# The table is the default species' (config/run_defaults.yaml):
+# spatial/data/<species>/site_params.csv.
 
-SITE_PARAMS_PATH <- "spatial/data/mn_site_params.csv"
+source("R/species_config.R")
+SITE_PARAMS_PATH <- file.path(load_species_spatial()$data_dir, "site_params.csv")
 
 # Read the cell table; optionally drop cells lacking rust or fire values.
 load_site_params <- function(path = SITE_PARAMS_PATH, drop_incomplete = TRUE) {
@@ -70,7 +73,7 @@ build_site_params <- function(base_params, site_row, fire_regime = "wild", fire_
 
   # --- RESISTANCE HOOK -------------------------------------------------------
   # When site-level resistance data are available, add a resist_freq0 column
-  # to mn_site_params.csv and uncomment:
+  # to the site table (spatial/data/<sp>/site_params.csv) and uncomment:
   # p$resist_freq0 <- c(site_row$resist_freq0)
   # For now: resist_freq0 from params.R (fully susceptible everywhere)
   # ---------------------------------------------------------------------------

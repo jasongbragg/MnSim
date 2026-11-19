@@ -100,8 +100,11 @@ where each parameter is used.
     invalidates result caches. Values computed in code (`1/50`, the anchor Beta) need a defined form.
 - [ ] [agent] Move the constants into `species/m_nodosa.yaml`; the model reads them from config
   - [x] `params.R` reads `species/m_nodosa.yaml` and `config/` through the loader (2026-11-19, notes T8).
-  - [ ] Runner and spatial constants (`docs/constants_inventory.md` §3–4): phasing years, category
+  - [x] Runner and spatial constants (`docs/constants_inventory.md` §3–4): phasing years, category
     thresholds, Pegg validation set-up (layer V), grid size, range box, file names; remove duplicates.
+    Done 2026-11-19 (notes T9): `config/assessment.yaml`, species `assessment`/`spatial`/`ensemble_draws`
+    blocks, `species/m_nodosa_validation.yaml`, `config/landscape.yaml` `spatial`; data in
+    `spatial/data/m_nodosa/`. Open: `QLD_BBOX` and the grid/cell ids for a second species (notes T9).
 - [ ] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment.
   - Fire already has three modes (legacy, plant, stand).
   - Response curves are pluggable through `dose_response`.

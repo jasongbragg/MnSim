@@ -1,17 +1,24 @@
 # spatial/01_get_melaleuca_occurrences.R
 #
-# Download, clean, and spatially thin Melaleuca nodosa occurrence records
-# from the Atlas of Living Australia (ALA) via the galah package.
+# Download, clean, and spatially thin occurrence records of the default
+# species (config/run_defaults.yaml, 'species') from the Atlas
+# of Living Australia (ALA) via the galah package. The species name, range
+# box and grid size come from the configuration (notes T9):
+#   species/<sp>.yaml         'species' (the ALA query) and spatial$range_box
+#   config/landscape.yaml     spatial$grid_deg
+# NOTE: cell_id is the cell number in a raster spanning the range box, so a
+# different box gives different cell ids (the fire tables are keyed by them).
 #
-# OUTPUTS
+# OUTPUTS (<sp> = the species file name, e.g. m_nodosa)
 # -------
-# spatial/data/mn_raw.csv           raw ALA download
-# spatial/data/mn_clean.csv         after coordinate cleaning
-# spatial/data/mn_thinned.csv       one record per grid cell
-# spatial/data/mn_grid.csv          occupied cells: lon_centre, lat_centre,
-#                                     n_raw, cell_id -- ready for cross-
-#                                     referencing with fire/rust rasters
-# spatial/figures/mn_records.png    3-panel diagnostic map
+# spatial/data/<sp>/raw.csv            raw ALA download
+# spatial/data/<sp>/clean.csv          after coordinate cleaning
+# spatial/data/<sp>/thinned.csv        one record per grid cell
+# spatial/data/<sp>/grid.csv           occupied cells: lon_centre, lat_centre,
+#                                        n_raw, cell_id -- ready for cross-
+#                                        referencing with fire/rust rasters
+# spatial/figures/<sp>/records.png     3-panel diagnostic map
+# spatial/figures/<sp>/year_histogram.png
 #
 # DEPENDENCIES
 # ------------
@@ -26,7 +33,7 @@
 #
 # NOTES ON GRID RESOLUTION
 # -------------------------
-# GRID_DEG = 0.1 (~10km at 34°S) is the recommended starting point.
+# grid_deg = 0.1 (config/landscape.yaml) (~10km at 34°S) is the recommended starting point.
 # At this resolution the fire history polygons and rust SDM have meaningful
 # variation; most occupied cells will have at least 1 record post-thinning.
 # Increase to 0.25 if occupied cell count is too low for a useful ensemble;
@@ -34,15 +41,20 @@
 # are at that resolution.
 
 # ---- Configuration --------------------------------------------------------
+source("R/species_config.R")
+SP          <- load_species_spatial()            # species/<sp>.yaml
 ALA_EMAIL   <- "your.email@institution.edu.au"  # EDIT: your ALA-registered email
-GRID_DEG    <- 0.1    # grid cell size in degrees (see note above)
+GRID_DEG    <- load_landscape_spatial()$grid_deg # grid cell size in degrees (see note above)
 YEAR_MIN    <- 1970   # exclude very old records (coordinate quality declines)
 MAX_COORD_UNCERTAINTY <- 5000  # metres; NA records are retained (see below)
-SPECIES     <- "Melaleuca nodosa"
+SPECIES     <- SP$name
+BOX         <- SP$range_box                      # lon_min, lon_max, lat_min, lat_max
+DATA_DIR    <- SP$data_dir
+FIG_DIR     <- SP$fig_dir
 
 # ---- Setup ----------------------------------------------------------------
-if (!dir.exists("spatial/data"))    dir.create("spatial/data",    recursive = TRUE)
-if (!dir.exists("spatial/figures")) dir.create("spatial/figures", recursive = TRUE)
+if (!dir.exists(DATA_DIR)) dir.create(DATA_DIR, recursive = TRUE)
+if (!dir.exists(FIG_DIR))  dir.create(FIG_DIR,  recursive = TRUE)
 
 pkgs <- c("galah","CoordinateCleaner","terra","sf",
           "ggplot2","ozmaps","dplyr","readr")
@@ -66,7 +78,7 @@ message("Step 1: Downloading from ALA...")
 
 galah_config(email = "jasongbragg@gmail.com", verbose = FALSE)
 
-mn_raw <- tryCatch(
+occ_raw <- tryCatch(
   galah_call() |>
     galah_identify(SPECIES) |>
     galah_filter(
@@ -91,39 +103,39 @@ mn_raw <- tryCatch(
   }
 )
 
-message(sprintf("  Downloaded %d records.", nrow(mn_raw)))
+message(sprintf("  Downloaded %d records.", nrow(occ_raw)))
 
 # Standardise column names (galah versions differ slightly)
-names(mn_raw) <- gsub("^decimal", "", names(mn_raw))
-names(mn_raw)[names(mn_raw) == "Longitude"] <- "longitude"
-names(mn_raw)[names(mn_raw) == "Latitude"]  <- "latitude"
-if (!"longitude" %in% names(mn_raw))
+names(occ_raw) <- gsub("^decimal", "", names(occ_raw))
+names(occ_raw)[names(occ_raw) == "Longitude"] <- "longitude"
+names(occ_raw)[names(occ_raw) == "Latitude"]  <- "latitude"
+if (!"longitude" %in% names(occ_raw))
   stop("Could not find longitude column. Column names: ",
-       paste(names(mn_raw), collapse = ", "))
+       paste(names(occ_raw), collapse = ", "))
 
-write_csv(mn_raw, "spatial/data/mn_raw.csv")
-message("  Saved: spatial/data/mn_raw.csv")
+write_csv(occ_raw, file.path(DATA_DIR, "raw.csv"))
+message("  Saved: ", file.path(DATA_DIR, "raw.csv"))
 
 # ============================================================================
 # STEP 2: Basic filters before CoordinateCleaner
 # ============================================================================
 message("Step 2: Basic filters...")
 
-mn <- mn_raw |>
+occ <- occ_raw |>
   filter(!is.na(longitude), !is.na(latitude)) |>
   # Coordinate uncertainty: keep NA (many herbarium records lack this field)
   # and records within threshold. Very precise records (uncertainty = 0) are
   # suspicious but rare -- keep them.
   filter(is.na(coordinateUncertaintyInMeters) |
            coordinateUncertaintyInMeters <= MAX_COORD_UNCERTAINTY) |>
-  # M. nodosa range: coastal NSW/QLD, so restrict to a generous bounding box
+  # Restrict to the species' range box (species/<sp>.yaml, spatial$range_box)
   # (prevents erroneous records in WA or overseas from passing through)
-  filter(longitude >= 148, longitude <= 155,
-         latitude  >= -38, latitude  <= -24) |>
+  filter(longitude >= BOX$lon_min, longitude <= BOX$lon_max,
+         latitude  >= BOX$lat_min, latitude  <= BOX$lat_max) |>
   # Remove duplicate lon/lat/year combinations (re-uploaded records, etc.)
   distinct(longitude, latitude, year, .keep_all = TRUE)
 
-message(sprintf("  After basic filters: %d records (was %d).", nrow(mn), nrow(mn_raw)))
+message(sprintf("  After basic filters: %d records (was %d).", nrow(occ), nrow(occ_raw)))
 
 # ============================================================================
 # STEP 3: Automated coordinate cleaning with CoordinateCleaner
@@ -131,11 +143,11 @@ message(sprintf("  After basic filters: %d records (was %d).", nrow(mn), nrow(mn
 message("Step 3: CoordinateCleaner...")
 
 # CoordinateCleaner needs standard column names
-mn_cc <- mn |>
+occ_cc <- occ |>
   rename(decimallongitude = longitude, decimallatitude = latitude)
 
 cc_flags <- clean_coordinates(
-  mn_cc |> mutate(species = "Melaleuca nodosa"),
+  occ_cc |> mutate(species = SPECIES),
   lon     = "decimallongitude",
   lat     = "decimallatitude",
   species = "species",
@@ -152,17 +164,17 @@ cc_flags <- clean_coordinates(
 )
 
 # .summary column is TRUE when all tests pass
-mn_clean <- mn_cc |>
+occ_clean <- occ_cc |>
   filter(cc_flags$.summary) |>
   rename(longitude = decimallongitude, latitude = decimallatitude)
 
-n_flagged <- nrow(mn) - nrow(mn_clean)
+n_flagged <- nrow(occ) - nrow(occ_clean)
 message(sprintf("  CoordinateCleaner removed %d records (%.1f%%).",
-                n_flagged, 100 * n_flagged / nrow(mn)))
-message(sprintf("  Clean records: %d", nrow(mn_clean)))
+                n_flagged, 100 * n_flagged / nrow(occ)))
+message(sprintf("  Clean records: %d", nrow(occ_clean)))
 
-write_csv(mn_clean, "spatial/data/mn_clean.csv")
-message("  Saved: spatial/data/mn_clean.csv")
+write_csv(occ_clean, file.path(DATA_DIR, "clean.csv"))
+message("  Saved: ", file.path(DATA_DIR, "clean.csv"))
 
 # ============================================================================
 # STEP 4: Grid thinning (one record per cell)
@@ -171,33 +183,33 @@ message(sprintf("Step 4: Grid thinning at %.2f degrees (~%.0f km)...",
                 GRID_DEG, GRID_DEG * 111))
 
 # Build reference raster over the species range
-bbox <- c(xmin = 148, xmax = 155, ymin = -38, ymax = -24)
+bbox <- c(xmin = BOX$lon_min, xmax = BOX$lon_max, ymin = BOX$lat_min, ymax = BOX$lat_max)
 r <- rast(xmin = bbox["xmin"], xmax = bbox["xmax"],
           ymin = bbox["ymin"], ymax = bbox["ymax"],
           resolution = GRID_DEG, crs = "EPSG:4326")
 
 # Assign each record to a cell
-coords  <- cbind(mn_clean$longitude, mn_clean$latitude)
+coords  <- cbind(occ_clean$longitude, occ_clean$latitude)
 cell_id <- cellFromXY(r, coords)
-mn_clean$cell_id <- cell_id
+occ_clean$cell_id <- cell_id
 
 # Count raw records per cell (before thinning)
-cell_counts <- mn_clean |>
+cell_counts <- occ_clean |>
   count(cell_id, name = "n_raw")
 
 # Thin: keep the record with smallest coordinate uncertainty per cell
 # (or random if uncertainty is NA throughout)
-mn_thinned <- mn_clean |>
+occ_thinned <- occ_clean |>
   group_by(cell_id) |>
   arrange(coordinateUncertaintyInMeters, .na_last = TRUE) |>
   slice_head(n = 1) |>
   ungroup()
 
 message(sprintf("  Occupied cells: %d (of %d thinned to 1 record each).",
-                nrow(mn_thinned), nrow(mn_thinned)))
+                nrow(occ_thinned), nrow(occ_thinned)))
 
-write_csv(mn_thinned, "spatial/data/mn_thinned.csv")
-message("  Saved: spatial/data/mn_thinned.csv")
+write_csv(occ_thinned, file.path(DATA_DIR, "thinned.csv"))
+message("  Saved: ", file.path(DATA_DIR, "thinned.csv"))
 
 # ============================================================================
 # STEP 5: Build occupied-cell grid table
@@ -205,29 +217,29 @@ message("  Saved: spatial/data/mn_thinned.csv")
 message("Step 5: Building occupied-cell grid table...")
 
 # Get cell centres for each occupied cell
-cell_xy <- xyFromCell(r, mn_thinned$cell_id) |>
+cell_xy <- xyFromCell(r, occ_thinned$cell_id) |>
   as.data.frame() |>
   setNames(c("lon_centre", "lat_centre"))
 
-mn_grid <- bind_cols(
-  data.frame(cell_id = mn_thinned$cell_id),
+occ_grid <- bind_cols(
+  data.frame(cell_id = occ_thinned$cell_id),
   cell_xy
 ) |>
   left_join(cell_counts, by = "cell_id") |>
   arrange(lat_centre, lon_centre)
 
 message(sprintf("  Grid table: %d occupied cells, total %d raw records.",
-                nrow(mn_grid), sum(mn_grid$n_raw)))
+                nrow(occ_grid), sum(occ_grid$n_raw)))
 
 # Summary by state
-state_summary <- mn_clean |>
+state_summary <- occ_clean |>
   count(stateProvince, name = "n_records") |>
   arrange(desc(n_records))
 message("  Records by state:")
 print(state_summary)
 
-write_csv(mn_grid, "spatial/data/mn_grid.csv")
-message("  Saved: spatial/data/mn_grid.csv")
+write_csv(occ_grid, file.path(DATA_DIR, "grid.csv"))
+message("  Saved: ", file.path(DATA_DIR, "grid.csv"))
 
 # ============================================================================
 # STEP 6: Diagnostic maps
@@ -239,8 +251,8 @@ aus_states <- ozmaps::ozmap_states
 aus_coast  <- ozmaps::ozmap_country
 
 # Bounding box for plot
-xlim <- c(148.5, 154.5)
-ylim <- c(-37.5, -24.5)
+xlim <- c(BOX$lon_min + 0.5, BOX$lon_max - 0.5)
+ylim <- c(BOX$lat_min + 0.5, BOX$lat_max - 0.5)
 
 base_map <- function() {
   list(
@@ -255,43 +267,43 @@ base_map <- function() {
 }
 
 # Panel A: raw records coloured by decade
-mn_raw_plot <- mn_raw |>
+occ_raw_plot <- occ_raw |>
   filter(!is.na(longitude), !is.na(latitude),
-         longitude >= 148, longitude <= 155,
-         latitude  >= -38, latitude  <= -24) |>
+         longitude >= BOX$lon_min, longitude <= BOX$lon_max,
+         latitude  >= BOX$lat_min, latitude  <= BOX$lat_max) |>
   mutate(decade = paste0(floor(year / 10) * 10, "s"))
 
-pA <- ggplot(mn_raw_plot, aes(x = longitude, y = latitude, colour = decade)) +
+pA <- ggplot(occ_raw_plot, aes(x = longitude, y = latitude, colour = decade)) +
   base_map() +
   geom_point(size = 0.6, alpha = 0.6) +
   scale_colour_viridis_d(name = "Decade", option = "C") +
   guides(colour = guide_legend(override.aes = list(size = 2))) +
-  labs(title = sprintf("Raw ALA records (n = %d)", nrow(mn_raw_plot)),
+  labs(title = sprintf("Raw ALA records (n = %d)", nrow(occ_raw_plot)),
        x = NULL, y = NULL)
 
 # Panel B: clean records
-pB <- ggplot(mn_clean, aes(x = longitude, y = latitude)) +
+pB <- ggplot(occ_clean, aes(x = longitude, y = latitude)) +
   base_map() +
   geom_point(colour = "#2a78d6", size = 0.7, alpha = 0.6) +
-  labs(title = sprintf("After coordinate cleaning (n = %d)", nrow(mn_clean)),
+  labs(title = sprintf("After coordinate cleaning (n = %d)", nrow(occ_clean)),
        x = NULL, y = NULL)
 
 # Panel C: thinned grid cells, sized by raw record count
-pC <- ggplot(mn_grid, aes(x = lon_centre, y = lat_centre, size = n_raw)) +
+pC <- ggplot(occ_grid, aes(x = lon_centre, y = lat_centre, size = n_raw)) +
   base_map() +
   geom_point(colour = "#e34948", alpha = 0.8) +
   scale_size_continuous(name = "Raw records\nper cell",
                         range = c(0.8, 4),
                         breaks = c(1, 5, 20, 50)) +
   labs(title = sprintf("Grid thinned (%.2f°): %d occupied cells",
-                       GRID_DEG, nrow(mn_grid)),
+                       GRID_DEG, nrow(occ_grid)),
        x = NULL, y = NULL)
 
 # Combine and save
 if (requireNamespace("patchwork", quietly = TRUE)) {
   fig <- patchwork::wrap_plots(pA, pB, pC, ncol = 3) +
     patchwork::plot_annotation(
-      title    = "Melaleuca nodosa — ALA occurrence records",
+      title    = paste(SPECIES, "— ALA occurrence records"),
       subtitle = sprintf("Downloaded %s | Year >= %d | Grid = %.2f° | Uncertainty <= %d m",
                           Sys.Date(), YEAR_MIN, GRID_DEG, MAX_COORD_UNCERTAINTY),
       theme = theme(plot.title = element_text(size = 12, face = "bold"),
@@ -300,12 +312,12 @@ if (requireNamespace("patchwork", quietly = TRUE)) {
   fig <- pA  # fallback if patchwork not installed
 }
 
-ggsave("spatial/figures/mn_records.png", fig,
+ggsave(file.path(FIG_DIR, "records.png"), fig,
        width = 14, height = 5.5, dpi = 150, bg = "white")
-message("  Saved: spatial/figures/mn_records.png")
+message("  Saved: ", file.path(FIG_DIR, "records.png"))
 
 # ---- Supplementary: year histogram ----------------------------------------
-year_hist <- mn_clean |>
+year_hist <- occ_clean |>
   filter(!is.na(year)) |>
   ggplot(aes(x = year)) +
   geom_histogram(binwidth = 5, fill = "#2a78d6", colour = "white") +
@@ -314,20 +326,20 @@ year_hist <- mn_clean |>
        title = "Temporal coverage of cleaned records") +
   theme_minimal(base_size = 10)
 
-ggsave("spatial/figures/mn_year_histogram.png", year_hist,
+ggsave(file.path(FIG_DIR, "year_histogram.png"), year_hist,
        width = 7, height = 3.5, dpi = 150, bg = "white")
 
 # ============================================================================
 # SUMMARY
 # ============================================================================
-cat("\n=== Melaleuca nodosa occurrence summary ===\n")
-cat(sprintf("  Raw download:        %5d records\n", nrow(mn_raw)))
-cat(sprintf("  After basic filter:  %5d records\n", nrow(mn)))
-cat(sprintf("  After CC cleaning:   %5d records\n", nrow(mn_clean)))
+cat(sprintf("\n=== %s occurrence summary ===\n", SPECIES))
+cat(sprintf("  Raw download:        %5d records\n", nrow(occ_raw)))
+cat(sprintf("  After basic filter:  %5d records\n", nrow(occ)))
+cat(sprintf("  After CC cleaning:   %5d records\n", nrow(occ_clean)))
 cat(sprintf("  Grid-thinned cells:  %5d occupied cells (%.2f° grid)\n",
-            nrow(mn_grid), GRID_DEG))
-cat(sprintf("  Total raw in cells:  %5d records\n", sum(mn_grid$n_raw)))
+            nrow(occ_grid), GRID_DEG))
+cat(sprintf("  Total raw in cells:  %5d records\n", sum(occ_grid$n_raw)))
 cat(sprintf("  Records per cell:    mean=%.1f  median=%.0f  max=%.0f\n",
-            mean(mn_grid$n_raw), median(mn_grid$n_raw), max(mn_grid$n_raw)))
-cat("\nOutputs in spatial/data/ and spatial/figures/\n")
+            mean(occ_grid$n_raw), median(occ_grid$n_raw), max(occ_grid$n_raw)))
+cat(sprintf("\nOutputs in %s/ and %s/\n", DATA_DIR, FIG_DIR))
 cat("Next step: spatial/02_cross_reference_layers.R\n")

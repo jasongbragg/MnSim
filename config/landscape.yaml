@@ -21,3 +21,17 @@ params:
   fire_size_sd:
     value: 0.146
     source: "docs/methodological_notes.md D3: range-wide median between-fire sd of burnt fraction (105 cells with >= 2 wildfire years, NSW + Qld, Nov 2026)"
+
+# Spatial pipeline and site-table settings shared by all species (notes T9).
+# The fire-record settings (years, fire-year threshold, floors, regimes) are in
+# plant_ibm/spatial/fire/fire_config.R (notes D1-D5).
+spatial:
+  grid_deg:
+    value: 0.1
+    source: "spatial/01_get_melaleuca_occurrences.R header: 0.1 degree (~10 km), where fire and rust layers vary meaningfully"
+  qld_border_lat:
+    value: -28.16
+    source: "Approximate NSW/Qld border on the coast; labels cells by state when a table has no fire_state, and splits states when ozmaps is unavailable (notes D4)"
+  rust_sdm:
+    value: "/home/jgb/projects/mrsdm/output/projections/AP_suitability_current.tif"
+    source: "mrsdm projection of A. psidii suitability (notes C2); a local file. The MN_SDM_TIFF environment variable overrides it"
