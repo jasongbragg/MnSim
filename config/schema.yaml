@@ -161,6 +161,7 @@ spatial:
 landscape_spatial:
   grid_deg:       {layer: landscape, type: double, min: 0}
   qld_border_lat: {layer: landscape, type: double, min: -90, max: 90}
+  qld_bbox_margin: {layer: landscape, type: double, min: 0}
   rust_sdm:       {layer: landscape, type: character}
 
 # Validation against Pegg et al. 2025 (runner/pegg_validation.R, runner/pegg_sites.R).

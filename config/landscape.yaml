@@ -32,6 +32,9 @@ spatial:
   qld_border_lat:
     value: -28.16
     source: "Approximate NSW/Qld border on the coast; labels cells by state when a table has no fire_state, and splits states when ozmaps is unavailable (notes D4)"
+  qld_bbox_margin:
+    value: 0.25
+    source: "Margin (degrees) added around the cells needing Qld fire data to get the Qld download area (spatial/fire/R/bbox.R; notes T10). Close to the margin of the hand-set box it replaces"
   rust_sdm:
     value: "/home/jgb/projects/mrsdm/output/projections/AP_suitability_current.tif"
     source: "mrsdm projection of A. psidii suitability (notes C2); a local file. The MN_SDM_TIFF environment variable overrides it"

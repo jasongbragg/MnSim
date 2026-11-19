@@ -14,7 +14,7 @@
 # Existing tables are skipped; delete one to recompute it. Slow: NSW a few
 # minutes per table, Qld a few minutes per year (recent years are large).
 source("spatial/fire/fire_config.R")
-for (f in c("grid", "sources", "cell_years", "regime")) source(file.path("spatial/fire/R", paste0(f, ".R")))
+for (f in c("grid", "bbox", "sources", "cell_years", "regime")) source(file.path("spatial/fire/R", paste0(f, ".R")))
 dir.create(FIRE_DATA_DIR, recursive = TRUE, showWarnings = FALSE)
 cy_file  <- function(name) file.path(FIRE_DATA_DIR, paste0("cell_years_", name, ".csv"))
 write_cy <- function(x, name) utils::write.csv(x, cy_file(name), row.names = FALSE)
@@ -49,6 +49,9 @@ if (!length(todo)) {
 if (all(file.exists(cy_file(c("qld_wild", "qld_planned", "qld_all"))))) {
   message("Qld: cell-year tables exist; skipping")
 } else {
+  # The downloads must cover every cell that needs Qld fire data (bbox.R; notes T10).
+  check_qld_coverage(c(file.path(FIRE_RAW_DIR, "qld_scars", sprintf("qld_scars_%d.gpkg", QLD_YEARS_ALL)),
+                       file.path(FIRE_RAW_DIR, "qpws_fire_history.gpkg")))
   yr_dir <- file.path(FIRE_DATA_DIR, "qld_years"); dir.create(yr_dir, showWarnings = FALSE)
   qld_land_cells <- cells_on_land(qld_cells, states[states$state == "Qld", ])
   qpws <- read_qpws()

@@ -22,7 +22,7 @@ GRID_DEG      <- LANDSCAPE$grid_deg
 QLD_SCARS_URL  <- "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Environment/FireScarMapping/MapServer"
 QLD_QPWS_URL   <- "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Environment/ParksFireHistory/MapServer/0"
 QLD_SCAR_YEARS <- 1987:2025      # layer id = year - 1986 (all downloaded; see QLD_YEARS for what is used)
-QLD_BBOX       <- c(xmin = 147.9, ymin = -29.3, xmax = 154.2, ymax = -23.9)  # Qld M. nodosa cells + margin: widen for a more northern species
+# Download area: qld_bbox() in spatial/fire/R/bbox.R, from every species' grid (notes T10).
 
 AREA_CRS <- 3577                 # Australian Albers: all areas computed in this CRS
 

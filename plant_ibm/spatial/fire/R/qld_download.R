@@ -1,4 +1,5 @@
-# spatial/fire/R/qld_download.R -- fetch Queensland fire polygons for the M. nodosa area.
+# spatial/fire/R/qld_download.R -- fetch Queensland fire polygons for the area
+# qld_bbox() (spatial/fire/R/bbox.R: every species' cells plus a margin).
 #
 # Both services are ArcGIS REST MapServer layers. Large years hold >100,000
 # scar polygons in our bounding box, and deep offset paging fails with HTTP
@@ -73,8 +74,21 @@ arcgis_fetch_ids <- function(layer_url, ids, out_fields, max_offset = MAX_OFFSET
 }
 
 # Download one layer within the bbox to 'out', resumable via a partial folder.
-download_layer <- function(layer_url, bbox, out, out_fields, batch = ID_BATCH, label = "") {
-  if (file.exists(out)) { message(label, ": already downloaded"); return(invisible(TRUE)) }
+# An existing download is kept if its recorded area covers 'need' (or it has
+# no record: older downloads); otherwise it is downloaded again. The area
+# requested is recorded in '<out>.bbox' (bbox.R).
+download_layer <- function(layer_url, bbox, out, out_fields, batch = ID_BATCH, label = "",
+                           need = bbox) {
+  if (file.exists(out)) {
+    rec <- read_download_bbox(out)
+    if (is.null(rec) || bbox_contains(rec, need)) {
+      message(label, ": already downloaded", if (is.null(rec)) " (area not recorded)" else "")
+      return(invisible(TRUE))
+    }
+    message(label, ": existing download does not cover the cells; downloading again")
+    unlink(c(out, bbox_file(out)))
+    unlink(paste0(out, ".partial"), recursive = TRUE)
+  }
   part_dir <- paste0(out, ".partial")
   dir.create(part_dir, recursive = TRUE, showWarnings = FALSE)
   ids_file <- file.path(part_dir, "ids.rds")
@@ -94,26 +108,29 @@ download_layer <- function(layer_url, bbox, out, out_fields, batch = ID_BATCH, l
   x <- if (length(parts)) do.call(rbind, parts) else NULL
   if (is.null(x)) x <- st_sf(year = integer(0), geometry = st_sfc(crs = 4326))
   st_write(x, out, quiet = TRUE)
+  record_download_bbox(out, bbox)
   unlink(part_dir, recursive = TRUE)
   message(sprintf("%s: %d polygons saved", label, nrow(x)))
   invisible(TRUE)
 }
 
 # Fire scars, one file per year (layer id = year - 1986).
-download_qld_scars <- function(years = QLD_SCAR_YEARS, bbox = QLD_BBOX,
-                               out_dir = file.path(FIRE_RAW_DIR, "qld_scars")) {
+download_qld_scars <- function(years = QLD_SCAR_YEARS, bbox = qld_bbox(),
+                               out_dir = file.path(FIRE_RAW_DIR, "qld_scars"),
+                               need = qld_cell_extent()) {
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   for (y in years)
     download_layer(paste0(QLD_SCARS_URL, "/", y - 1986L), bbox,
                    file.path(out_dir, sprintf("qld_scars_%d.gpkg", y)),
-                   out_fields = "objectid,year,month,area_ha", label = as.character(y))
+                   out_fields = "objectid,year,month,area_ha", label = as.character(y), need = need)
   invisible(TRUE)
 }
 
 # QPWS fire history (planned burns PB and wildfires WF on QPWS / state land).
-download_qpws <- function(bbox = QLD_BBOX, out = file.path(FIRE_RAW_DIR, "qpws_fire_history.gpkg")) {
+download_qpws <- function(bbox = qld_bbox(), out = file.path(FIRE_RAW_DIR, "qpws_fire_history.gpkg"),
+                          need = qld_cell_extent()) {
   dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
   download_layer(QLD_QPWS_URL, bbox, out,
                  out_fields = "objectid,label,type,burnstatus,ignitiondate,outdate,outyear,completedyear,month,area_ha",
-                 label = "QPWS")
+                 label = "QPWS", need = need)
 }

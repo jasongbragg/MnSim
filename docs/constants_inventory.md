@@ -284,9 +284,8 @@ grep -rnE '1600L|1810L|1910L|2010L|2026L|2210L|2020L|2022L|0\.48|nodosa|mn_site_
   - grid size, border latitude and SDM path come from `config/landscape.yaml`;
   - the data files are in `spatial/data/m_nodosa/`.
 - **R1:** `draw_age_first_flower()`.
-- **Not moved:** the items marked Keep. Two remain open (notes T9): `QLD_BBOX` (P13) and the
-  grid/cell ids for a second species.
+- **Not moved:** the items marked Keep. `QLD_BBOX` (P13) is now derived from the species grids
+  (notes T10). Still open (notes T9): the grid/cell ids for a second species.
 - **§6 grep:** no hits on code lines outside config, tests and docs. The remaining hits are:
   - comments that describe M. nodosa, mostly in the Pegg runners, which are M. nodosa validation code;
-  - the `GRID_DEG <-` lines, which now read the configuration;
-  - the `QLD_BBOX` comment.
+  - the `GRID_DEG <-` lines, which now read the configuration.

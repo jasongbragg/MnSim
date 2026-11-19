@@ -716,14 +716,40 @@ Not moved (inventory: keep in code), and open points:
 - numerical settings and model structure (inventory section 2; V9–V10, S8–S10, P8–P11, P14);
 - the fire-pipeline settings in `spatial/fire/fire_config.R` (record years, threshold, floors,
   regimes; D1–D5): already in one shared file.
-- **Open: `QLD_BBOX`** (the Qld download extent) is drawn around the M. nodosa cells. A more northern
-  species needs a wider box.
+- ~~Open: `QLD_BBOX`~~ (the Qld download extent, drawn by hand around the M. nodosa cells): now
+  derived from the grids, T10.
 - **Open: cell ids and fire tables.** `cell_id` is the cell number in a raster spanning the
   species' range box. The fire cell-year tables and `spatial/data/fire/cells.rds` are built for the
   M. nodosa grid. A second species needs its own (or a common, fixed) grid before the fire tables
   can be shared.
 - `talk/` keeps its M. nodosa references (talk figures); only its paths and the renamed constants
   were updated.
+
+**T10. Queensland fire download area derived from the species grids** [decided, 2026-11-19]
+The hand-set `QLD_BBOX` (147.9, −29.3, 154.2, −23.9) is replaced by `qld_bbox()` in
+`spatial/fire/R/bbox.R`. It is worked out as follows:
+- take the cells, over **all** species grids (`spatial/data/*/grid.csv`), that lie north of the
+  border latitude minus the border band (−28.16 − 1°). Cells are assigned to a state by the state
+  polygons, so this is a safe superset of the Queensland cells;
+- take their extent at the cell edges;
+- add a margin, `qld_bbox_margin`: 0.25° in `config/landscape.yaml`.
+
+The Qld fire data are a shared landscape layer (T4 decision 2), so one download serves every species.
+For M. nodosa the cells span 148.10, −29.20, 153.60, −24.10, inside the old box. The downloads
+already made still cover them, and the old box's eastern reach to 154.2° was not needed.
+
+A guard stops a too-small download from being used without notice:
+- each finished download records its area in `<file>.bbox`;
+- `download_layer()` fetches a layer again if its recorded area does not cover the cells (a
+  finished download used to be skipped whatever its area);
+- `02_fire_cell_years.R` stops before computing the Qld tables if a download misses part of the
+  cells;
+- downloads made before this change have no record. They give a warning, not an error;
+  `record_download_bbox(file, c(xmin = 147.9, ymin = -29.3, xmax = 154.2, ymax = -23.9))` records
+  the old box.
+
+No model output changes: the area only selects which polygons are downloaded, and the cell-year
+tables in git are untouched. Still open (T9): cell ids depend on each species' range box.
 
 ## Decision log
 
@@ -756,3 +782,4 @@ Not moved (inventory: keep in code), and open points:
 | 2026-11-19 | T7 | YAML schema + loader (config/, species/m_nodosa.yaml, R/species_config.R); identical to get_default_params(); rule 5 checked at load; remaining 18 untraced rows made priors |
 | 2026-11-19 | T8 | params.R switched to the loader (same interface, identical output) |
 | 2026-11-19 | T9 | Runner and spatial constants moved to config (assessment.yaml, species assessment/spatial/ensemble_draws blocks, m_nodosa_validation.yaml, landscape spatial); default species in run_defaults.yaml; data in spatial/data/m_nodosa/ |
+| 2026-11-19 | T10 | Qld fire download area derived from all species grids (cells north of border − band, + 0.25° margin); downloads record their area; coverage checked |
