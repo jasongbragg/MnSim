@@ -480,7 +480,7 @@ Results are summarised as category shares overall and by region (NSW / Qld).
   intended for ABC.
 - `runner/summarise.R`: `summarise_run()`, which reduces a run to scalar
   summaries.
-- `main.R`: the old two-phase example (calibrate, then run rust and
+- `archive/main.R` (archived 2026-11-19): the old two-phase example (calibrate, then run rust and
   counterfactual from `init_state`).
 
 `../runscripts/*.run.code` are hand-run driver scripts for the workstation.

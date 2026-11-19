@@ -66,14 +66,20 @@ Starting point: all biology is already in one nested list (`get_default_params()
 `runner/params_utils.R` maps that list to and from flat `a__b__c` keys. `docs/architecture.md` §5 lists
 where each parameter is used.
 
-- [ ] [agent] List every hard-coded biological constant (with file:line) in `docs/constants_inventory.md`.
+- [x] [agent] List every hard-coded biological constant (with file:line) in `docs/constants_inventory.md`.
+  Done 2026-11-19. Also proposes a fourth layer (V, validation data) and lists duplicates; open
+  questions in its §7.
   - Cover `runner/` and `spatial/` as well as `R/`. That includes `RUST_ANCHOR`, the
     1600/1810–1910/2010/2026/2210 phasing, the Pegg values (0.48 of 50; 2020/2022),
     `SITE_PARAMS_PATH` (`mn_site_params.csv`), `QLD_LAT`, `DEFAULT_PARAM_DRAWS`, and the structural
     constants in `docs/architecture.md` §5.4.
   - Sort each constant into one of three layers: species biology (YAML), site inputs (site table,
     anchor), assessment settings (`iucn_assess_spec`).
-- [ ] [you] Review the inventory: which are biology (go into YAML) and which are numerical settings (stay in code)
+- [x] [you] Review the inventory: which are biology (go into YAML) and which are numerical settings (stay in code)
+  Done 2026-11-19 (inventory §7; notes T4): four layers (species, landscape, assessment, validation);
+  `main.R` and `02b_fire_prior_spatial.R` archived.
+- [ ] [agent] Warn when the spin-up or generation-time window is short relative to the run's T_g
+  (proposed: gen-time window < 3 T_g, spin-up before it < 5 T_g; inventory §7, decision 3).
 - [ ] [you] Decide how `m_nodosa.yaml` meets CLAUDE.md rule 5. `data/rust_species_params.csv` has no
   M. nodosa rows. Options: add them, or allow citations to `methodological_notes.md` IDs (E1, V4, D3, …).
 - [ ] [you] Decide what happens to `parlib/`. Proposal:

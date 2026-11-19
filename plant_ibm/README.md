@@ -58,7 +58,7 @@ plant_ibm/
 │   ├── testthat.R
 │   └── testthat/          # see TESTING.md
 ├── params.R               # single source of truth for all parameters
-└── main.R                 # example two-phase workflow (calibration →
+└── archive/main.R         # ARCHIVED 2026-11-19: example two-phase workflow (calibration →
                             #   rust projection + counterfactual)
 ```
 
@@ -303,7 +303,7 @@ doesn't hold once density dependence is restored to its normal strength,
 and is not representative of the mechanism's real effect — see
 TESTING.md if extending this further.
 
-### Two-phase simulation workflow (see `main.R`)
+### Two-phase simulation workflow (see `archive/main.R`, archived 2026-11-19)
 
 ```r
 # Phase 1: pre-rust calibration (fire only, rust off) -- run long enough
@@ -346,7 +346,7 @@ elements.
 ## Running a scenario
 
 ```bash
-Rscript main.R
+Rscript archive/main.R   # archived; run from plant_ibm/ after copying it back
 ```
 
 produces the two-phase calibration → rust/counterfactual comparison

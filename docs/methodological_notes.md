@@ -554,6 +554,25 @@ Comparison tested on scratch sets, 2026-11-19:
 - The same draw change moved the single-seed A4 run from EN to CR. Single-seed outputs after a
   random-stream change are a new draw, not evidence of a behaviour change.
 
+**T4. Configuration layers for species** [decided, 2026-11-19]
+From the constants inventory (`docs/constants_inventory.md` §7). Values move out of the code into
+four layers:
+- species biology (`species/<sp>.yaml`);
+- landscape (one shared file);
+- assessment settings (`iucn_assess_spec`);
+- validation data (per species, kept separate from the biology).
+
+What goes where:
+- Landscape holds what is the same for every species in a cell: fire regime defaults, fire
+  pipeline settings, grid size, the rust SDM.
+- The rust anchor stays with the species, because it is calibrated to that species' field data.
+- Rust arrival is 2010 for all species [assumption].
+- Spin-up and generation-time windows are species settings. They must be long relative to T_g, which
+  is emergent, so a run warns when they are short relative to its own T_g. M. nodosa
+  (T_g ≈ 23 yr) uses a gen-time window of ≈ 4.4 T_g and spin-up before it of ≈ 9 T_g. The proposed
+  warnings are below 3 T_g and 5 T_g.
+- `main.R` and `02b_fire_prior_spatial.R` moved to `plant_ibm/archive/`.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -579,3 +598,4 @@ Comparison tested on scratch sets, 2026-11-19:
 | 2026-11-19 | T1 | Six fixed-seed regression scenarios from `params.R` at test scale (density parameters x 0.03); references store their params |
 | 2026-11-19 | T2 | Second check: mature mortality, Pegg fraction dead and rust mortality over 20 seeds, tolerance 4 sd of the difference |
 | 2026-11-19 | T3 | Reference-update procedure (docs/reference_updates.md); stats baseline kept across draw-order refactors; owner installs references |
+| 2026-11-19 | T4 | Four config layers (species, landscape, assessment, validation); rust arrival 2010 for all species; windows are species settings with T_g-relative warnings |
