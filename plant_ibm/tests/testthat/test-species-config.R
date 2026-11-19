@@ -14,7 +14,10 @@ working_params_env <- function() {
   env
 }
 
-test_that("load_species('m_nodosa') is identical to params.R's get_default_params()", {
+# params.R now only wraps the loader (notes T8). Its frozen pre-switch output is
+# guarded by test-regression.R ("params.R still builds the frozen params"); these
+# two tests check the wiring.
+test_that("params.R's get_default_params() is load_species('m_nodosa')", {
   set.seed(1)
   env <- working_params_env()
   p   <- load_species("m_nodosa", root = repo_root)

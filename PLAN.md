@@ -99,6 +99,9 @@ where each parameter is used.
   - Watch types: YAML reads `10000` as integer, not double, which changes `make_run_id` hashes and
     invalidates result caches. Values computed in code (`1/50`, the anchor Beta) need a defined form.
 - [ ] [agent] Move the constants into `species/m_nodosa.yaml`; the model reads them from config
+  - [x] `params.R` reads `species/m_nodosa.yaml` and `config/` through the loader (2026-11-19, notes T8).
+  - [ ] Runner and spatial constants (`docs/constants_inventory.md` §3–4): phasing years, category
+    thresholds, Pegg validation set-up (layer V), grid size, range box, file names; remove duplicates.
 - [ ] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment.
   - Fire already has three modes (legacy, plant, stand).
   - Response curves are pluggable through `dose_response`.

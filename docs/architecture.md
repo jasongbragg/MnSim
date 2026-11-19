@@ -317,7 +317,10 @@ A run's parameter list is built in layers. Later layers override earlier ones.
 
 1. **`get_default_params()`.** Whichever file was sourced last defines it:
    - `params.R`: working M. nodosa values, used by every runner and
-     diagnostic;
+     diagnostic. Since 2026-11-19 it holds no values: it loads them with
+     `species_config("m_nodosa")` (`R/species_config.R`) from
+     `species/m_nodosa.yaml`, `config/landscape.yaml` and
+     `config/run_defaults.yaml` (notes T7, T8);
    - `parlib/unittests/params.R`: used by the tests;
    - a `parlib/ensemble/...` file: used for Morris screening.
 2. **Site overrides: `build_site_params()` (`runner/site_params.R:51`).**

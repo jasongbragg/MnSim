@@ -656,6 +656,26 @@ The 18 rows still `UNTRACED` after T6 are now priors:
   `fire_prob_annual` [0.005, 0.5], `fire_p_fimp` [0.05, 1]. Their canonical values are in
   `config/landscape.yaml`.
 
+**T8. `params.R` reads the species configuration** [decided, 2026-11-19]
+`plant_ibm/params.R` no longer holds values. When sourced, it loads `species_config("m_nodosa")`
+once and keeps its old interface:
+- `get_default_params()` returns the loaded list;
+- `RUST_ANCHOR` is the loaded anchor.
+
+Every runner, diagnostic and runscript that sources it is unchanged. It finds the repo from its own
+location, so it can be sourced from `plant_ibm/`, `diagnostics/`, the repo root, with `chdir`, or
+by `sys.source` into an environment; `MNSIM_ROOT` overrides the location. A configuration error
+stops the source.
+
+Checked before the switch: the new and old `params.R` give identical `get_default_params()` and
+`RUST_ANCHOR` in all five ways of sourcing. All regression tests pass: frozen outputs, and
+"params.R still builds the frozen params".
+
+The comments that documented values in the old file are covered by the CSV notes and sections C,
+D, E and V of this file. Loading takes about 0.3 s per source.
+
+Still to do (PLAN Phase 2): the constants in `runner/` and `spatial/` (inventory sections 3–4).
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -685,3 +705,4 @@ The 18 rows still `UNTRACED` after T6 are now priors:
 | 2026-11-19 | T5 | parlib: unittests fixture completed (schema test added), diags archived, param_ranges format for Phase 4 priors |
 | 2026-11-19 | T6 | M. nodosa values in data/m_nodosa_params.csv (rule 5 names both CSVs); 19 untraced active values marked as priors |
 | 2026-11-19 | T7 | YAML schema + loader (config/, species/m_nodosa.yaml, R/species_config.R); identical to get_default_params(); rule 5 checked at load; remaining 18 untraced rows made priors |
+| 2026-11-19 | T8 | params.R switched to the loader (same interface, identical output) |
