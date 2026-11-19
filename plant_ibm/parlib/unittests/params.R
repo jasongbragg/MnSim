@@ -13,12 +13,15 @@
 # would be confounded by active senescence, juv_decline or shade terms
 # inherited through make_geometric_params() / make_lefkovitch_params().
 #
-# SCHEMA: identical to params.R (same parameter names, same structure).
-# Only VALUES differ -- conservative / off where the working calibration
-# has active mechanisms.
+# SCHEMA: identical to params.R (same parameter names, same structure);
+# test-params.R checks this. Only VALUES differ -- conservative / off where
+# the working calibration has active mechanisms. The fields added on
+# 2026-11-19 (resprout_delay_dist, fire_extent_mode, fire_size_sd,
+# fire_stand_cover, rust_site_sd) take the values the code used to fall back
+# to when they were absent, so test behaviour is unchanged
+# (docs/methodological_notes.md T5).
 #
 # DO NOT calibrate this file. It is test infrastructure, not biology.
-# Calibrated scenarios belong in parlib/diags/ or similar.
 
 get_default_params <- function() {
   list(
@@ -76,11 +79,15 @@ get_default_params <- function() {
     fire_years            = c(40, 80, 120),
     fire_prob_annual      = 0,
     resprout_yrs_base     = 3,
+    resprout_delay_dist   = "poisson",   # the original rule (fallback when absent)
     resprout_recovery     = "countdown",
     resprout_prob_recovery = 1 / 3,
 
     fire_kill_prob      = 0.35,
-    fire_p_fimp         = 0,
+    fire_p_fimp         = 0,         # 0 = legacy flat-probability fire
+    fire_extent_mode    = "plant",   # used only when fire_p_fimp > 0
+    fire_size_sd        = 0,         # "stand" mode only
+    fire_stand_cover    = 1,         # "stand" mode only
     fire_kill_scalar    = 0.30,
     fire_kill_half_sat  = 5,
     fire_kill_hill      = 2,
@@ -92,6 +99,7 @@ get_default_params <- function() {
     microclim_beta     = 1,
     annual_env_alpha   = 1,
     annual_env_beta    = 1,
+    rust_site_sd       = 0,          # no persistent site effect
 
     rust_dose_response = list(
       age_peak     = 0.20,

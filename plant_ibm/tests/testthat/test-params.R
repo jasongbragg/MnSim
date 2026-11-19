@@ -104,3 +104,22 @@ test_that("test suite is using parlib/unittests/params.R, not the working M. nod
   expect_false("dd_alpha" %in% names(p),
     label = "test params must NOT contain dd_alpha (dd mortality removed)")
 })
+
+test_that("parlib/unittests/params.R has the same schema as the working params.R", {
+  set.seed(1)
+  # Same names and nesting, so code paths never fall back to defaults for a
+  # field the test params lack (notes T5). Values may differ.
+  env <- new.env()
+  sys.source(file.path(proj_root, "params.R"), envir = env)
+  leaves <- function(x, prefix = "") {
+    if (is.list(x)) unlist(lapply(names(x), function(k)
+      leaves(x[[k]], if (nzchar(prefix)) paste0(prefix, "$", k) else k)))
+    else prefix
+  }
+  working <- leaves(env$get_default_params())
+  test    <- leaves(get_default_params())
+  expect_identical(sort(setdiff(working, test)), character(0),
+                   label = "fields in params.R missing from parlib/unittests/params.R")
+  expect_identical(sort(setdiff(test, working)), character(0),
+                   label = "fields in parlib/unittests/params.R not in params.R")
+})

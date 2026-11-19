@@ -573,6 +573,21 @@ What goes where:
   warnings are below 3 T_g and 5 T_g.
 - `main.R` and `02b_fire_prior_spatial.R` moved to `plant_ibm/archive/`.
 
+**T5. `parlib/`** [decided, 2026-11-19]
+- `parlib/unittests/params.R` stays as the unit-test fixture. It now has the five fields it lacked
+  (`resprout_delay_dist`, `fire_extent_mode`, `fire_size_sd`, `fire_stand_cover`, `rust_site_sd`),
+  each set to the value the code fell back to when the field was absent: "poisson", "plant", 0, 1,
+  0. Test behaviour is therefore unchanged. `test-params.R` now checks that its fields match
+  `params.R`.
+- The five identical `parlib/diags/*/params.R` (an older, unused calibration) are archived as
+  `plant_ibm/archive/parlib_diags_params.R`.
+- Phase 4 priors use the `parlib/ensemble/no_rust_no_fire/param_ranges.R` format: `__` keys,
+  min, max, an optional correlation matrix `Sigma`, and a written rationale for each range. This
+  is the format `runner/ensemble.R` reads. In the species YAML each prior carries the same fields
+  (`prior: true`, min, max, reason; CLAUDE.md rule 5) and is converted to keys/mins/maxs.
+  `DEFAULT_PARAM_DRAWS` (`runner/range_ensemble.R`, inventory S7) uses a different layout; it
+  should move to this format when the YAML loader is written.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -599,3 +614,4 @@ What goes where:
 | 2026-11-19 | T2 | Second check: mature mortality, Pegg fraction dead and rust mortality over 20 seeds, tolerance 4 sd of the difference |
 | 2026-11-19 | T3 | Reference-update procedure (docs/reference_updates.md); stats baseline kept across draw-order refactors; owner installs references |
 | 2026-11-19 | T4 | Four config layers (species, landscape, assessment, validation); rust arrival 2010 for all species; windows are species settings with T_g-relative warnings |
+| 2026-11-19 | T5 | parlib: unittests fixture completed (schema test added), diags archived, param_ranges format for Phase 4 priors |

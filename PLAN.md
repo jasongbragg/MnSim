@@ -82,7 +82,7 @@ where each parameter is used.
   (proposed: gen-time window < 3 T_g, spin-up before it < 5 T_g; inventory §7, decision 3).
 - [ ] [you] Decide how `m_nodosa.yaml` meets CLAUDE.md rule 5. `data/rust_species_params.csv` has no
   M. nodosa rows. Options: add them, or allow citations to `methodological_notes.md` IDs (E1, V4, D3, …).
-- [ ] [you] Decide what happens to `parlib/`. Proposal:
+- [x] [you] Decide what happens to `parlib/`. Done 2026-11-19 (notes T5): proposal accepted and carried out.
   - keep `unittests/` as a test fixture and add its missing fields (`resprout_delay_dist`,
     `fire_extent_mode`, `fire_size_sd`, `fire_stand_cover`, `rust_site_sd`);
   - remove or archive `diags/*` (five identical, unused, older copies);

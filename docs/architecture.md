@@ -348,8 +348,8 @@ the list (values, element order, or integer vs double type) gives a new id.
 
 | Path | Used by | State |
 |---|---|---|
-| `unittests/params.R` | `tests/testthat/helper-fixtures.R` (instead of `params.R`) | Turns everything off: legacy fire, Poisson resprout window of 3, Weibull k = 2, λ = 30, rust Beta(1,1), microsite Beta(1,1), `resist_freq0 = 0.05`, fixed fire years 40/80/120. Lacks `resprout_delay_dist`, `fire_extent_mode`, `fire_size_sd`, `fire_stand_cover`, `rust_site_sd`, so the code falls back to its defaults when these are missing (`NULL`). Its header says "schema identical to params.R"; that is no longer true |
-| `diags/{demography,flowering_by_fire,mortality_by_age,recruitment,rust_age}/params.R` | nothing (the diagnostics source `params.R`) | Five byte-identical copies, all headed `parlib/diags/demography/params.R`; an older calibration (senescence 0.2/30, `fire_p_fimp` 0.8, resprout `max_effect` 0.80, rust from year 1) |
+| `unittests/params.R` | `tests/testthat/helper-fixtures.R` (instead of `params.R`) | Turns everything off: legacy fire, Poisson resprout window of 3, Weibull k = 2, λ = 30, rust Beta(1,1), microsite Beta(1,1), `resist_freq0 = 0.05`, fixed fire years 40/80/120. Same schema as `params.R` since 2026-11-19 (checked by `test-params.R`; notes T5) |
+| `diags/*/params.R` | — | Archived 2026-11-19 to `archive/parlib_diags_params.R` (five identical, unused copies of an older calibration) |
 | `ensemble/no_rust_no_fire/params_base.R` + `param_ranges.R` | `runner/morris.R` via `runscripts/morris_sensitivity.run.code` | No-disturbance baseline plus prior ranges (`keys`/`mins`/`maxs`/`Sigma`) for 10 demographic parameters, each with a written rationale |
 
 ### 5.3 Parameter reference: where each parameter is used
