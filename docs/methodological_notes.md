@@ -588,6 +588,36 @@ What goes where:
   `DEFAULT_PARAM_DRAWS` (`runner/range_ensemble.R`, inventory S7) uses a different layout; it
   should move to this format when the YAML loader is written.
 
+**T6. Sources for M. nodosa parameter values** [decided, 2026-11-19]
+M. nodosa values sit in their own file, `data/m_nodosa_params.csv`. It has the same columns as
+`data/rust_species_params.csv`, and CLAUDE.md rule 5 now names both files.
+- It has one row per `params.R` value (69, with `RUST_ANCHOR`), using `a__b__c` parameter names,
+  plus 3 calibration targets (V1, V5, V6).
+- Run settings are left out: `N0`, `n_years`, `seed`, `fire_years`, `rust_start_year`.
+- Sources cite the entries in this file.
+- New `evidence_type` labels: calibration (fitted, e.g. V4), model_assumption, model_choice (a rule
+  or form).
+
+19 active values could not be traced to any note, README or commit. They are marked as priors
+[assumption]: `source` = "prior: ... T6", and notes start `PRIOR [min, max]` (numbers) or
+`PRIOR {a, b}` (alternative forms or rules), then a reason. Where the range is not taken from
+`parlib/ensemble/no_rust_no_fire/param_ranges.R` it was proposed on 2026-11-19 and is open to review.
+The point values are unchanged: the priors document uncertainty and nothing was refitted. The 19:
+- senescence (all four);
+- juvenile decline (`max_effect`, form, `half_sat`, age `half_sat` and hill);
+- `age_first_flower_sd`;
+- fire kill age `half_sat` and hill;
+- the resprout recovery rule;
+- rust hazard by age (four);
+- the resprout rust curve's form and `half_sat`.
+
+`rust_dose_response__resprout__half_sat` is confounded with the V4-calibrated `max_effect` while
+`rust_pressure` = 1.
+
+18 rows stay marked `UNTRACED`:
+- 16 are inactive (switched-off terms, the legacy fire mode, shape settings the chosen form ignores);
+- 2 are the single-site fire defaults, which belong to the landscape layer (T4).
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -615,3 +645,4 @@ What goes where:
 | 2026-11-19 | T3 | Reference-update procedure (docs/reference_updates.md); stats baseline kept across draw-order refactors; owner installs references |
 | 2026-11-19 | T4 | Four config layers (species, landscape, assessment, validation); rust arrival 2010 for all species; windows are species settings with T_g-relative warnings |
 | 2026-11-19 | T5 | parlib: unittests fixture completed (schema test added), diags archived, param_ranges format for Phase 4 priors |
+| 2026-11-19 | T6 | M. nodosa values in data/m_nodosa_params.csv (rule 5 names both CSVs); 19 untraced active values marked as priors |

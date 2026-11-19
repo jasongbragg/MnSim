@@ -80,7 +80,9 @@ where each parameter is used.
   `main.R` and `02b_fire_prior_spatial.R` archived.
 - [ ] [agent] Warn when the spin-up or generation-time window is short relative to the run's T_g
   (proposed: gen-time window < 3 T_g, spin-up before it < 5 T_g; inventory §7, decision 3).
-- [ ] [you] Decide how `m_nodosa.yaml` meets CLAUDE.md rule 5. `data/rust_species_params.csv` has no
+- [x] [you] Decide how `m_nodosa.yaml` meets CLAUDE.md rule 5. Done 2026-11-19 (notes T6): a separate
+  `data/m_nodosa_params.csv`; 19 untraced values marked as priors.
+  Was: `data/rust_species_params.csv` has no
   M. nodosa rows. Options: add them, or allow citations to `methodological_notes.md` IDs (E1, V4, D3, …).
 - [x] [you] Decide what happens to `parlib/`. Done 2026-11-19 (notes T5): proposal accepted and carried out.
   - keep `unittests/` as a test fixture and add its missing fields (`resprout_delay_dist`,

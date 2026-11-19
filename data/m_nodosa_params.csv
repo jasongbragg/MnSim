@@ -1,0 +1,73 @@
+species,ibm_module,parameter,role,value,units,evidence_type,confidence,source,notes
+Melaleuca nodosa,rust_pressure,rust_anchor__site,parameter,Yarringully NR,,field_monitoring,high,docs/methodological_notes.md C2,Anchor site for rust pressure: Pegg et al. 2025 site
+Melaleuca nodosa,rust_pressure,rust_anchor__lon,parameter,153.21967,degrees E,field_monitoring,high,docs/methodological_notes.md C2,Reserve point location; the anchor cell is the occupied cell nearest it (cell 3623)
+Melaleuca nodosa,rust_pressure,rust_anchor__lat,parameter,-29.09357,degrees N,field_monitoring,high,docs/methodological_notes.md C2,As lon
+Melaleuca nodosa,rust_pressure,rust_anchor__mu,parameter,0.70,annual pathogen pressure (0-1),field_monitoring,medium,docs/methodological_notes.md C2,Mean annual pressure from field incidence at Yarringully. [open in C2] field-incidence source not yet cited
+Melaleuca nodosa,rust_pressure,rust_anchor__conc,parameter,20,alpha + beta,model_assumption,low,docs/methodological_notes.md C3,Year-to-year variability; not constrained by data; being fitted (V6)
+Melaleuca nodosa,rust_pressure,rust_anchor__cap,parameter,0.95,annual pathogen pressure (0-1),model_assumption,low,docs/methodological_notes.md C2,Cap on cell mean pressure; no cell currently exceeds the anchor
+Melaleuca nodosa,mortality,weibull_k,parameter,1,shape,model_assumption,low,docs/methodological_notes.md E1,Constant background hazard; age effects come from the senescence and juvenile terms
+Melaleuca nodosa,mortality,weibull_lambda,parameter,60,years,model_assumption,low,docs/methodological_notes.md E1,E1 states the value; no data or reason given
+Melaleuca nodosa,mortality,senescence_dose_response__max_effect,parameter,0.1,annual probability,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [0, 0.6]: Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: at most 60% annual mortality from senescence alone"
+Melaleuca nodosa,mortality,senescence_dose_response__form,parameter,sigmoid,,model_choice,low,prior: docs/methodological_notes.md T6,PRIOR {sigmoid}: The only bounded rising form in dose_response(); kept fixed
+Melaleuca nodosa,mortality,senescence_dose_response__half_sat,parameter,40,years,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [15, 60]: Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: senescence starts early (15 yr) to barely noticeable before 60 yr"
+Melaleuca nodosa,mortality,senescence_dose_response__hill,parameter,8,,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [2, 12]: Proposed: 2 = gradual onset, above ~10 = near step at half_sat"
+Melaleuca nodosa,mortality,juv_decline_dose_response__max_effect,parameter,0.5,annual probability,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [0.3, 0.99]: Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: substantial to near-certain seedling death under full canopy"
+Melaleuca nodosa,mortality,juv_decline_dose_response__form,parameter,saturating,,model_choice,low,prior: docs/methodological_notes.md T6,"PRIOR {saturating, sigmoid}: Proposed: saturating = effect rises from the first canopy plant; sigmoid = threshold-like"
+Melaleuca nodosa,mortality,juv_decline_dose_response__half_sat,parameter,5000,canopy plants,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [1000, 20000]: Proposed: 0.1-2 x stand size (N0 10000); a count of canopy plants, so it scales with stand size (notes T1)"
+Melaleuca nodosa,mortality,juv_decline_dose_response__hill,parameter,2,,model_assumption,low,UNTRACED,Unused by the saturating form
+Melaleuca nodosa,mortality,juv_decline_age_half_sat,parameter,2,years,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [1, 8]: Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: juvenile hazard halves by age 1 to still declining at age 8"
+Melaleuca nodosa,mortality,juv_decline_age_hill,parameter,2,,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [1, 4]: Proposed: 1 = near-exponential decay with age, 4 = gate-like"
+Melaleuca nodosa,recruitment,R_max,parameter,1000,recruits per year,model_assumption,low,docs/methodological_notes.md E2,Beverton-Holt; recruits = seedlings surviving their first year; no data. Scales with stand size (notes T1)
+Melaleuca nodosa,recruitment,K_half,parameter,4000,flowering plants,model_assumption,low,docs/methodological_notes.md E2,As R_max
+Melaleuca nodosa,recruitment,shade_dose_response__max_effect,parameter,0,fraction of recruits,model_assumption,low,UNTRACED,Off
+Melaleuca nodosa,recruitment,shade_dose_response__form,parameter,saturating,,model_choice,low,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,recruitment,shade_dose_response__half_sat,parameter,1000,canopy plants,model_assumption,low,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,recruitment,shade_dose_response__hill,parameter,4,,model_assumption,low,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,life_history,age_first_flower_mean,parameter,5,years,model_assumption,low,docs/methodological_notes.md E2,No data cited
+Melaleuca nodosa,life_history,age_first_flower_sd,parameter,1.5,years,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [0.5, 3]: Proposed: between-plant spread in years; up to about half the mean (5 yr)"
+Melaleuca nodosa,recruitment,selfing_rate,parameter,0.10,,model_assumption,low,docs/methodological_notes.md E2,No data cited
+Melaleuca nodosa,fire,fire_prob_annual,parameter,0.02,per year,model_assumption,low,UNTRACED,LANDSCAPE layer (T4): single-site default only; each cell's value comes from the fire record (D2). params.R writes 1/50
+Melaleuca nodosa,fire,fire_p_fimp,parameter,0.6,burnt fraction,model_assumption,low,UNTRACED,"LANDSCAPE layer (T4): single-site default only; each cell's value comes from the fire record (D2, D3)"
+Melaleuca nodosa,fire,fire_size_sd,parameter,0.146,burnt fraction,derived,medium,docs/methodological_notes.md D3,"LANDSCAPE layer (T4): range-wide median between-fire sd (105 cells with >= 2 wildfire years, NSW + Qld)"
+Melaleuca nodosa,fire,fire_extent_mode,parameter,stand,,model_choice,medium,docs/methodological_notes.md D3,Fire reaches the stand with probability f
+Melaleuca nodosa,fire,fire_stand_cover,parameter,0.9,fraction of plants,model_assumption,low,docs/methodological_notes.md D3,"Unburnt patches within a stand; fixed, not measured"
+Melaleuca nodosa,fire,fire_kill_scalar,parameter,0.30,,model_assumption,low,docs/methodological_notes.md D3,Old-plant kill ceiling = 0.30 x fire size; not directly calibrated (D3 open)
+Melaleuca nodosa,fire,fire_kill_half_sat,parameter,2,years,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [1, 5]: Proposed: age (yr) at which fire kill falls halfway from certain death to the ceiling; seedlings almost always die (D3). Unit-test params use 5"
+Melaleuca nodosa,fire,fire_kill_hill,parameter,2,,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [1, 4]: Proposed: 1 = gradual fall with age, 4 = sharp"
+Melaleuca nodosa,fire,fire_kill_prob,parameter,0.35,probability,model_assumption,low,UNTRACED,Legacy fire mode only (fire_p_fimp = 0); inactive in M. nodosa runs
+Melaleuca nodosa,fire,resprout_yrs_base,parameter,2,years,model_assumption,low,docs/methodological_notes.md D3,"Fixed 2-yr resprout window from fire alone; a judgement, not measured"
+Melaleuca nodosa,fire,resprout_delay_dist,parameter,fixed,,model_choice,medium,docs/methodological_notes.md D3,Decided Nov 2026; 'poisson' restores the earlier rule
+Melaleuca nodosa,fire,resprout_recovery,parameter,countdown,,model_choice,low,prior: docs/methodological_notes.md T6,"PRIOR {countdown, geometric}: countdown matches the fixed resprout window (D3); geometric is the matrix-test alternative"
+Melaleuca nodosa,fire,resprout_prob_recovery,parameter,1/3,per year,model_assumption,low,UNTRACED,Used only with resprout_recovery = 'geometric'; inactive
+Melaleuca nodosa,rust_pressure,rust_pressure,parameter,1,multiplier,model_choice,medium,docs/methodological_notes.md C2,Neutral multiplier: the level of rust pressure is set by the anchor (C2)
+Melaleuca nodosa,disease,microclim_alpha,parameter,20,Beta shape,model_assumption,low,docs/methodological_notes.md C1,"Microsite susceptibility Beta(20, 5), same in every cell; no data"
+Melaleuca nodosa,disease,microclim_beta,parameter,5,Beta shape,model_assumption,low,docs/methodological_notes.md C1,As microclim_alpha
+Melaleuca nodosa,rust_pressure,annual_env_alpha,parameter,14,Beta shape,derived,medium,docs/methodological_notes.md C2,= rust_anchor__mu x rust_anchor__conc; replaced per cell in range runs
+Melaleuca nodosa,rust_pressure,annual_env_beta,parameter,6,Beta shape,derived,medium,docs/methodological_notes.md C2,= (1 - rust_anchor__mu) x rust_anchor__conc
+Melaleuca nodosa,rust_pressure,rust_site_sd,parameter,0,logit sd,model_assumption,low,docs/methodological_notes.md V6,"Persistent site effect off by default; interim fit favours sd ~2 (V6, in progress)"
+Melaleuca nodosa,disease,rust_dose_response__age_peak,parameter,0.3,annual hazard,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [0.1, 0.6]: Proposed: annual rust hazard of the youngest fully susceptible plants at pressure 1"
+Melaleuca nodosa,disease,rust_dose_response__age_floor,parameter,0.025,annual hazard,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [0, 0.1]: Proposed: adult rust hazard; includes 0 because adult resprouter mortality may be too high for zero-death plots (V6 open)"
+Melaleuca nodosa,disease,rust_dose_response__age_half_sat,parameter,2,years,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [1, 8]: Proposed: same age scale as juvenile decline"
+Melaleuca nodosa,disease,rust_dose_response__age_hill,parameter,4,,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [1, 8]: Proposed: 1 = gradual decline with age, 8 = sharp"
+Melaleuca nodosa,disease,rust_dose_response__resprout__max_effect,parameter,0.53,annual hazard,calibration,medium,docs/methodological_notes.md V4,Pegg scenario median 48% dead at the Yarringully cell; values 0.32-0.78 span the observation's 95% interval
+Melaleuca nodosa,disease,rust_dose_response__resprout__form,parameter,saturating,,model_choice,low,prior: docs/methodological_notes.md T6,"PRIOR {saturating, linear}: With rust_pressure fixed at 1 the form only rescales max_effect, which V4 calibrates; keep fixed while that holds"
+Melaleuca nodosa,disease,rust_dose_response__resprout__half_sat,parameter,0.2,rust pressure,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [0.05, 1]: Proposed. Confounded with max_effect while rust_pressure = 1 (realised effect = max_effect / (1 + half_sat)); V4 was calibrated with 0.2"
+Melaleuca nodosa,disease,rust_dose_response__resprout__hill,parameter,1,,model_assumption,low,UNTRACED,Unused by the saturating form
+Melaleuca nodosa,disease,rust_dose_response__delay__max_effect,parameter,1.79,years,derived,low,docs/methodological_notes.md C5,= 1 / (0.8 x 0.70): one extra year for a fully susceptible plant at the anchor; magnitude not constrained by data. Recompute if microclim or rust_anchor__mu change
+Melaleuca nodosa,disease,rust_dose_response__delay__form,parameter,linear,,model_choice,low,docs/methodological_notes.md C5,
+Melaleuca nodosa,disease,rust_dose_response__delay__half_sat,parameter,1,,model_assumption,low,UNTRACED,Unused by the linear form
+Melaleuca nodosa,disease,rust_dose_response__delay__hill,parameter,1,,model_assumption,low,UNTRACED,Unused by the linear form
+Melaleuca nodosa,disease,rust_flower_dose_response__max_effect,parameter,0,probability,gap,none,docs/methodological_notes.md C5,Off: implemented but no data
+Melaleuca nodosa,disease,rust_flower_dose_response__form,parameter,saturating,,model_choice,none,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,disease,rust_flower_dose_response__half_sat,parameter,0.5,effective susceptibility,model_assumption,none,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,disease,rust_flower_dose_response__hill,parameter,1,,model_assumption,none,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,disease,rust_recruit_dose_response__max_effect,parameter,0,probability,gap,none,docs/methodological_notes.md C5,Off: implemented but no data
+Melaleuca nodosa,disease,rust_recruit_dose_response__form,parameter,saturating,,model_choice,none,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,disease,rust_recruit_dose_response__half_sat,parameter,0.5,effective susceptibility,model_assumption,none,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,disease,rust_recruit_dose_response__hill,parameter,1,,model_assumption,none,UNTRACED,Inactive while max_effect = 0
+Melaleuca nodosa,resistance,resist_locus_effect,parameter,1,resistance score,model_assumption,low,docs/methodological_notes.md E3,One locus; placeholder pending data (CLAUDE.md rule 1)
+Melaleuca nodosa,resistance,resist_dominance,parameter,1,,model_assumption,low,docs/methodological_notes.md E3,Placeholder pending data (CLAUDE.md rule 1)
+Melaleuca nodosa,resistance,resist_freq0,parameter,0,allele frequency,gap,none,docs/methodological_notes.md E3,Placeholder: fully susceptible. Site values to come through the resistance hook (CLAUDE.md rule 1)
+Melaleuca nodosa,disease,pegg_yarringully_resprout_dead,calibration_target,0.48,fraction,field_monitoring,high,Pegg et al. 2025 Austral Ecology 50: e70099; docs/methodological_notes.md V1,24 of 50 resprouting trees dead by Jan 2022 (fire 2020); 95% binomial interval 0.34-0.63. Fitted by V4
+Melaleuca nodosa,disease,pegg_plots_interval_mortality,calibration_target,see file,deaths / trees at risk,field_monitoring,medium,Pegg et al. 2025; runner/data/pegg2025_mnodosa_plots.csv; docs/methodological_notes.md V6,"Seven plots by observation interval. INTERIM: approximate coordinates and fire months, two zero plots inferred"
+Melaleuca nodosa,life_history,pegg_yarringully_flowering_survivors,calibration_target,0.15,fraction,field_monitoring,high,Pegg et al. 2025; docs/methodological_notes.md V5,"4 of 26 surviving trees flowering in Jan 2022. Secondary check, not fitted"

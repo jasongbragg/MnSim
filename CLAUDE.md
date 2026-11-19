@@ -18,6 +18,9 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
   each with a source. Columns: species, ibm_module, parameter, role, value, units, evidence_type,
   confidence, source, notes. `role` is one of: parameter | calibration_target | committee_method |
   committee_projection.
+- `data/m_nodosa_params.csv` — the same columns for *M. nodosa*, whose values come mostly from this
+  project's own calibration and assumptions (sources cite `docs/methodological_notes.md` entries).
+  Extra `evidence_type` labels: calibration | model_assumption | model_choice.
 - `tests/` — testthat tests; `tests/reference/` holds frozen M. nodosa outputs
 - `docs/methodological_notes.md` — running log of assumptions and decisions
 - `private/` — unpublished data (git-ignored)
@@ -32,8 +35,9 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
    relative path. Use R 4.3.1: the system `Rscript` is R 3.4.4 and cannot load `sf`.)
 4. **Do not hand-tune parameters to hit calibration targets.** All fitting goes through the
    calibration code (Phase 5), so it is logged and reproducible.
-5. **Every parameter value in a species YAML must cite its CSV row** (species + parameter), or be
-   marked `prior: true` with the range and a reason. No unsourced numbers.
+5. **Every parameter value in a species YAML must cite its row** (species + parameter) in
+   `data/rust_species_params.csv` or `data/m_nodosa_params.csv`, or be marked `prior: true` with the
+   range and a reason. No unsourced numbers.
 6. **Log every modelling assumption or structural decision** as a dated entry in
    `docs/methodological_notes.md`.
 7. **Propose before building new model structure.** For new modules (clonal stage, hazard
