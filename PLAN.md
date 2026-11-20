@@ -128,6 +128,9 @@ For each item: design note in `docs/` → [you] approve → implement → add te
 - [ ] **Fruit-infection suppression:** fecundity → ~0 under high rust (Tucki Tucki NR; no fruit seen for *R. psidioides* since 2010).
   Partly built: `rust_flower_dose_response` and `rust_recruit_dose_response` exist but are off.
   The design note may only need to cover their parameterisation (overlaps ROADMAP Phase 2, flowering/seed set).
+- [x] **Fire exposure and fire-change scenarios** (rainforest species): species `fire_exposure`; a
+  scenario that raises fire rate and size from a year. Done 2026-11-20
+  (`docs/design_fire_exposure_and_change.md`; notes T15). Exposure priors for each species: Phase 4.
 - [ ] Check that M. nodosa outputs are unchanged when each new option is switched off (Phase 1 tests still pass)
 
 ## Phase 4 — Species parameter files  [agent, you set priors]

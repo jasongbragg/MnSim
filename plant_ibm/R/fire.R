@@ -121,6 +121,39 @@ fire_response_name <- function(params) {
   mode
 }
 
+# ---- Fire exposure and fire-change scenario (notes T15) -------------------------
+# design_fire_exposure_and_change.md. All optional: absent, the probability is
+# fire_prob_annual and the params are returned unchanged, as before.
+#   fire_exposure    species: share of the cell's fire rate its habitat gets
+#   fire_change_*    scenario: from fire_change_year, rate and size multiplied,
+#                    reaching full size over fire_change_ramp years (0 = step)
+
+# Multiplier in year t for a full-size change 'full' (1 before the change year).
+fire_change_factor <- function(params, t, full) {
+  y0 <- params$fire_change_year
+  if (is.null(full) || is.null(y0) || t < y0) return(1)
+  ramp <- if (is.null(params$fire_change_ramp)) 0 else params$fire_change_ramp
+  w <- if (ramp > 0) min(1, (t - y0 + 1) / ramp) else 1
+  1 + (full - 1) * w
+}
+
+# Probability of a fire in the cell in year t.
+fire_prob_at <- function(params, t) {
+  p <- params$fire_prob_annual
+  if (!is.null(params$fire_exposure)) p <- p * params$fire_exposure
+  if (!is.null(params$fire_change_rate)) p <- p * fire_change_factor(params, t, params$fire_change_rate)
+  min(1, p)
+}
+
+# Params for the fire response in year t: bigger fires after the change
+# (mean burnt fraction fire_p_fimp multiplied, kept below 1).
+fire_params_at <- function(params, t) {
+  if (is.null(params$fire_change_size)) return(params)
+  f <- fire_change_factor(params, t, params$fire_change_size)
+  if (f != 1) params$fire_p_fimp <- min(0.99, params$fire_p_fimp * f)
+  params
+}
+
 apply_fire <- function(pop, params, t) {
   alive_idx <- which(pop$alive)
   if (length(alive_idx) == 0) return(pop)

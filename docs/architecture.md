@@ -233,7 +233,9 @@ by the model. They are kept for diagnostics and tests.
 
 ### 4.2 Fire (`R/fire.R`)
 
-Whether a fire happens is decided in `simulate.R` (step 3). `apply_fire()`
+Whether a fire happens is decided in `simulate.R` (step 3), with probability
+`fire_prob_at()`: the cell's `fire_prob_annual`, times the species'
+`fire_exposure` and any fire-change scenario (notes T15). `apply_fire()`
 then calls one of three response functions, from the registry
 `FIRE_RESPONSES` (`fire_legacy`, `fire_plant`, `fire_stand`; chosen by
 `fire_response_name()`; notes T12). Each returns who died and who survived;
@@ -563,6 +565,7 @@ written into the params list, so existing species are unchanged.
 | fire response | `FIRE_RESPONSES` (`R/fire.R`) | `fire_extent_mode`; `fire_p_fimp == 0` → legacy | legacy, plant, stand |
 | cell rust pressure | `RUST_PRESSURE_MODES` (`spatial/rust_pressure.R`) | rust anchor `mode` (default `sdm`) | sdm |
 | yearly pathogen draw | `draw_annual_env()` (`R/simulate.R`) | (function only, no selector) | iid Beta |
+| fire exposure, fire change | `fire_prob_at()`, `fire_params_at()` (`R/fire.R`) | `fire_exposure` (species); `fire_change_*` (runner scenario; T15) | |
 | recruitment curve | `RECRUITMENT_CURVES` (`R/recruitment.R`) | `recruitment_curve` (default `bevholt`) | bevholt, ricker |
 | expected recruits, flowering | `expected_recruits()`, `update_flowering()` | (functions only) | |
 

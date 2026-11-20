@@ -51,7 +51,11 @@ site_fire_values <- function(site_row, fire_regime = "wild") {
 }
 
 # Override base params with one cell's values.
-build_site_params <- function(base_params, site_row, fire_regime = "wild", fire_scale = 1) {
+# 'fire_change': a fire-change scenario (notes T15), list(year, rate = 1,
+# size = 1, ramp = 0): from 'year' the fire probability is multiplied by
+# 'rate' and the mean burnt fraction by 'size', over 'ramp' years. NULL = none.
+build_site_params <- function(base_params, site_row, fire_regime = "wild", fire_scale = 1,
+                              fire_change = NULL) {
   p <- base_params
 
   # Site-specific fire regime
@@ -64,6 +68,7 @@ build_site_params <- function(base_params, site_row, fire_regime = "wild", fire_
   if (!is.null(fv$size_sd) && !is.na(fv$size_sd))
     p$fire_size_sd   <- fv$size_sd
   p$fire_years       <- integer(0)   # must use fire_prob_annual for long runs
+  if (!is.null(fire_change)) p <- set_fire_change(p, fire_change)
 
   # Site-specific rust pressure (SDM, normalised at the rust anchor cell)
   p$annual_env_alpha <- site_row$annual_env_alpha
@@ -78,6 +83,20 @@ build_site_params <- function(base_params, site_row, fire_regime = "wild", fire_
   # For now: resist_freq0 from params.R (fully susceptible everywhere)
   # ---------------------------------------------------------------------------
 
+  p
+}
+
+# Write a fire-change scenario into params (hashed into run IDs).
+set_fire_change <- function(p, fc) {
+  stopifnot(is.list(fc), is.numeric(fc$year), length(fc$year) == 1L,
+            all(names(fc) %in% c("year", "rate", "size", "ramp")))
+  get <- function(k, d) if (is.null(fc[[k]])) d else fc[[k]]
+  v <- c(rate = get("rate", 1), size = get("size", 1), ramp = get("ramp", 0))
+  stopifnot(all(is.finite(v)), all(v >= 0))
+  p$fire_change_year <- as.double(fc$year)
+  p$fire_change_rate <- as.double(v[["rate"]])
+  p$fire_change_size <- as.double(v[["size"]])
+  p$fire_change_ramp <- as.double(v[["ramp"]])
   p
 }
 

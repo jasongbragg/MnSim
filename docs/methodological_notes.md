@@ -883,6 +883,38 @@ goes through the calibration code. The single-site regression references use `pa
 not the site table, so they are unaffected. D1's earlier cross-check against the previous `02`
 reported 255/256 cells matching; why it did not catch this has not been traced.
 
+**T15. Species fire exposure and fire-change scenarios** [decided, 2026-11-20]
+Design note `docs/design_fire_exposure_and_change.md`, approved with its recommendations. It is
+aimed at the rainforest species, whose habitat burns far less than the ~10 km cell it sits in, and
+at the question of whether more fire, together with rust, changes their category.
+- **`fire_exposure`** (species, optional, 0–1, default 1) multiplies the cell's fire probability
+  for the whole run, spin-up included. It is habitat biology, so it goes in the species YAML under
+  rule 5: it either cites a CSV row or is a prior with a reason (e.g. how rarely rainforest patches
+  burn in the NSW record). It can be drawn over its range with `ensemble_draws`. Fire off =
+  exposure 0. The runner's `fire_scale` stays separate, as a management or sensitivity scenario;
+  the two multiply.
+- **Fire-change scenario** (`fire_change_year`, `_rate`, `_size`, `_ramp`; set by runners, e.g.
+  `run_range_ensemble(..., fire_change = list(year = 2026, rate = 2, size = 1.5))`). From the change
+  year, the fire probability is multiplied by `rate` and the mean burnt fraction `fire_p_fimp` by
+  `size` (kept below 1), so stand fires reach the stand more often and kill more (D3). A `ramp`
+  > 0 makes the rise linear over that many years; 0 is a step.
+  - The settings are written into params, so they are hashed into run IDs.
+  - Cells, seeds and parameter draws do not depend on the scenario, so scenario ensembles pair run
+    by run with the baseline.
+  - A run is identical to the baseline, draw for draw, before the change year.
+  - `run_iucn_a4()` refuses a change year at or before the end of the gen-time window, so T_g
+    describes the pre-rust population.
+  - The suggested year is 2026. The cell records (to 2024) already include 2019–20, so the scenario
+    means "more fire than the recent record".
+- **Code.** `fire_prob_at()` and `fire_params_at()` in `R/fire.R`, called each year by
+  `run_simulation()`. When the settings are absent they return exactly the old values, so
+  M. nodosa is unchanged.
+
+These are scenarios, not predictions: the size of a future fire increase in these vegetation types
+is not estimated from data. They are reported as the change in the category distribution against
+the paired baseline. The fire *response* of the rainforest species (kill, resprouting) is species
+biology and needs Phase 4 priors. Tests: `tests/testthat/test-fire-change.R`.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -919,3 +951,4 @@ reported 255/256 cells matching; why it did not catch this has not been traced.
 | 2026-11-20 | T12 | Swappable parts: registries for fire response, cell rust pressure and recruitment curve (Ricker wired in, unused); `draw_annual_env()`, `expected_recruits()`, `update_flowering()`; optional schema fields keep existing species unchanged |
 | 2026-11-20 | T13 | One Australia-wide master grid (110–160 E, 45–9 S, 0.1°) for cell ids; fire tables shared over all species' cells and built incrementally; fire prior fitted per species |
 | 2026-11-20 | T14 | Error found and corrected: NSW cell-year tables were shifted by one cell after a zero-land cell (234/256 NSW cells held another cell's record); tables, site table and fire checks rebuilt; D2/D4 still hold; range, Pegg-site and V4 runs to redo |
+| 2026-11-20 | T15 | Species `fire_exposure` (optional, habitat share of cell fire rate); fire-change scenario (from a year: rate and fire size multiplied, optional ramp), set by runners, paired with baseline |

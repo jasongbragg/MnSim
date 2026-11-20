@@ -89,6 +89,17 @@ params:
   fire_kill_scalar:       {layer: species, type: double, min: 0, max: 1}
   fire_kill_half_sat:     {layer: species, type: double, min: 0}
   fire_kill_hill:         {layer: species, type: double, min: 0}
+  # Species fire exposure: multiplies the cell's fire probability for the whole
+  # run (habitat that burns less than the cell, e.g. rainforest; notes T15).
+  fire_exposure:          {layer: species, type: double, min: 0, max: 1, optional: true, default: 1}
+  # Fire-change scenario (notes T15): from fire_change_year the fire probability
+  # is multiplied by fire_change_rate and fire_p_fimp by fire_change_size,
+  # reaching full size over fire_change_ramp years (0 = step). Set by runners
+  # (build_site_params(fire_change = ...)), not by species files.
+  fire_change_year: {layer: run, type: double, optional: true, default: .inf}
+  fire_change_rate: {layer: run, type: double, min: 0, optional: true, default: 1}
+  fire_change_size: {layer: run, type: double, min: 0, optional: true, default: 1}
+  fire_change_ramp: {layer: run, type: double, min: 0, optional: true, default: 0}
 
   rust_start_year:  {layer: run, type: double}
   rust_pressure:    {layer: species, type: double, min: 0}

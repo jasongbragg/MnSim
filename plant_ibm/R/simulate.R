@@ -120,8 +120,10 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     }
 
     # 3. fire event this year?
+    # Probability: the cell's rate, times the species' exposure and any
+    # fire-change scenario (fire_prob_at(); notes T15).
     fire_this_year <- if (params$fire_prob_annual > 0) {
-      rbinom(1L, 1L, params$fire_prob_annual) == 1L
+      rbinom(1L, 1L, fire_prob_at(params, t)) == 1L
     } else {
       t %in% params$fire_years
     }
@@ -131,7 +133,7 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     n_dead_fire  <- 0L
     if (fire_this_year) {
       n_before <- sum(pop$alive)
-      pop <- apply_fire(pop, params, t)
+      pop <- apply_fire(pop, fire_params_at(params, t), t)
       n_dead_fire <- n_before - sum(pop$alive)
       fire_reached <- !identical(attr(pop, "fire_reached"), FALSE)
       attr(pop, "fire_reached") <- NULL

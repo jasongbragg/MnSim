@@ -362,6 +362,13 @@ run_iucn_a4 <- function(
     )
   }
 
+  # A fire-change scenario must start after the gen-time window, so T_g still
+  # describes the pre-rust population (notes T15).
+  if (!is.null(params$fire_change_year) && is.finite(params$fire_change_year) &&
+      params$fire_change_year <= year_gentime_end)
+    stop(sprintf("fire_change_year %g is inside or before the gen-time window (ends %d)",
+                 params$fire_change_year, as.integer(year_gentime_end)))
+
   # --- Build params for rust run -----------------------------------------
   p_rust                 <- params
   p_rust$rust_start_year <- year_rust

@@ -20,6 +20,8 @@
 #   # fire scenarios (D5): same cells, seeds and draws, so runs pair up
 #   run_range_ensemble(300, "results/range_v1_allfire/", fire_regime = "all")
 #   run_range_ensemble(300, "results/range_v1_suppress50/", fire_scale = 0.5)
+#   run_range_ensemble(300, "results/range_v1_fire2x/",                 # notes T15
+#                      fire_change = list(year = 2026, rate = 2, size = 1.5))
 #   R <- collect_range_ensemble("results/range_v1/")
 #   range_category_shares(R$runs)            # overall and by region
 #   plot_range_drivers(R, "results/range_v1/drivers.png")
@@ -71,21 +73,32 @@ load_range_sites <- function(path = SITE_PARAMS_PATH) {
 }
 
 # ---- Planning ---------------------------------------------------------------
-# The random draws (cell, seed, parameters) do not depend on fire_regime or
-# fire_scale, so ensembles that differ only in those pair up run by run.
+# Short label of a fire-change scenario for the plan table ("none" if NULL).
+fire_change_label <- function(fc) {
+  if (is.null(fc)) return("none")
+  get <- function(k, d) if (is.null(fc[[k]])) d else fc[[k]]
+  sprintf("from %g: rate x%g, size x%g, ramp %g yr", fc$year, get("rate", 1), get("size", 1), get("ramp", 0))
+}
+
+# The random draws (cell, seed, parameters) do not depend on fire_regime,
+# fire_scale or fire_change, so ensembles that differ only in those pair up
+# run by run.
 plan_range_run <- function(i, sites, base, param_draws = DEFAULT_PARAM_DRAWS,
-                           master_seed = 20261022L, fire_regime = "wild", fire_scale = 1) {
+                           master_seed = 20261022L, fire_regime = "wild", fire_scale = 1,
+                           fire_change = NULL) {
   set.seed(master_seed + i)
   k  <- sample.int(nrow(sites), 1L, prob = sites$weight_n_raw)
   sd <- sample.int(99999L, 1L)
   dr <- draw_params(base, param_draws)
-  p  <- build_site_params(dr$params, sites[k, ], fire_regime = fire_regime, fire_scale = fire_scale)
+  p  <- build_site_params(dr$params, sites[k, ], fire_regime = fire_regime, fire_scale = fire_scale,
+                          fire_change = fire_change)
   p  <- apply_rust_site_effect(p, draw_rust_site_effect(p))   # no draw when rust_site_sd = 0
   p$seed <- sd
   row <- data.frame(run = i, cell_row = k, cell_id = sites$cell_id[k],
                     lon = sites$lon_centre[k], lat = sites$lat_centre[k],
                     region = sites$region[k], sim_seed = sd,
                     fire_regime = fire_regime, fire_scale = fire_scale,
+                    fire_change = fire_change_label(fire_change),
                     rust_site_z = p$rust_site_z,
                     site_fire_prob = p$fire_prob_annual,
                     site_fire_p_fimp = p$fire_p_fimp,
@@ -103,7 +116,8 @@ run_range_ensemble <- function(n_runs, results_dir,
                                base        = get_default_params(),
                                sites       = load_range_sites(),
                                fire_regime = "wild",
-                               fire_scale  = 1) {
+                               fire_scale  = 1,
+                               fire_change = NULL) {
   dir.create(file.path(results_dir, "range"), recursive = TRUE, showWarnings = FALSE)
   base$fire_years <- integer(0)
   message(sprintf(
@@ -112,7 +126,7 @@ run_range_ensemble <- function(n_runs, results_dir,
     fire_regime, fire_scale))
   plans <- lapply(seq_len(n_runs), plan_range_run, sites = sites, base = base,
                   param_draws = param_draws, master_seed = master_seed,
-                  fire_regime = fire_regime, fire_scale = fire_scale)
+                  fire_regime = fire_regime, fire_scale = fire_scale, fire_change = fire_change)
   plan  <- do.call(rbind, lapply(plans, `[[`, "row"))
   write.csv(plan, file.path(results_dir, "range_plan.csv"), row.names = FALSE)
 
