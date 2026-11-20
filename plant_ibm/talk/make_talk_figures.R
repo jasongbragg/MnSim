@@ -58,7 +58,7 @@ DIAGRAM_SVG  <- "talk/model_diagram.svg"
 # Model code
 # ============================================================================
 source("params.R")
-for (f in c("individuals", "genetics", "mortality", "fire", "recruitment",
+for (f in c("individuals", "genetics", "mortality", "fire", "recruitment", "clonal",
             "census", "simulate"))
   source(file.path("R", paste0(f, ".R")))
 source("runner/params_utils.R")

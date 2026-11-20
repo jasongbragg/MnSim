@@ -66,16 +66,30 @@ update_flowering <- function(pop, t, params, annual_env_t) {
   pop
 }
 
+# Clonal mode (docs/design_clonal_stage.md; notes T17). Off unless the species
+# sets clonal_mode: genet; R/clonal.R is then needed as well.
+is_clonal <- function(params) identical(params$clonal_mode, "genet")
+
 run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALSE) {
   set.seed(params$seed)
+  clonal <- is_clonal(params)
+  genets <- NULL
 
   if (is.null(init_state)) {
     init      <- create_population(params, year0 = year0)
     pop       <- init$pop
     resist_gt <- init$resist_gt
+    if (clonal) {
+      ci        <- clonal_init(pop, resist_gt, params)
+      pop       <- ci$pop
+      resist_gt <- ci$resist_gt
+      genets    <- ci$genets
+    }
   } else {
     pop       <- init_state$individuals
     resist_gt <- init_state$resist_gt
+    genets    <- init_state$genets
+    if (clonal && is.null(genets)) stop("clonal run continued from a state without genets")
   }
   # States saved before death_cause existed: add it (causes unknown).
   if (is.null(pop$death_cause)) pop$death_cause <- NA_character_
@@ -101,6 +115,7 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
 
     # 1. age all living individuals
     pop$age[pop$alive] <- pop$age[pop$alive] + 1L
+    if (clonal) alive_start <- pop$alive
 
     # 2. resprout recovery (from prior fire events)
     rs_idx <- which(pop$alive & pop$resprout)
@@ -137,6 +152,7 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
       n_dead_fire <- n_before - sum(pop$alive)
       fire_reached <- !identical(attr(pop, "fire_reached"), FALSE)
       attr(pop, "fire_reached") <- NULL
+      if (clonal && fire_reached) genets <- clonal_after_fire(pop, genets, params, t)
     }
 
     # 4. update flowering status, post-fire (rust may suppress it)
@@ -148,6 +164,14 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     pop$death_year[dead_idx]  <- t
     pop$death_cause[dead_idx] <- "mortality"
     pop$flowering[dead_idx]   <- FALSE
+    n_dead_other <- length(dead_idx)
+
+    # 5b. clonal: rootstocks of genets with no mature ramet may die
+    if (clonal) {
+      rs <- clonal_rootstock_step(pop, genets, params, t)
+      pop <- rs$pop; genets <- rs$genets
+      n_dead_other <- n_dead_other + rs$n_dead
+    }
 
     # 6. recruitment: Beverton-Holt, parent sampling, Mendelian inheritance
     rec       <- recruit(pop, resist_gt, t, params, annual_env_t, next_id = next_id)
@@ -155,19 +179,35 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     resist_gt <- rec$resist_gt
     next_id   <- next_id + rec$n_rec
 
+    # 6b. clonal: seed recruits start genets; then root suckering
+    n_suckers <- 0L
+    if (clonal) {
+      new_idx <- seq_len(rec$n_rec) + nrow(pop) - rec$n_rec
+      genets  <- clonal_add_seed_genets(pop, resist_gt, genets, new_idx)
+      sk <- clonal_sucker(pop, resist_gt, genets, t, params, next_id)
+      pop <- sk$pop; resist_gt <- sk$resist_gt
+      n_suckers <- sk$n_suckers
+      next_id <- next_id + n_suckers
+    }
+
     # 7. census
     census_list[[i]] <- census_year(pop, resist_gt, t, rec$n_rec,
-                                     length(dead_idx) + n_dead_fire, params,
+                                     n_dead_other + n_dead_fire, params,
                                      fire_this_year = fire_reached,
                                      fire_in_cell   = fire_this_year,
                                      n_dead_fire    = n_dead_fire)
+    if (clonal) {
+      census_list[[i]] <- cbind(census_list[[i]], clonal_census(pop, genets, n_suckers))
+      killed <- which(c(alive_start, logical(nrow(pop) - length(alive_start))) & !pop$alive)
+      genets <- clonal_end_year(pop, genets, killed)
+    }
 
     if (verbose && i %% 10 == 0) {
       cat(sprintf("year %d: N=%d  N_IUCN=%d\n",
                   t, sum(pop$alive), sum(pop$alive & pop$flowering)))
     }
 
-    if (sum(pop$alive) == 0) {
+    if (sum(pop$alive) == 0 && (!clonal || nrow(genets$df) == 0L)) {
       census_list <- census_list[seq_len(i)]
       break
     }
@@ -196,5 +236,7 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
   rownames(pop) <- NULL
 
   census <- do.call(rbind, census_list)
-  list(individuals = pop, resist_gt = resist_gt, census = census)
+  out <- list(individuals = pop, resist_gt = resist_gt, census = census)
+  if (clonal) out$genets <- genets
+  out
 }

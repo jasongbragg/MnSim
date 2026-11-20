@@ -36,6 +36,7 @@ plant_ibm/
     mortality.R         hazards, dose_response(), nominate_deaths()
     fire.R              apply_fire(): occurrence handled in simulate.R, effects here
     recruitment.R       Beverton-Holt, parent sampling, canopy shading, recruit()
+    clonal.R            clonal stage (optional): genets, root suckering, rootstock survival
     census.R            census_year(), pct_decline()
     matrix_model.R      Leslie/Lefkovitch builders, used only by the tests
   runner/             scenarios and assessments (section 6)
@@ -283,6 +284,29 @@ n_rec           ~ Poisson(expected)                                             
   a different flowering plant chosen uniformly.
 - Recruits inherit genotypes from their parents but draw age at first
   flowering and microsite afresh.
+
+### 4.3b Clonal stage (`R/clonal.R`; optional, notes T17)
+
+Used only when a species sets `clonal_mode: genet` (`is_clonal()`); otherwise
+`run_simulation()` calls nothing here and makes the same draws as before.
+- Each row is a ramet with a `genet_id` and an `origin` (founder, seed,
+  sucker). Ramets of a genet share its genotype and microsite. The genet
+  table (`genets$df`, `genets$gt`) holds the rootstock state and is returned as
+  `$genets`; `init_state` must carry it.
+- Founders are grouped into `clonal_founder_genets` genets; each seedling
+  starts its own genet.
+- After recruitment, each living genet produces Poisson suckers:
+  `sucker_rate` × mature ramets + `sucker_pulse` × ramets killed last year
+  + `sucker_rate_rootstock` if it has no mature ramet, times
+  (1 − shade suppression) × `sucker_density_factor()` (the recruitment
+  curve's saturation, so seed and suckers share the same space).
+- Rootstock: survives a fire that leaves the genet without ramets with
+  P = `rootstock_fire_survival`; dies with P = `rootstock_hazard_no_canopy` in
+  each year without a mature ramet (its remaining ramets die with it,
+  cause `"rootstock"`). Only established genets (ever had a mature ramet)
+  keep a rootstock without ramets.
+- Census adds `N_genets`, `N_rootstock_only` and `births_sucker`. T_g counts
+  sucker parents (the sucker's `mother_id` is a ramet of its genet).
 
 ### 4.4 Flowering (`update_flowering()`, `R/simulate.R`)
 
@@ -568,6 +592,7 @@ written into the params list, so existing species are unchanged.
 | yearly pathogen draw | `draw_annual_env()` (`R/simulate.R`) | (function only, no selector) | iid Beta |
 | fire exposure, fire change | `fire_prob_at()`, `fire_params_at()` (`R/fire.R`) | `fire_exposure` (species); `fire_change_*` (runner scenario; T15) | |
 | recruitment curve | `RECRUITMENT_CURVES` (`R/recruitment.R`) | `recruitment_curve` (default `bevholt`) | bevholt, ricker |
+| clonal stage | `R/clonal.R`, `is_clonal()` | `clonal_mode` (default `none`) and the sucker/rootstock settings (T17) | none, genet |
 | expected recruits, flowering | `expected_recruits()`, `update_flowering()` | (functions only) | |
 
 ---

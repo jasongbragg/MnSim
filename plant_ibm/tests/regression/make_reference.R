@@ -14,7 +14,7 @@
 args    <- commandArgs(trailingOnly = TRUE)
 out_dir <- if (length(args) >= 1) args[1] else file.path("..", "tests", "reference")
 
-for (f in c("individuals", "genetics", "mortality", "fire", "recruitment", "census", "simulate"))
+for (f in c("individuals", "genetics", "mortality", "fire", "recruitment", "clonal", "census", "simulate"))
   source(file.path("R", paste0(f, ".R")))
 source("runner/params_utils.R")
 source("runner/iucn_a4.R")

@@ -64,6 +64,18 @@ params:
   ricker_r: {layer: species, type: double, min: 0, optional: true, required_when: {recruitment_curve: ricker}}
   ricker_K: {layer: species, type: double, min: 0, optional: true, required_when: {recruitment_curve: ricker}}
 
+  # Clonal stage (docs/design_clonal_stage.md; notes T17): ramets grouped into
+  # genets, root suckering, rootstock survival. Off (none) unless a species sets
+  # clonal_mode: genet, which then needs the fields below.
+  clonal_mode:                {layer: species, type: character, choices: [none, genet], optional: true, default: none}
+  clonal_founder_genets:      {layer: species, type: double, min: 1, optional: true, required_when: {clonal_mode: genet}}
+  sucker_rate:                {layer: species, type: double, min: 0, optional: true, required_when: {clonal_mode: genet}}
+  sucker_rate_rootstock:      {layer: species, type: double, min: 0, optional: true, required_when: {clonal_mode: genet}}
+  sucker_pulse:               {layer: species, type: double, min: 0, optional: true, required_when: {clonal_mode: genet}}
+  rootstock_fire_survival:    {layer: species, type: double, min: 0, max: 1, optional: true, required_when: {clonal_mode: genet}}
+  rootstock_hazard_no_canopy: {layer: species, type: double, min: 0, max: 1, optional: true, required_when: {clonal_mode: genet}}
+  sucker_microsite:           {layer: species, type: character, choices: [parent, new], optional: true, default: parent}
+
   shade_dose_response:
     max_effect: {layer: species, type: double, min: 0, max: 1}
     form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}

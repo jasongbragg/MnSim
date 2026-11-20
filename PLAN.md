@@ -124,7 +124,8 @@ where each parameter is used.
 
 ## Phase 3 — New model structure  [agent proposes, you decide]
 For each item: design note in `docs/` → [you] approve → implement → add tests.
-- [ ] **Clonal sucker stage** (*R. psidioides*): canopy death leaves a persisting root-sucker pool with no seed input; suckers get infected at about 30 cm
+- [x] **Clonal sucker stage** (*R. psidioides*, *U. australis*, *R. rubescens*): canopy death leaves a persisting root-sucker pool with no seed input; suckers get infected at about 30 cm.
+  Done 2026-11-21 (`docs/design_clonal_stage.md`; notes T17). Sucker and rootstock priors per species: Phase 4.
 - [ ] **Rust-pressure modes:** (a) SDM-scaled (current); (b) saturating/constant. Evidence: no climate predictor of infection for *R. psidioides* (Fensham et al. 2020); strong NSW vs SE Qld contrast for *A. beckleri* (Manea et al. 2019 vs Pegg et al. 2017)
 - [ ] **Accumulating-damage hazard:** death risk rises with consecutive defoliation events (Olney exclusion trial: ~6-month lag, death in <4 yr; Table 10 resurveys)
 - [ ] **Fruit-infection suppression:** fecundity → ~0 under high rust (Tucki Tucki NR; no fruit seen for *R. psidioides* since 2010).

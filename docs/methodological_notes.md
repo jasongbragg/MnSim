@@ -965,6 +965,45 @@ What it needs before it can run (not built; rule 7):
 - *Spatial.* EOO is 89 km²; the range (~13 × 11 km) covers a few master-grid cells, so range-wide
   draws reduce to one or two cells' fire and rust.
 
+**T17. Clonal stage: genets, ramets and root suckers** [decided, 2026-11-21]
+Design note `docs/design_clonal_stage.md`, approved with its recommendations. Needed by
+*U. australis* (suckering only), *R. psidioides* (populations reduced to root suckers) and
+*R. rubescens* (clonal clumps). Code in `R/clonal.R`; it is optional (`clonal_mode: genet`), and
+absent it makes no draws, so M. nodosa is unchanged (regression passes).
+- **Structure.** Each row is a ramet, the IUCN mature individual, with `genet_id` and `origin`.
+  Ramets share their genet's genotype and microsite (decision 3: suckers stay beside the parent).
+  Founders are grouped into `clonal_founder_genets` genets; each seedling starts a genet.
+- **Suckering.** Each living genet produces Poisson suckers each year from its mature ramets
+  (`sucker_rate`), from ramets killed the year before (`sucker_pulse`: response to fire, rust
+  dieback or slashing), and, with no mature ramet, from the bare rootstock
+  (`sucker_rate_rootstock`). Suckers face the existing hazards, so rust's young-plant peak kills
+  them early.
+- **Rootstock.** It survives a fire that leaves the genet with no ramet with
+  P = `rootstock_fire_survival`, and dies with P = `rootstock_hazard_no_canopy` in each year
+  without a mature ramet, taking its remaining ramets with it. That hazard sets how long a
+  "living dead" sucker pool lasts.
+- **Generation length** (decision 4a). T_g is the mean age of the parents of all new
+  individuals, seed and sucker; a sucker's parent is a ramet of its genet (a mature one if any).
+  Without suckers this is the old calculation exactly.
+- **Census.** Adds `N_genets`, `N_rootstock_only` and `births_sucker`, reported alongside
+  `N_IUCN` (ramets), not assessed.
+Two refinements, found in smoke runs before any species used the code:
+- *Suckers saturate with the recruitment curve.* The design limited suckers by canopy
+  shading only. With M. nodosa's shading (never full suppression) a mixed seed + sucker run grew
+  from 1,500 to ~260,000 stems in 250 years. Suckers are now also multiplied by the recruitment
+  curve's per-capita saturation at the current canopy (`sucker_density_factor()`: Beverton-Holt
+  K_half / (K_half + N); Ricker exp(−r N / K)). This reuses the species' own K, adds no
+  parameter, and makes seed and suckers compete for the same space. The same run then settles
+  near 21,000 stems.
+- *Only established genets keep a bare rootstock.* A genet keeps a rootstock with no living ramet
+  only once it has had a mature ramet (founders count). Otherwise every seedling that died young
+  left a persisting rootstock (~12,000 in the same run).
+[assumption] Pollination between ramets of one genet counts as outcrossing in `sample_parents()`
+(within-genet selfing is not distinguished). [open] Stem age stands in for stem size (fire kill,
+maturity); U. australis quadrat data are by height class. Smoke runs (illustrative values, not
+priors): a clonal-only run (150 genets) holds ~1,000 mature stems for 250 years and declines
+under rust; T_g ≈ 23 yr from sucker parents. Tests: `tests/testthat/test-clonal.R`.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -987,6 +1026,7 @@ What it needs before it can run (not built; rule 7):
 | Nov 2026 | C4 | Current SDM kept; rust uniform along the coast; random-background gradient shown to follow survey effort |
 | Nov 2026 | D3 | Fire-only resprout window fixed at 2 years (was Poisson, mean 3), set before the Phase 2 fit |
 | 2026-11-20 | T16 | *Uromyrtus australis* added to the species set; needs the clonal stage before it runs |
+| 2026-11-21 | T17 | Clonal stage: ramets in genets, root suckering, rootstock survival; optional, off for M. nodosa |
 | Nov 2026 | V6 | Phase 2: fit level and between-plot spread of post-fire mortality at seven Pegg plots, by interval |
 | 2026-11-19 | T1 | Six fixed-seed regression scenarios from `params.R` at test scale (density parameters x 0.03); references store their params |
 | 2026-11-19 | T2 | Second check: mature mortality, Pegg fraction dead and rust mortality over 20 seeds, tolerance 4 sd of the difference |

@@ -1,5 +1,5 @@
 source("params.R")
-for (f in c("individuals","genetics","mortality","fire","recruitment","census","simulate"))
+for (f in c("individuals","genetics","mortality","fire","recruitment", "clonal", "census","simulate"))
   source(file.path("R", paste0(f, ".R")))
 source("runner/params_utils.R")
 source("runner/pegg_validation.R")

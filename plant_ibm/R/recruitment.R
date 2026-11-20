@@ -158,6 +158,10 @@ recruit <- function(pop, resist_gt, t, params, annual_env_t = 0, next_id = NULL)
                                               parents$father_idx, pop, params,
                                               start_id = next_id)
   new_rows$resist_score <- rec_score
+  if (!is.null(pop$genet_id)) {            # clonal mode: each seedling starts a genet
+    new_rows$genet_id <- new_rows$id
+    new_rows$origin   <- "seed"
+  }
 
   pop       <- append_rows(pop, new_rows)
   resist_gt <- rbind(resist_gt, rec_gt)
