@@ -44,7 +44,7 @@ plant_ibm/
   diagnostics/        plausibility plots; source params.R directly
   talk/               figures for talks
   tests/              testthat suite (section 9)
-../runscripts/        driver scripts (*.run.code) for the workstation
+../runscripts/        hand-run driver scripts (*.run.code)
 ../docs/methodological_notes.md   assumptions and decisions (IDs A1..V6 used below)
 ```
 
@@ -492,7 +492,8 @@ Results are summarised as category shares overall and by region (NSW / Qld).
 - `archive/main.R` (archived 2026-11-19): the old two-phase example (calibrate, then run rust and
   counterfactual from `init_state`).
 
-`../runscripts/*.run.code` are hand-run driver scripts for the workstation.
+`../runscripts/*.run.code` are hand-run driver scripts. Most run in minutes to an hour on an
+ordinary multi-core machine; benchmark before assuming a job needs a bigger one.
 They call `/opt/R/4.3.1/bin/Rscript`.
 
 ---

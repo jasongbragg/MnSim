@@ -40,7 +40,7 @@ suppressPackageStartupMessages({
 # ============================================================================
 # Configuration
 # ============================================================================
-RESULTS_DIR <- "results/talk_v2/"   # v2: Pegg at the anchor cell; wider max_effect range
+RESULTS_DIR <- "results/talk_v3/"   # v3: NSW fire tables rebuilt (notes T14); v2: Pegg at the anchor cell
 FIG_DIR     <- "talk/figures/"
 N_CORES     <- max(1L, parallel::detectCores() - 1L)
 N_PEGG      <- 100L     # Pegg-scenario runs

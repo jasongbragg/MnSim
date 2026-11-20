@@ -872,7 +872,8 @@ The code is fixed: the pieces are matched back by position, and a cell with no l
   rejects the automated Qld record: Qld/NSW rate ratio 4.96 → 4.66 (95% CI 3.25–6.88), against
   0.96 → 0.90 for the edited 2014–2024 record.
 
-What must be rerun on the workstation, because their fire inputs changed:
+What must be rerun, because their fire inputs changed (each takes minutes to under an hour on an
+8-core machine):
 - range-wide ensembles and talk figures;
 - the Pegg-site fit (V6);
 - the Pegg anchor-cell runs behind V4. The Pegg scenario sets the 2020 fire itself, but the
@@ -882,6 +883,27 @@ No parameter was refitted here (CLAUDE.md rule 4). If V4's `max_effect` range ne
 goes through the calibration code. The single-site regression references use `params.R` defaults,
 not the site table, so they are unaffected. D1's earlier cross-check against the previous `02`
 reported 255/256 cells matching; why it did not catch this has not been traced.
+
+**Reruns with the rebuilt tables (2026-11-20, commit 105e31f; results in `plant_ibm/results/`, not
+tracked).** All three ran on one 8-core machine in about 70 minutes in total.
+- *Range-wide ensemble* (`talk/make_talk_figures.R`, `results/talk_v3/`; 300 runs, 128 cells):
+  median decline 47.9% (IQR 45.5–54.9%; 90% 37.5–78.5%). Categories: LC/NT 1%, VU 66%, EN 29%,
+  CR 4%; NSW VU 67% / EN 28% / CR 5%, Qld (25 runs) VU 56% / EN 40% / CR 0%. Median T_g 23.7 yr,
+  window 71 yr. Close to the earlier stand-mode result (60 runs: median 48.3%, VU 60% / EN 35% /
+  CR 5%). The median still sits near the 50% EN threshold, so shares stay sensitive to small shifts.
+- *Pegg scenario at the anchor cell* (100 runs, max_effect drawn from the B3 range): median 51.9%
+  of resprouters dead by Jan 2022 (90% 36.3–65.7%), against 48% observed (24/50).
+- *V4 sweep* (`max_effect` 0.2–0.9, 40 seeds each, Yarringully cell): the median reaches 48% at
+  max_effect ≈ 0.49, against 0.53 before; medians inside the observation's 95% interval
+  (0.35–0.62) for 0.35–0.70, against 0.32–0.78 before. The level moved little; the range narrowed
+  slightly. Nothing is changed here (rule 4): `max_effect` = 0.53 and the B3 range
+  U(0.32, 0.78) stay until the calibration code refits them.
+- *V6 full grid* (`results/pegg_sites_t14/`; 12 grid points × 5 cells × 60 seeds): best
+  log-likelihood −31.0 at site_sd 4, max_effect 1.0, then sd 4 / 1.2 (−31.6) and sd 3 / 1.0
+  (−31.9). Year-to-year variation alone fits worse. The optimum is again at the edge of the
+  site_sd range, so the V6 reading stands (a large persistent site effect), and the grid needs to
+  go wider. At the best set the model still predicts every plot in a broad band (each plot's
+  90% range 0–62% or 4–92% dead) with a 1–6% chance of a zero-death plot.
 
 **T15. Species fire exposure and fire-change scenarios** [decided, 2026-11-20]
 Design note `docs/design_fire_exposure_and_change.md`, approved with its recommendations. It is
@@ -915,6 +937,34 @@ is not estimated from data. They are reported as the change in the category dist
 the paired baseline. The fire *response* of the rainforest species (kill, resprouting) is species
 biology and needs Phase 4 priors. Tests: `tests/testthat/test-fire-change.R`.
 
+**T16. *Uromyrtus australis* added** [decided, 2026-11-20]
+Added at the user's request: 37 rows in `data/rust_species_params.csv`. Sources: NSW TSSC
+conservation assessment (Saunders 2025) and final determination (8 May 2026, Critically
+Endangered, B1ab(iii,v)); EPBC Conservation Advice (2021); Pegg et al. (2025) Austral Ecol;
+Pegg et al. (2017) CRC2063 Table 13; Makinson (2018). Much of the recent monitoring is
+R. Kooyman *in litt.* (2024–25), as cited by the committee. The primary reports (Kooyman 2005 MSc
+thesis; Kooyman 2021 and 2024 SoS reports; DPE/DCCEEW SoS report cards 2021–23) were not found
+online.
+Why it fits this project:
+- *Fire × rust.* It is the clearest case of the interaction. Its refugial rainforest
+  rarely burns, but 2019–20 burnt ~30% of the range and 29% of monitored genets. Stem kill by
+  size class is measured in three quadrats. Rust then infected 55–85% of reshoots, and no
+  significant fruiting has occurred since 2018. This is the case `fire_exposure` and the
+  fire-change scenario (T15) were built for.
+- *Criterion A is open.* The committee found Criterion A Data Deficient because generation length
+  is unknown, so a model-based A4 assessment would fill a stated gap.
+What it needs before it can run (not built; rule 7):
+- *Clonal stage.* Reproduction is by root suckers only: no wild seedling seen in >40 yr, and seed
+  viability is ~20 weeks. The mature individual is the ramet (IUCN), but genets carry
+  persistence. The current IBM recruits from seed, so the Phase 3 clonal-stage design note must
+  cover genet → ramet structure.
+- *Generation length.* Stems live >1,500 yr and age at first suckering is unknown, so T_g from the
+  run's age structure needs a clonal definition. Any 3-generation window will hit the 100-yr cap.
+- *Rust timing.* Rust was first seen on the species in 2018–19, eight years after it reached NSW.
+  The rust start year is a species setting, not 2010.
+- *Spatial.* EOO is 89 km²; the range (~13 × 11 km) covers a few master-grid cells, so range-wide
+  draws reduce to one or two cells' fire and rust.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -936,6 +986,7 @@ biology and needs Phase 4 priors. Tests: `tests/testthat/test-fire-change.R`.
 | Nov 2026 | B4, C2 | SDM averaged over each cell's land, not read at the centre: fills the 16 coastal cells |
 | Nov 2026 | C4 | Current SDM kept; rust uniform along the coast; random-background gradient shown to follow survey effort |
 | Nov 2026 | D3 | Fire-only resprout window fixed at 2 years (was Poisson, mean 3), set before the Phase 2 fit |
+| 2026-11-20 | T16 | *Uromyrtus australis* added to the species set; needs the clonal stage before it runs |
 | Nov 2026 | V6 | Phase 2: fit level and between-plot spread of post-fire mortality at seven Pegg plots, by interval |
 | 2026-11-19 | T1 | Six fixed-seed regression scenarios from `params.R` at test scale (density parameters x 0.03); references store their params |
 | 2026-11-19 | T2 | Second check: mature mortality, Pegg fraction dead and rust mortality over 20 seeds, tolerance 4 sd of the difference |

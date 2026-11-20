@@ -4,7 +4,9 @@
 
 Species order: *R. rubescens* first (best calibration data), then *R. psidioides*, then
 *A. beckleri* and *D. humile*. *B. leptopetala* is optional, as a low-impact contrast species with
-parameters set rather than fitted.
+parameters set rather than fitted. *U. australis* (added 2026-11-20, notes T16) is a clonal
+rainforest species with no seedling recruitment and strong fire × rust data; it needs the clonal
+stage (Phase 3) before it can run.
 
 ---
 
@@ -109,7 +111,7 @@ where each parameter is used.
     `spatial/data/m_nodosa/`. `QLD_BBOX` now derived from the species grids (notes T10). Cell ids:
     one Australia-wide master grid, fire tables shared over all species' cells, prior per species
     (2026-11-20, notes T13). NSW fire tables misassigned and rebuilt (notes T14); range-wide,
-    Pegg-site and V4 runs to redo on the workstation.
+    Pegg-site and V4 runs redone.
 - [x] [agent] Make swappable interfaces for: fire response, rust pressure, reproduction/recruitment.
   - Fire already has three modes (legacy, plant, stand).
   - Response curves are pluggable through `dose_response`.
@@ -147,9 +149,10 @@ likelihood over simulated sites). Decide whether that stays the M. nodosa route 
 - [ ] [agent] Write `scripts/targets.R`: turns each species' targets into summary statistics with tolerances
   - *R. rubescens:* 12% dead at ~3.5 yr after arrival (n=669, 43 sites) and the spread across sites; Table 10 paired resurveys 2014→2016; Olney stand 53% dead in <4 yr; mean crown transparency ~0.76
   - *R. psidioides:* 57% dead at ~3.5 yr (n=297, 18 sites) and the spread across sites; by 2018, 23% of populations extinct and 61% reduced to suckers
+  - *U. australis:* post-fire stem mortality by size class (Nightcap and Mt Jerusalem quadrats, 2019–20); reshoot infection 55% (n=39) and 85%; genet impact classes 2020–21 and 2024; no fruiting since 2018
   - *A. beckleri / D. humile:* Ryans Road 2016→2017 (13→44%, 36→73%); NSW populations with little mortality (Manea et al. 2019)
 - [ ] [agent] Rejection ABC with the `abc` package; draw from the priors; distance on the summary statistics
-- [ ] [agent] Benchmark: runs per hour on the laptop → estimate the cost of a full ABC; if it is more than about an overnight run, write it as a script for rcn01
+- [ ] [agent] Benchmark: runs per hour on the laptop → estimate the cost of a full ABC; if it is more than about an overnight run, write it as a script to run on a larger machine
 - [ ] [you] Check the posterior predictive plots: does the fitted model reproduce the between-site variance as well as the mean?
 - [ ] Decide whether rejection ABC is enough or whether ABC-SMC is needed
 
@@ -177,4 +180,7 @@ likelihood over simulated sites). Decide whether that stays the M. nodosa route 
 - *R. rubescens*: 3 generations at 40 yr = 120 yr, above the IUCN 100-yr cap
 - *D. humile* 2016 mortality: 36% (Pegg et al. 2017 PLoS ONE) vs 53.85% (PBCRC report Table 12)
 - *D. humile*: the NE Qld form is rated relatively tolerant; confirm which form is being modelled
+- *U. australis*: generation length unknown (committee: Criterion A Data Deficient); stems live >1,500 yr and reproduction is clonal only, so a generation is hard to define. The model's T_g needs a clonal definition, and 3 generations will exceed the 100-yr cap
+- *U. australis*: most current numbers are R. Kooyman *in litt.* as cited by the NSW TSSC (2025); the SoS report cards and Kooyman 2021/2024 reports are not public. Request them
+- *U. australis*: 2024 count of 3,286 ramets is from monitoring plots, not a census, so it cannot be set against the ~10,000 pre-2018 estimate as a decline
 - Manea et al. 2019: a single October survey in drought with no active infection; treat as weak evidence

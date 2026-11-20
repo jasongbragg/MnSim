@@ -7,7 +7,7 @@ MnSim is an individual-based model (IBM), written in R, of a Myrtaceae populatio
 (*Austropuccinia psidii*), fire and demographic processes. It is used for IUCN Criterion A
 assessments. It was built for *Melaleuca nodosa*. This branch generalises it to other
 rust-affected species: *Rhodamnia rubescens*, *Rhodomyrtus psidioides*, *Archirhodomyrtus beckleri*,
-*Decaspermum humile* and *Backhousia leptopetala*.
+*Decaspermum humile*, *Backhousia leptopetala* and *Uromyrtus australis*.
 
 The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and tick items off as they are done.
 
@@ -55,8 +55,8 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
 - R, base pipe `|>`; data.table where the existing code already uses it; match the existing style.
 - Fixed seeds in all tests (`set.seed()` at the start of each test).
 - Keep test runs small (population ≤ 500, ≤ 20 replicates) so the suite runs in a few minutes on a laptop.
-- Large ensembles are not run on the laptop. Write them as scripts with a `--reps` argument,
-  to be run on the workstation (rcn01).
+- Write ensembles as scripts with a `--reps` argument (and a cores setting), so they run on whatever
+  machine is available. Benchmark a few runs before assuming a job is too big to run locally.
 
 ## IUCN framing (do not change without asking)
 - M. nodosa uses Criterion A4 with one fixed window per run, and window length taken from the
