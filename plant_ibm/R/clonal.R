@@ -201,6 +201,7 @@ clonal_sucker <- function(pop, resist_gt, genets, t, params, next_id) {
     resist_score        = resist_score_from_gt(gt, params),
     genet_id            = g$genet_id[gr],
     origin              = "sucker")
+  if (!is.null(pop$rust_damage)) new$rust_damage <- 0        # damage mode (notes T19)
   list(pop = append_rows(pop, new), resist_gt = rbind(resist_gt, gt), n_suckers = S)
 }
 

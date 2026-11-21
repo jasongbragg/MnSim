@@ -161,6 +161,25 @@ params:
       half_sat:   {layer: species, type: double, min: 0}
       hill:       {layer: species, type: double, min: 0}
 
+  # Accumulating rust damage (docs/design_accumulating_damage.md; notes T19).
+  # instant (default): the memoryless rust hazard only. damage: each plant also
+  # carries crown damage D, gained each year from the disease triangle and
+  # recovered at damage_recovery, with a death risk rising with D.
+  rust_hazard_mode: {layer: species, type: character, choices: [instant, damage], optional: true, default: instant}
+  damage_gain_dose_response:
+    max_effect: {layer: species, type: double, min: 0, max: 1, optional: true, required_when: {rust_hazard_mode: damage}}
+    form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold], optional: true, required_when: {rust_hazard_mode: damage}}
+    half_sat:   {layer: species, type: double, min: 0, optional: true, required_when: {rust_hazard_mode: damage}}
+    hill:       {layer: species, type: double, min: 0, optional: true, required_when: {rust_hazard_mode: damage}}
+  damage_recovery: {layer: species, type: double, min: 0, max: 1, optional: true, required_when: {rust_hazard_mode: damage}}
+  damage_mortality_dose_response:
+    max_effect: {layer: species, type: double, min: 0, max: 1, optional: true, required_when: {rust_hazard_mode: damage}}
+    form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold], optional: true, required_when: {rust_hazard_mode: damage}}
+    half_sat:   {layer: species, type: double, min: 0, optional: true, required_when: {rust_hazard_mode: damage}}
+    hill:       {layer: species, type: double, min: 0, optional: true, required_when: {rust_hazard_mode: damage}}
+  # Fire top-kill resets a resprouting plant's damage to 0 (reset), or keeps it.
+  damage_fire_reset: {layer: species, type: character, choices: [reset, keep], optional: true, default: reset}
+
   rust_flower_dose_response:
     max_effect: {layer: species, type: double, min: 0, max: 1}
     form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}

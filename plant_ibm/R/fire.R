@@ -187,6 +187,10 @@ apply_fire <- function(pop, params, t) {
     pop$flowering[surv_idx]           <- FALSE
     pop$resprout_yrs_remain[surv_idx] <- delay
     pop$resprout_total_yrs[surv_idx]  <- delay
+    # Damage mode (notes T19): a top-killed plant regrows a new, undamaged
+    # canopy, unless the species keeps damage through fire.
+    if (!is.null(pop$rust_damage) && !identical(params$damage_fire_reset, "keep"))
+      pop$rust_damage[surv_idx] <- 0
   }
 
   pop

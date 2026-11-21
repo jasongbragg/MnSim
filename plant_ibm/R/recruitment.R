@@ -162,6 +162,7 @@ recruit <- function(pop, resist_gt, t, params, annual_env_t = 0, next_id = NULL)
     new_rows$genet_id <- new_rows$id
     new_rows$origin   <- "seed"
   }
+  if (!is.null(pop$rust_damage)) new_rows$rust_damage <- 0   # damage mode (notes T19)
 
   pop       <- append_rows(pop, new_rows)
   resist_gt <- rbind(resist_gt, rec_gt)

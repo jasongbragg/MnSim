@@ -85,6 +85,7 @@ rust_resprout_delay <- function(pop, idx, params, t) {
   if (length(idx) == 0L || t < params$rust_start_year) return(numeric(length(idx)))
   mu  <- params$annual_env_alpha / (params$annual_env_alpha + params$annual_env_beta)
   if (!is.null(params$rust_ramp_years)) mu <- mu * rust_ramp_factor(params, t)   # notes T18
+  if (!is.null(params$rust_protection)) mu <- mu * (1 - rust_protected_share(params, t))   # notes T20
   eff <- (1 - pop$resist_score[idx]) * pop$env_susceptibility[idx] * mu
   dose_response(params$rust_pressure * eff, params$rust_dose_response$delay)
 }
@@ -159,6 +160,35 @@ senescence_hazard <- function(age, params) {
 #' draw per year, shared by all individuals, passed in from simulate.R).
 #' Default 0 → no rust effect (used by tests that call nominate_deaths()
 #' directly without simulating an annual loop).
+# ---- Accumulating rust damage (docs/design_accumulating_damage.md; notes T19)
+# Optional: rust_hazard_mode "damage". Each living plant carries rust_damage D
+# in [0, 1], the share of its crown lost to rust. Each year, before mortality:
+#   D <- D * (1 - damage_recovery)
+#   D <- D + (1 - D) * gain,  gain = dose_response(rust_pressure * eff_susc,
+#                                                  damage_gain_dose_response)
+# with eff_susc the disease triangle of the rust hazard. Deterministic: no
+# random numbers. D adds a death risk dose_response(D, damage_mortality_dose_response)
+# to the union in nominate_deaths(). Off (instant, the default) nothing here
+# runs and pop has no rust_damage column.
+RUST_HAZARD_MODES <- c("instant", "damage")
+is_damage_mode <- function(params) identical(params$rust_hazard_mode, "damage")
+
+update_rust_damage <- function(pop, t, params, annual_env_t) {
+  a <- which(pop$alive)
+  if (!length(a)) return(pop)
+  D <- pop$rust_damage[a] * (1 - params$damage_recovery)
+  if (t >= params$rust_start_year && annual_env_t > 0) {
+    eff  <- (1 - pop$resist_score[a]) * pop$env_susceptibility[a] * annual_env_t
+    gain <- pmin(1, dose_response(params$rust_pressure * eff, params$damage_gain_dose_response))
+    D    <- D + (1 - D) * gain
+  }
+  pop$rust_damage[a] <- pmin(1, pmax(0, D))
+  pop
+}
+
+rust_damage_hazard <- function(D, params)
+  pmin(1, dose_response(D, params$damage_mortality_dose_response))
+
 nominate_deaths <- function(pop, t, params, annual_env_t = 0) {
   alive_idx <- which(pop$alive)
   n_alive   <- length(alive_idx)
@@ -217,6 +247,8 @@ nominate_deaths <- function(pop, t, params, annual_env_t = 0) {
 
   # --- Probability union ---------------------------------------------------
   p_death <- 1 - (1 - p_age) * (1 - p_sen) * (1 - p_jd) * (1 - p_rust)
+  if (is_damage_mode(params))                       # notes T19
+    p_death <- 1 - (1 - p_death) * (1 - rust_damage_hazard(pop$rust_damage[alive_idx], params))
   p_death <- pmin(p_death, 1)   # defensive -- union formula should not need this
 
   dead_draw <- rbinom(n_alive, 1, p_death) == 1

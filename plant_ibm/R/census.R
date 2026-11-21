@@ -42,7 +42,20 @@ census_year <- function(pop, resist_gt, t, n_rec, n_dead, params,
     extinct           = N_alive == 0
   )
 
-  cbind(row, as.data.frame(t(freqs)))
+  row <- cbind(row, as.data.frame(t(freqs)))
+  if (is_damage_mode(params)) row <- cbind(row, damage_census(pop))
+  row
+}
+
+# Damage mode (notes T19): mean rust damage of living mature plants, and the
+# share of them with damage >= DAMAGE_REPORT_THRESHOLD (a reporting setting,
+# not biology), for matching crown transparency and dieback.
+DAMAGE_REPORT_THRESHOLD <- 0.6
+damage_census <- function(pop) {
+  m <- pop$alive & pop$age >= pop$age_first_flower
+  D <- pop$rust_damage[m]
+  data.frame(mean_damage   = if (length(D)) mean(D) else NA_real_,
+             share_damaged = if (length(D)) mean(D >= DAMAGE_REPORT_THRESHOLD) else NA_real_)
 }
 
 #' Simple IUCN Criterion A style percent-decline calculator on the
