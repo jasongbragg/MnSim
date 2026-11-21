@@ -43,12 +43,22 @@ recruitment_curve <- function(params) {
 #' Sample n_rec mother/father ROW INDEX pairs from the flowering pool.
 #' Indexes flower_idx explicitly (sample.int), so a pool of one plant is not
 #' misread as sample(1:k); otherwise identical draws to sample(flower_idx, ...).
-sample_parents <- function(pop, n_rec, params) {
+#' mother_w: optional fruit-success weight per flowering plant (in the order of
+#' which(alive & flowering)); mothers are then drawn in proportion to it, while
+#' fathers are not (design_fruit_infection.md 4.2; notes T21). NULL draws
+#' exactly as before.
+sample_parents <- function(pop, n_rec, params, mother_w = NULL) {
   flower_idx <- which(pop$alive & pop$flowering)
   n_flower   <- length(flower_idx)
   if (n_flower == 0) return(NULL)
 
-  mother_idx <- flower_idx[sample.int(n_flower, n_rec, replace = TRUE)]
+  mother_idx <- if (is.null(mother_w)) {
+    flower_idx[sample.int(n_flower, n_rec, replace = TRUE)]
+  } else {
+    if (length(mother_w) != n_flower) stop("mother_w needs one weight per flowering plant")
+    if (!any(mother_w > 0)) return(NULL)
+    flower_idx[sample.int(n_flower, n_rec, replace = TRUE, prob = mother_w)]
+  }
 
   if (n_flower == 1) {
     return(list(mother_idx = mother_idx, father_idx = mother_idx))
@@ -96,29 +106,33 @@ shade_suppression <- function(N_canopy, params) {
   pmin(dose_response(N_canopy, params$shade_dose_response), 1)
 }
 
+# Fruit success of the flowering plants in year t (design_fruit_infection.md
+# 4.1; notes T21): 1 - dose_response(rust_pressure x eff_susc,
+# rust_recruit_dose_response), with eff_susc = (1 - resist) x microsite x the
+# year's pressure. NULL when the hook is off or rust is not active (every
+# flowering plant then counts 1). Uses no random numbers.
+fruit_success <- function(pop, t, params, annual_env_t = 0) {
+  if (!(params$rust_recruit_dose_response$max_effect > 0 &&
+        t >= params$rust_start_year && annual_env_t > 0)) return(NULL)
+  idx <- which(pop$alive & pop$flowering)
+  eff <- params$rust_pressure * (1 - pop$resist_score[idx]) * pop$env_susceptibility[idx] * annual_env_t
+  1 - pmin(dose_response(eff, params$rust_recruit_dose_response), 1)
+}
+
+# Rust's reproductive hooks (flowering suppression, fruit success) switched on?
+rust_repro_on <- function(params) {
+  params$rust_flower_dose_response$max_effect > 0 || params$rust_recruit_dose_response$max_effect > 0
+}
+
 #' Expected number of recruits in year t: the recruitment curve applied to the
-#' effective number of flowering plants (rust-suppressed fecundity), times
-#' (1 - shade suppression). Uses no random numbers. Later fecundity rules
-#' (e.g. fruit infection) belong here.
-expected_recruits <- function(pop, t, params, annual_env_t = 0) {
-  flower_mask <- pop$alive & pop$flowering
-  N_canopy    <- canopy_density(pop)
-
-  # Rust-suppressed fecundity: each flowering adult's contribution to the
-  # recruit pool is weighted by (1 - suppression), where suppression is
-  # driven by that adult's own effective_susceptibility. Off by default.
-  if (params$rust_recruit_dose_response$max_effect > 0 &&
-      t >= params$rust_start_year && annual_env_t > 0) {
-    flower_idx <- which(flower_mask)
-    eff_susc   <- (1 - pop$resist_score[flower_idx]) *
-                   pop$env_susceptibility[flower_idx] * annual_env_t
-    weights    <- 1 - vapply(eff_susc, dose_response,
-                              numeric(1), cfg = params$rust_recruit_dose_response)
-    n_flowering_eff <- sum(weights)
-  } else {
-    n_flowering_eff <- sum(flower_mask)
-  }
-
+#' effective number of flowering plants (each weighted by its fruit success,
+#' fruit_success()), times (1 - shade suppression). Uses no random numbers.
+#' fruit_w: precomputed fruit_success() (recruit() passes it so the weights
+#' are computed once); missing = compute here.
+expected_recruits <- function(pop, t, params, annual_env_t = 0,
+                              fruit_w = fruit_success(pop, t, params, annual_env_t)) {
+  N_canopy <- canopy_density(pop)
+  n_flowering_eff <- if (is.null(fruit_w)) sum(pop$alive & pop$flowering) else sum(fruit_w)
   recruitment_curve(params)(n_flowering_eff, params) *
     (1 - shade_suppression(N_canopy, params))
 }
@@ -128,27 +142,29 @@ expected_recruits <- function(pop, t, params, annual_env_t = 0) {
 #' simulate.R's annual draw). Default 0 → no rust effect on fecundity
 #' (used by tests that call recruit() directly).
 #'
-#' The expected count comes from expected_recruits(): rust suppresses
-#' per-parent fecundity via rust_recruit_dose_response applied to each
-#' adult's effective susceptibility; the "effective" flowering count fed to
-#' the recruitment curve is the sum of each adult's (1 - suppression) weight,
+#' The expected count comes from expected_recruits(): rust lowers each
+#' flowering plant's fruit success (fruit_success()); the "effective"
+#' flowering count fed to the recruitment curve is the sum of those weights,
 #' so a fully resistant adult contributes 1.0 regardless of annual_env_t.
+#' Mothers are drawn in proportion to fruit success; fathers are not.
 #'
 #' next_id: id for the first recruit (run_simulation keeps a running
 #' counter because dead rows may have been archived); NULL = max(pop$id) + 1.
 #' Returns list(pop, resist_gt, n_rec).
 recruit <- function(pop, resist_gt, t, params, annual_env_t = 0, next_id = NULL) {
   n_flowering  <- sum(pop$alive & pop$flowering)
-  expected_rec <- expected_recruits(pop, t, params, annual_env_t)
+  fruit_w      <- fruit_success(pop, t, params, annual_env_t)
+  fs           <- if (is.null(fruit_w) || !length(fruit_w)) NA_real_ else mean(fruit_w)
+  expected_rec <- expected_recruits(pop, t, params, annual_env_t, fruit_w = fruit_w)
   n_rec <- rpois(1, expected_rec)
 
   if (n_rec == 0 || n_flowering == 0) {
-    return(list(pop = pop, resist_gt = resist_gt, n_rec = 0L))
+    return(list(pop = pop, resist_gt = resist_gt, n_rec = 0L, fruit_success = fs))
   }
 
-  parents <- sample_parents(pop, n_rec, params)
+  parents <- sample_parents(pop, n_rec, params, mother_w = fruit_w)
   if (is.null(parents)) {
-    return(list(pop = pop, resist_gt = resist_gt, n_rec = 0L))
+    return(list(pop = pop, resist_gt = resist_gt, n_rec = 0L, fruit_success = fs))
   }
 
   rec_gt    <- inherit_alleles(resist_gt, parents$mother_idx, parents$father_idx)
@@ -167,5 +183,5 @@ recruit <- function(pop, resist_gt, t, params, annual_env_t = 0, next_id = NULL)
   pop       <- append_rows(pop, new_rows)
   resist_gt <- rbind(resist_gt, rec_gt)
 
-  list(pop = pop, resist_gt = resist_gt, n_rec = n_rec)
+  list(pop = pop, resist_gt = resist_gt, n_rec = n_rec, fruit_success = fs)
 }

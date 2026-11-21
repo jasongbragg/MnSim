@@ -58,6 +58,16 @@ damage_census <- function(pop) {
              share_damaged = if (length(D)) mean(D >= DAMAGE_REPORT_THRESHOLD) else NA_real_)
 }
 
+# Rust's reproductive hooks on (notes T21): the share of eligible plants rust
+# kept from flowering this year (counted at flowering, before mortality), and
+# the mean fruit success of flowering plants (NA when no plant flowered or the
+# fruit hook is off). Reported only; the mature count is unchanged (notes A4).
+repro_census <- function(flower_stats, fruit_success) {
+  data.frame(share_flowering_suppressed =
+               if (flower_stats[["eligible"]] > 0) flower_stats[["suppressed"]] / flower_stats[["eligible"]] else NA_real_,
+             fruit_success = if (is.null(fruit_success)) NA_real_ else fruit_success)
+}
+
 #' Simple IUCN Criterion A style percent-decline calculator on the
 #' mature-individual count (N_IUCN), between any two years present in a census
 #' data frame (e.g. a fixed window, or 3-generation length).

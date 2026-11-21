@@ -91,28 +91,48 @@ rust_ramp_factor <- function(params, t) {
 }
 
 # Flowering status for the year, after fire: alive, not resprouting and old
-# enough, unless rust suppresses it. Rust suppression is a per-year
-# Bernoulli on eligible plants, driven by each plant's effective
-# susceptibility and the year's annual_env_t; off by default (max_effect = 0).
-# The place for later flowering rules (notes T12).
-# NOTE: This is a per-year draw, so a plant can recover flowering in a
-# favourable year (low annual_env_t). Revisit if data suggest flowering
-# suppression should be more persistent once infection is established --
-# e.g. if heavily infected plants fail to set buds for multiple
-# consecutive seasons regardless of annual conditions.
+# enough, unless rust suppresses it (a per-year Bernoulli on eligible plants;
+# off by default, max_effect = 0). The driver (rust_flower_driver; notes T21,
+# design_fruit_infection.md 4.1, 4.3):
+#   pressure  (default) P(suppressed) = dose_response(rust_pressure x eff_susc,
+#             rust_flower_dose_response), eff_susc = (1 - resist) x microsite
+#             x the year's pressure. Redrawn each year: a plant can flower
+#             again in a light rust year.
+#   damage    P(suppressed) = dose_response(D, rust_flower_dose_response),
+#             with D the plant's crown damage at the end of last year (buds
+#             are set on last season's crown). Suppression persists while the
+#             crown stays damaged, whatever this year's pressure. Needs
+#             rust_hazard_mode: damage.
+# Plants kept from flowering still count as mature (notes A4).
 update_flowering <- function(pop, t, params, annual_env_t) {
   eligible <- pop$alive & !pop$resprout & pop$age >= pop$age_first_flower
-  if (params$rust_flower_dose_response$max_effect > 0 &&
-      t >= params$rust_start_year && annual_env_t > 0) {
-    eff_susc    <- (1 - pop$resist_score) * pop$env_susceptibility * annual_env_t
-    p_suppress  <- vapply(eff_susc, dose_response,
-                           numeric(1), cfg = params$rust_flower_dose_response)
-    not_suppressed <- rbinom(length(eff_susc), 1L, 1 - p_suppress) == 1L
-    pop$flowering <- eligible & not_suppressed
-  } else {
+  cfg      <- params$rust_flower_dose_response
+  driver   <- rust_flower_driver(params)
+  p_suppress <- NULL
+  if (cfg$max_effect > 0 && t >= params$rust_start_year) {
+    if (driver == "damage") {
+      if (is.null(pop$rust_damage)) stop("rust_flower_driver 'damage' needs rust_hazard_mode: damage")
+      p_suppress <- dose_response(pop$rust_damage, cfg)
+    } else if (annual_env_t > 0) {
+      eff_susc   <- params$rust_pressure * (1 - pop$resist_score) * pop$env_susceptibility * annual_env_t
+      p_suppress <- dose_response(eff_susc, cfg)
+    }
+  }
+  if (is.null(p_suppress)) {
     pop$flowering <- eligible
+  } else {
+    not_suppressed <- rbinom(length(p_suppress), 1L, 1 - pmin(p_suppress, 1)) == 1L
+    pop$flowering  <- eligible & not_suppressed
   }
   pop
+}
+
+RUST_FLOWER_DRIVERS <- c("pressure", "damage")
+rust_flower_driver <- function(params) {
+  d <- if (is.null(params$rust_flower_driver)) "pressure" else params$rust_flower_driver
+  if (!d %in% RUST_FLOWER_DRIVERS) stop("Unknown rust_flower_driver '", d, "'; one of: ",
+                                        paste(RUST_FLOWER_DRIVERS, collapse = ", "))
+  d
 }
 
 # Clonal mode (docs/design_clonal_stage.md; notes T17). Off unless the species
@@ -145,6 +165,7 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
   # (also for a state saved by a run without it).
   damage <- is_damage_mode(params)
   if (damage && is.null(pop$rust_damage)) pop$rust_damage <- 0
+  repro  <- rust_repro_on(params)   # rust reproductive hooks on: census columns (notes T21)
   # States saved before death_cause existed: add it (causes unknown).
   if (is.null(pop$death_cause)) pop$death_cause <- NA_character_
 
@@ -211,6 +232,10 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
 
     # 4. update flowering status, post-fire (rust may suppress it)
     pop <- update_flowering(pop, t, params, annual_env_t)
+    if (repro) {   # for the census: eligible plants rust kept from flowering
+      elig <- pop$alive & !pop$resprout & pop$age >= pop$age_first_flower
+      flower_stats <- c(eligible = sum(elig), suppressed = sum(elig & !pop$flowering))
+    }
 
     # 4b. damage mode: this year's rust damage, before mortality (notes T19)
     if (damage) pop <- update_rust_damage(pop, t, params, annual_env_t)
@@ -253,6 +278,8 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
                                      fire_this_year = fire_reached,
                                      fire_in_cell   = fire_this_year,
                                      n_dead_fire    = n_dead_fire)
+    if (repro) census_list[[i]] <- cbind(census_list[[i]],
+                                         repro_census(flower_stats, rec$fruit_success))
     if (clonal) {
       census_list[[i]] <- cbind(census_list[[i]], clonal_census(pop, genets, n_suckers))
       killed <- which(c(alive_start, logical(nrow(pop) - length(alive_start))) & !pop$alive)

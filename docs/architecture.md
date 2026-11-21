@@ -263,7 +263,7 @@ resprouts, but it does not count as canopy (see 4.3).
 ### 4.3 Recruitment (`R/recruitment.R`)
 
 ```
-n_flowering_eff = Σ over flowering plants of (1 - rust fecundity suppression)   [suppression off by default]
+n_flowering_eff = Σ over flowering plants of fruit success                      [fruit_success(); 1 when off]
 expected        = curve(n_flowering_eff) × (1 - shade_suppression(N_canopy))    [expected_recruits()]
 n_rec           ~ Poisson(expected)                                               [recruit()]
 ```
@@ -278,8 +278,12 @@ n_rec           ~ Poisson(expected)                                             
   by how far through recovery they are (`1 - remain/total`).
 - `shade_suppression()` (`:78`) is `dose_response(N_canopy,
   shade_dose_response)`, capped at 1.
-- Parents (`sample_parents`, `:29`) are drawn with replacement from flowering
-  plants. The mother is chosen uniformly. The father is the mother itself
+- Fruit success (`fruit_success()`; notes T21) is
+  1 − `dose_response(rust_pressure × eff_susc, rust_recruit_dose_response)`,
+  off by default (NULL: every flowering plant counts 1).
+- Parents (`sample_parents`) are drawn with replacement from flowering
+  plants. The mother is chosen uniformly, or in proportion to fruit success
+  when that hook is on. The father is the mother itself
   with probability `selfing_rate / (n_flower - 1 + selfing_rate)`, otherwise
   a different flowering plant chosen uniformly.
 - Recruits inherit genotypes from their parents but draw age at first
@@ -312,8 +316,16 @@ Used only when a species sets `clonal_mode: genet` (`is_clonal()`); otherwise
 
 A plant flowers if it is alive, not resprouting and has reached its own
 `age_first_flower`. If `rust_flower_dose_response$max_effect > 0`, flowering
-is also suppressed by a yearly Bernoulli draw with probability
-`dose_response(eff_susc, ...)`. This is off by default.
+is also suppressed by a yearly Bernoulli draw. This is off by default. The
+probability depends on `rust_flower_driver` (notes T21):
+- `pressure` (default): `dose_response(rust_pressure × eff_susc, ...)`;
+- `damage` (needs damage mode): `dose_response(D, ...)`, with D the crown
+  damage at the end of last year, so suppression persists while the crown
+  stays damaged.
+
+When either reproductive hook is on, the census adds
+`share_flowering_suppressed` and `fruit_success`. Plants kept from flowering
+still count as mature (notes A4).
 
 ### 4.5 Genetics (`R/genetics.R`)
 
@@ -593,7 +605,7 @@ written into the params list, so existing species are unchanged.
 | recruitment curve | `RECRUITMENT_CURVES` (`R/recruitment.R`) | `recruitment_curve` (default `bevholt`) | bevholt, ricker |
 | rust hazard | `nominate_deaths()`, `update_rust_damage()` (`R/mortality.R`) | `rust_hazard_mode` (default `instant`) and the damage settings (T19) | instant, damage |
 | clonal stage | `R/clonal.R`, `is_clonal()` | `clonal_mode` (default `none`) and the sucker/rootstock settings (T17) | none, genet |
-| expected recruits, flowering | `expected_recruits()`, `update_flowering()` | (functions only) | |
+| expected recruits, flowering | `expected_recruits()`, `fruit_success()`, `update_flowering()` | `rust_flower_driver` (default `pressure`; T21) | pressure, damage |
 
 ---
 

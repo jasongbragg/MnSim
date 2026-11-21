@@ -409,6 +409,8 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
   # --- Cross-field checks -----------------------------------------------------
   nl <- vapply(params[c("resist_locus_effect", "resist_dominance", "resist_freq0")], length, 1L)
   if (length(unique(nl)) > 1L) err("resistance", "resist_locus_effect, resist_dominance and resist_freq0 need the same length (one per locus)")
+  if (identical(params$rust_flower_driver, "damage") && !identical(params$rust_hazard_mode, "damage"))
+    err(paste0(fname[["species"]], ": rust_flower_driver"), "'damage' needs rust_hazard_mode: damage (notes T21)")
 
   # --- Assessment, spatial range and parameter draws (notes T9) ---------------
   af   <- read_config_yaml(file.path(root, "config", "assessment.yaml"))

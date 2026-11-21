@@ -1161,6 +1161,62 @@ Implementation:
 series (Supplementary Fig. 1), which would allow a tree-level likelihood.
 Tests: `tests/testthat/test-olney.R`.
 
+**T21. Rust suppression of flowering and fruit** [decided, 2026-11-21]
+Design note `docs/design_fruit_infection.md`, approved with its recommendations, except that the
+alternative mature count is not built (decision 5). Evidence: *R. rubescens* fruit on untreated
+branches all infected, none matured (Tucki Tucki NR); *R. psidioides* no mature fruit, flowering
+or seed since 2010; *U. australis* no significant fruiting since 2018 (seed recruitment ~0 even
+before rust). Checking the existing hooks (T12) found three gaps: they ignored the cell's rust
+pressure; fruit failure shrank the number of recruits but not who the mothers were, so there was
+no selection for resistance through fecundity; and flowering suppression was redrawn every year,
+so it never persisted.
+
+Decisions required by the note, and what was decided:
+1. *Site pressure in the hooks.* Options: include the cell's `rust_pressure`, or leave it out.
+   **Decided: include it**, as in the hazard and damage terms (T18): both hooks now use
+   `rust_pressure × eff_susc`. No effect on *M. nodosa*, whose hooks are off.
+2. *Who fruit failure acts on.* Options: weight mothers by fruit success; weight mothers and
+   fathers; weight neither. **Decided: mothers only.** Pollen comes from flowers, which exist; the
+   evidence is about fruit.
+3. *What drives flowering suppression.* Options: an optional `damage` driver (crown damage D) with
+   fruit maturation on the year's pressure; both stages on D; or a separate reproductive state
+   with its own recovery rate. **Decided: optional driver**, `rust_flower_driver: damage`
+   (default `pressure`); fruit maturation stays on the year's pressure, because fruit is infected
+   directly in the season it develops. A separate state would add a parameter no data identify.
+   [assumption] Buds are set on last season's crown: flowering in year t reads D at the end of
+   year t − 1 (flowering comes before the damage update in the year's order).
+4. *Phenology.* Options: in each species' priors, or a sub-annual step. **Decided: in the priors**
+   (whether fruiting falls in the rust season goes into the fruit dose-response priors, with the
+   reason recorded).
+5. *Reporting and the mature count.* Options: census columns plus an alternative count
+   `N_fruiting_capable` (mature plants with fruit success above a threshold), or census columns
+   only. **Decided: census columns only; the IUCN mature count is unchanged (A4).** The user
+   considered this question earlier and judged it cleaner and more defensible to decide when a
+   living plant will never reproduce, rather than counting by this year's fruit success. That is
+   a later item: quantify, per plant, the probability of reaching a reproducing state, and treat a
+   plant as not mature only when it falls below a threshold. Example: *R. psidioides* ramets in a
+   phase of repeated suckering after canopy death, which may stay alive for years with little
+   chance of ever fruiting again. [open] (PLAN.md, Phase 6.)
+6. *Order of work.* Options: build now with toy tests, or wait for the species files. **Decided:
+   build now**; per-species priors in Phase 4. Fruit ≈ 0 is a key Phase 5 target for
+   *R. psidioides* and *R. rubescens*.
+
+Implementation:
+- `fruit_success()` (`R/recruitment.R`): each flowering plant's weight,
+  1 − `dose_response(rust_pressure × eff_susc, rust_recruit_dose_response)`; NULL when off.
+  `expected_recruits()` sums the weights; `recruit()` passes them to `sample_parents()` as mother
+  weights. When the hook is off, no weights are passed and draws are unchanged.
+- `update_flowering()` (`R/simulate.R`): driver `pressure` or `damage` (`rust_flower_driver()`,
+  `RUST_FLOWER_DRIVERS`). The `damage` driver works in years of no pressure as well, so
+  suppression persists while the crown stays damaged; it needs damage mode (a loader error
+  otherwise). Probabilities are capped at 1, now that site pressure can exceed 1.
+- Census (`repro_census()`, only when either hook is on): `share_flowering_suppressed` (share of
+  eligible plants kept from flowering by rust, counted at flowering, before mortality) and
+  `fruit_success` (mean weight over flowering plants).
+- Change in behaviour when the hooks are on: earlier runs with the hooks on (diagnostics only; no
+  species uses them) would differ, through site pressure and mother weights.
+Tests: `tests/testthat/test-fruit.R`.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -1203,3 +1259,4 @@ Tests: `tests/testthat/test-olney.R`.
 | 2026-11-20 | T13 | One Australia-wide master grid (110–160 E, 45–9 S, 0.1°) for cell ids; fire tables shared over all species' cells and built incrementally; fire prior fitted per species |
 | 2026-11-20 | T14 | Error found and corrected: NSW cell-year tables were shifted by one cell after a zero-land cell (234/256 NSW cells held another cell's record); tables, site table and fire checks rebuilt; D2/D4 still hold; range, Pegg-site and V4 runs to redo |
 | 2026-11-20 | T15 | Species `fire_exposure` (optional, habitat share of cell fire rate); fire-change scenario (from a year: rate and fire size multiplied, optional ramp), set by runners, paired with baseline |
+| 2026-11-21 | T21 | Rust suppression of flowering and fruit: site pressure in both hooks; mothers weighted by fruit success; optional flowering driver `damage` (crown damage D); census columns; mature count unchanged, a prospective "will never reproduce" test left for later |

@@ -130,13 +130,18 @@ For each item: design note in `docs/` → [you] approve → implement → add te
   Done 2026-11-21 (`docs/design_rust_pressure_modes.md`; notes T18): modes `sdm`, `constant`, `sdm_gradient` (per-run latitude gradient); anchor shared by all species in `config/landscape.yaml`; species `rust_arrival_year`, `rust_ramp_years`. Per-species mode and timing values: Phase 4.
 - [x] **Accumulating-damage hazard:** death risk rises with consecutive defoliation events (Olney exclusion trial: ~6-month lag, death in <4 yr; Table 10 resurveys)
   Done 2026-11-21 (`docs/design_accumulating_damage.md`; notes T19): optional `rust_hazard_mode: damage`, per-plant crown damage with recovery and a damage death risk. Per-species damage priors: Phase 4.
-- [ ] **Fruit-infection suppression:** fecundity → ~0 under high rust (Tucki Tucki NR; no fruit seen for *R. psidioides* since 2010).
-  Partly built: `rust_flower_dose_response` and `rust_recruit_dose_response` exist but are off.
-  The design note may only need to cover their parameterisation (overlaps ROADMAP Phase 2, flowering/seed set).
+- [x] **Fruit-infection suppression:** fecundity → ~0 under high rust (Tucki Tucki NR; no fruit seen for *R. psidioides* since 2010).
+  Done 2026-11-21 (`docs/design_fruit_infection.md`; notes T21). More than parameterisation: the
+  old hooks ignored site pressure, did not change who the mothers were (no selection through
+  fecundity), and never let suppression persist. Now: site pressure in both hooks; mothers weighted
+  by fruit success; optional flowering driver `damage` (crown damage D); census columns. Mature
+  count unchanged (A4). Per-species priors: Phase 4. **Fruit ≈ 0 is a key Phase 5 target for
+  *R. psidioides* and *R. rubescens*; set these hooks up properly in their species files.**
 - [x] **Fire exposure and fire-change scenarios** (rainforest species): species `fire_exposure`; a
   scenario that raises fire rate and size from a year. Done 2026-11-20
   (`docs/design_fire_exposure_and_change.md`; notes T15). Exposure priors for each species: Phase 4.
-- [ ] Check that M. nodosa outputs are unchanged when each new option is switched off (Phase 1 tests still pass)
+- [x] Check that M. nodosa outputs are unchanged when each new option is switched off (Phase 1 tests still pass)
+  Holds: each option is optional and off by default, and the reference tests passed after every addition (T17–T21).
 
 ## Phase 4 — Species parameter files  [agent, you set priors]
 - [ ] [agent] Write `scripts/csv_to_yaml.R`: turns `role == parameter` rows into `species/<sp>.yaml`, each value carrying its CSV row reference
@@ -166,6 +171,13 @@ likelihood over simulated sites). Decide whether that stays the M. nodosa route 
   The A3 window is new code: `runner/iucn_a4.R` assesses A4 only, and `collect_iucn_results()` skips non-A4 results.
 - [ ] [agent] Global sensitivity analysis (e.g. Sobol or PRCC) on the posterior plus prior-only parameters.
   Overlaps ROADMAP Phase 3: Morris screening already exists (`runner/morris.R`), and Sobol is planned there for M. nodosa.
+- [ ] [both] **When does a living plant count as never reproducing?** (notes T21, decision 5; not
+  before the main results.) The mature count stays as in notes A4. The user judges it cleaner and
+  more defensible to decide when a living plant will never reproduce than to count by one year's
+  fruit success. Quantify per plant the probability of reaching a reproducing state (from its
+  damage, rust pressure, resprout or sucker state and survival), and treat it as not mature only
+  below a threshold. Example: *R. psidioides* ramets in a phase of repeated suckering after canopy
+  death. Needs a design note, and an IUCN decision by the user before it changes any count.
 - [ ] [you] Interpret the results: which unmeasured parameters most change the category? These set the fieldwork priorities.
 
 ## Phase 7 — Independent check  [fresh agent session]

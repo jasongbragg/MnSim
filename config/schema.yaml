@@ -186,6 +186,10 @@ params:
     half_sat:   {layer: species, type: double, min: 0}
     hill:       {layer: species, type: double, min: 0}
 
+  # What drives rust suppression of flowering (notes T21): this year's pressure,
+  # or the plant's crown damage D (needs rust_hazard_mode: damage).
+  rust_flower_driver: {layer: species, type: character, choices: [pressure, damage], optional: true, default: pressure}
+
   rust_recruit_dose_response:
     max_effect: {layer: species, type: double, min: 0, max: 1}
     form:       {layer: species, type: character, choices: [linear, power, saturating, sigmoid, threshold]}
