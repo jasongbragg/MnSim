@@ -128,7 +128,8 @@ For each item: design note in `docs/` → [you] approve → implement → add te
   Done 2026-11-21 (`docs/design_clonal_stage.md`; notes T17). Sucker and rootstock priors per species: Phase 4.
 - [x] **Rust-pressure modes:** (a) SDM-scaled (current); (b) saturating/constant. Evidence: no climate predictor of infection for *R. psidioides* (Fensham et al. 2020); strong NSW vs SE Qld contrast for *A. beckleri* (Manea et al. 2019 vs Pegg et al. 2017)
   Done 2026-11-21 (`docs/design_rust_pressure_modes.md`; notes T18): modes `sdm`, `constant`, `sdm_gradient` (per-run latitude gradient); anchor shared by all species in `config/landscape.yaml`; species `rust_arrival_year`, `rust_ramp_years`. Per-species mode and timing values: Phase 4.
-- [ ] **Accumulating-damage hazard:** death risk rises with consecutive defoliation events (Olney exclusion trial: ~6-month lag, death in <4 yr; Table 10 resurveys)
+- [x] **Accumulating-damage hazard:** death risk rises with consecutive defoliation events (Olney exclusion trial: ~6-month lag, death in <4 yr; Table 10 resurveys)
+  Done 2026-11-21 (`docs/design_accumulating_damage.md`; notes T19): optional `rust_hazard_mode: damage`, per-plant crown damage with recovery and a damage death risk. Per-species damage priors: Phase 4.
 - [ ] **Fruit-infection suppression:** fecundity → ~0 under high rust (Tucki Tucki NR; no fruit seen for *R. psidioides* since 2010).
   Partly built: `rust_flower_dose_response` and `rust_recruit_dose_response` exist but are off.
   The design note may only need to cover their parameterisation (overlaps ROADMAP Phase 2, flowering/seed set).
@@ -153,6 +154,7 @@ likelihood over simulated sites). Decide whether that stays the M. nodosa route 
   - *R. psidioides:* 57% dead at ~3.5 yr (n=297, 18 sites) and the spread across sites; by 2018, 23% of populations extinct and 61% reduced to suckers
   - *U. australis:* post-fire stem mortality by size class (Nightcap and Mt Jerusalem quadrats, 2019–20); reshoot infection 55% (n=39) and 85%; genet impact classes 2020–21 and 2024; no fruiting since 2018
   - *A. beckleri / D. humile:* Ryans Road 2016→2017 (13→44%, 36→73%); NSW populations with little mortality (Manea et al. 2019)
+- [ ] [agent] Olney SF exclusion trial (Carnegie et al. 2016; *R. rubescens* only) as a damage-mode validation (notes T19, T20; `docs/design_olney_validation.md`, approved; hooks and `runner/olney_validation.R` built 2026-11-21, to run once the *R. rubescens* species file exists), set up like the Pegg one (layer V). Data extracted 2026-11-21: `data/validation/carnegie2016_olney_crown_transparency.csv` (Fig. 3, digitised) and `carnegie2016_site_mortality.csv` (Tables 2 and 4, both species); fungicide = rust gain switched off for treated trees, so canopy recovery under protection identifies `damage_recovery` (a rare look at canopy tissue turnover), and the response after protection stopped tests the gain and lag. Needs a per-plant or per-group treatment hook in the run, and a check whether the trial's sub-annual monitoring fits an annual step
 - [ ] [agent] Rejection ABC with the `abc` package; draw from the priors; distance on the summary statistics
 - [ ] [agent] Benchmark: runs per hour on the laptop → estimate the cost of a full ABC; if it is more than about an overnight run, write it as a script to run on a larger machine
 - [ ] [you] Check the posterior predictive plots: does the fitted model reproduce the between-site variance as well as the mean?

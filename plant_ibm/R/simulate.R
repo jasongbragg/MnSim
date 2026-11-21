@@ -36,14 +36,38 @@
 # A species' rust_ramp_years (notes T18) scales the draw by
 # rust_ramp_factor(), with no extra random numbers, so runs without it are
 # unchanged draw for draw.
+# Two runner settings (docs/design_olney_validation.md; notes T20), absent
+# unless a runner sets them:
+#   annual_env_series  a fixed yearly pressure, named by year, used instead of
+#                      the Beta draw (no rbeta), so runs can share their years
+#   rust_protection    protected periods c(start1, end1, ...), in model years;
+#                      the year's pressure is multiplied by the unprotected share
 draw_annual_env <- function(params, t) {
   if (t >= params$rust_start_year) {
-    x <- rbeta(1L, params$annual_env_alpha, params$annual_env_beta)
+    x <- if (is.null(params$annual_env_series)) rbeta(1L, params$annual_env_alpha, params$annual_env_beta)
+         else annual_env_from_series(params, t)
     if (!is.null(params$rust_ramp_years)) x <- x * rust_ramp_factor(params, t)
+    if (!is.null(params$rust_protection)) x <- x * (1 - rust_protected_share(params, t))
     x
   } else {
     0
   }
+}
+
+annual_env_from_series <- function(params, t) {
+  x <- params$annual_env_series[as.character(t)]
+  if (length(x) != 1L || is.na(x)) stop("annual_env_series has no value for year ", t)
+  unname(x)
+}
+
+# Share of model year t (the interval [t, t + 1)) covered by the protected
+# periods in params$rust_protection (pairs of start, end), capped at 1.
+rust_protected_share <- function(params, t) {
+  pr <- params$rust_protection
+  if (is.null(pr) || !length(pr)) return(0)
+  if (length(pr) %% 2L) stop("rust_protection needs pairs of start and end")
+  m <- matrix(pr, ncol = 2L, byrow = TRUE)
+  min(1, sum(pmax(0, pmin(m[, 2], t + 1) - pmax(m[, 1], t))))
 }
 
 # Rust timing per species (docs/design_rust_pressure_modes.md section 3.3;
@@ -117,6 +141,10 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
     genets    <- init_state$genets
     if (clonal && is.null(genets)) stop("clonal run continued from a state without genets")
   }
+  # Damage mode (notes T19): every plant carries rust_damage, 0 at the start
+  # (also for a state saved by a run without it).
+  damage <- is_damage_mode(params)
+  if (damage && is.null(pop$rust_damage)) pop$rust_damage <- 0
   # States saved before death_cause existed: add it (causes unknown).
   if (is.null(pop$death_cause)) pop$death_cause <- NA_character_
 
@@ -183,6 +211,9 @@ run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALS
 
     # 4. update flowering status, post-fire (rust may suppress it)
     pop <- update_flowering(pop, t, params, annual_env_t)
+
+    # 4b. damage mode: this year's rust damage, before mortality (notes T19)
+    if (damage) pop <- update_rust_damage(pop, t, params, annual_env_t)
 
     # 5. mortality: union of all hazard components
     dead_idx <- nominate_deaths(pop, t, params, annual_env_t)

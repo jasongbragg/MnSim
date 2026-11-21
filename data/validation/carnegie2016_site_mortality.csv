@@ -1,0 +1,64 @@
+# Percentage of trees assessed as dead per survey site, Jan-Oct 2014, ~3-3.5 yr after rust established (Carnegie et al. 2016 Biol Invasions 18:127-144, Tables 2 and 4).
+# Nominally the 20 nearest trees >0.5 m per site; per-site n is not reported (percentages imply it varied). Totals: R. rubescens 12% of 669 trees, R. psidioides 57% of 297.
+species,site,state,pct_dead,table
+Rhodamnia rubescens,Austinmer,NSW,0.0,Table 2
+Rhodamnia rubescens,Bagawa SF,NSW,15.0,Table 2
+Rhodamnia rubescens,Bongil Bongil NP,NSW,10.0,Table 2
+Rhodamnia rubescens,Brill Brill SF,NSW,30.0,Table 2
+Rhodamnia rubescens,Brisbane Water NP,NSW,0.0,Table 2
+Rhodamnia rubescens,Chichester SF,NSW,8.3,Table 2
+Rhodamnia rubescens,Conglomerate SF,NSW,0.0,Table 2
+Rhodamnia rubescens,Cunninghams Gap,QLD,0.0,Table 2
+Rhodamnia rubescens,Ewingar SF 1,NSW,0.0,Table 2
+Rhodamnia rubescens,Ewingar SF 2,NSW,0.0,Table 2
+Rhodamnia rubescens,Flat Rock SF,NSW,0.0,Table 2
+Rhodamnia rubescens,Gibraltar Range NP,NSW,0.0,Table 2
+Rhodamnia rubescens,Gold Creek Reservoir,QLD,73.3,Table 2
+Rhodamnia rubescens,Goongery,NSW,15.4,Table 2
+Rhodamnia rubescens,Kiwarrak SF,NSW,26.3,Table 2
+Rhodamnia rubescens,McDonald SF,NSW,4.8,Table 2
+Rhodamnia rubescens,Mebbin NP 2,NSW,0.0,Table 2
+Rhodamnia rubescens,Mebbin NP 4,NSW,0.0,Table 2
+Rhodamnia rubescens,Middle Brother SF,NSW,0.0,Table 2
+Rhodamnia rubescens,Morton NP,NSW,0.0,Table 2
+Rhodamnia rubescens,Murramarang NP 1,NSW,4.5,Table 2
+Rhodamnia rubescens,Murramarang NP 2,NSW,8.3,Table 2
+Rhodamnia rubescens,Murramarang NP 3,NSW,16.7,Table 2
+Rhodamnia rubescens,Olney SF 1,NSW,53.3,Table 2
+Rhodamnia rubescens,Olney SF 2,NSW,0.0,Table 2
+Rhodamnia rubescens,Pine Creek SF,NSW,0.0,Table 2
+Rhodamnia rubescens,Red Head,NSW,40.0,Table 2
+Rhodamnia rubescens,Richmond Range NP,NSW,0.0,Table 2
+Rhodamnia rubescens,Royal NP,NSW,23.3,Table 2
+Rhodamnia rubescens,Seven Mile Beach NP,NSW,16.7,Table 2
+Rhodamnia rubescens,Tallebudgera Valley 1,QLD,25.0,Table 2
+Rhodamnia rubescens,Tallebudgera Valley 2,QLD,0.0,Table 2
+Rhodamnia rubescens,Termeil SF 1,NSW,0.0,Table 2
+Rhodamnia rubescens,Termeil SF 2,NSW,0.0,Table 2
+Rhodamnia rubescens,Tomerong SF,NSW,0.0,Table 2
+Rhodamnia rubescens,Tomerong,NSW,0.0,Table 2
+Rhodamnia rubescens,Traveston Crossing 1,QLD,0.0,Table 2
+Rhodamnia rubescens,Traveston Crossing 2,QLD,13.3,Table 2
+Rhodamnia rubescens,Upper Burringbar,NSW,0.0,Table 2
+Rhodamnia rubescens,Upper Sleepy Hollow,NSW,0.0,Table 2
+Rhodamnia rubescens,Wambina NR,NSW,11.1,Table 2
+Rhodamnia rubescens,Way Way SF,NSW,0.0,Table 2
+Rhodamnia rubescens,Yabbra SF,NSW,0.0,Table 2
+Rhodomyrtus psidioides,Baggotville 1,NSW,69.2,Table 4
+Rhodomyrtus psidioides,Baggotville 2,NSW,60.0,Table 4
+Rhodomyrtus psidioides,Bongil Bongil NP,NSW,72.5,Table 4
+Rhodomyrtus psidioides,Broken Ridge,NSW,100.0,Table 4
+Rhodomyrtus psidioides,Cudgen NR,NSW,0.0,Table 4
+Rhodomyrtus psidioides,Ewingsdale,NSW,100.0,Table 4
+Rhodomyrtus psidioides,Goolawah RP,NSW,24.0,Table 4
+Rhodomyrtus psidioides,Myall Lakes NP,NSW,23.1,Table 4
+Rhodomyrtus psidioides,Port Macquarie 1,NSW,11.8,Table 4
+Rhodomyrtus psidioides,Port Macquarie 2,NSW,0.0,Table 4
+Rhodomyrtus psidioides,Red Head,NSW,0.0,Table 4
+Rhodomyrtus psidioides,Seal Rocks RP,NSW,20.0,Table 4
+Rhodomyrtus psidioides,Tallebudgera Valley,QLD,96.7,Table 4
+Rhodomyrtus psidioides,Tweed Coast,NSW,15.0,Table 4
+Rhodomyrtus psidioides,Upper Burringbar,NSW,95.7,Table 4
+Rhodomyrtus psidioides,Upper Sleepy Hollow,NSW,12.5,Table 4
+Rhodomyrtus psidioides,Wamberal Lagoon NR,NSW,50.0,Table 4
+Rhodomyrtus psidioides,Wambina NR,NSW,33.3,Table 4

@@ -575,8 +575,6 @@ PLAN Phase 3:
 
 Not present:
 
-- damage or defoliation history per plant (hazard is memoryless except for
-  the resprout state);
 - an A3 window;
 - committee-style projection.
 
@@ -590,9 +588,10 @@ written into the params list, so existing species are unchanged.
 | fire response | `FIRE_RESPONSES` (`R/fire.R`) | `fire_extent_mode`; `fire_p_fimp == 0` → legacy | legacy, plant, stand |
 | cell rust pressure | `RUST_PRESSURE_MODES` (`spatial/rust_pressure.R`) | species `rust_anchor$mode` (default `sdm`); the anchor itself is in `config/landscape.yaml` (T18) | sdm, constant, sdm_gradient |
 | rust gradient | `apply_rust_gradient()` (`runner/site_params.R`) | `rust_gradient` (run setting, drawable; mode `sdm_gradient` only; T18) | |
-| yearly pathogen draw | `draw_annual_env()`, `apply_rust_timing()` (`R/simulate.R`) | species `rust_arrival_year`, `rust_ramp_years` (T18) | iid Beta, optional ramp |
+| yearly pathogen draw | `draw_annual_env()`, `apply_rust_timing()` (`R/simulate.R`) | species `rust_arrival_year`, `rust_ramp_years` (T18); runner `annual_env_series`, `rust_protection` (T20) | iid Beta or a fixed series; optional ramp and protection |
 | fire exposure, fire change | `fire_prob_at()`, `fire_params_at()` (`R/fire.R`) | `fire_exposure` (species); `fire_change_*` (runner scenario; T15) | |
 | recruitment curve | `RECRUITMENT_CURVES` (`R/recruitment.R`) | `recruitment_curve` (default `bevholt`) | bevholt, ricker |
+| rust hazard | `nominate_deaths()`, `update_rust_damage()` (`R/mortality.R`) | `rust_hazard_mode` (default `instant`) and the damage settings (T19) | instant, damage |
 | clonal stage | `R/clonal.R`, `is_clonal()` | `clonal_mode` (default `none`) and the sucker/rootstock settings (T17) | none, genet |
 | expected recruits, flowering | `expected_recruits()`, `update_flowering()` | (functions only) | |
 

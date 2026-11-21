@@ -1052,6 +1052,115 @@ the rust step; params, run IDs and the regression tests are unchanged).
 Not done: year-to-year structure, a new SDM, host susceptibility per species (Phase 4/5).
 Tests: `tests/testthat/test-rust-modes.R`.
 
+**T19. Accumulating rust damage** [decided, 2026-11-21]
+Design note `docs/design_accumulating_damage.md`, approved with its recommendations. Why: the
+rust hazard had no memory, so under steady pressure survivors' death rate stays flat or falls
+(selection removes the most susceptible first). The data show it rising: *R. rubescens* paired
+resurveys 2014 → 2016 (Pegg et al. 2017, Table 10) rose at 4 of 5 sites (Bongil Bongil ~3%/yr to
+2014, ~25%/yr after); *R. psidioides* ~21%/yr to 2014, ≥ 32%/yr among survivors to 2016; at Olney
+trees lost their crowns, stopped flushing and died. No parameter values of the old hazard give
+that. Optional (`rust_hazard_mode: damage`); in the default `instant` mode nothing new runs, so
+M. nodosa is unchanged (regression passes).
+
+Decisions required by the note, and what was decided:
+1. *How damage is represented.* Options: a continuous damage state, or a counter of consecutive
+   high-pressure years (PLAN's "consecutive defoliation events"). **Decided: a continuous state**
+   D in [0, 1], the share of the crown lost. The counter resets abruptly after one light year
+   and needs a "defoliation event" threshold that no data give; D is in effect a smoothed counter.
+2. *Whether the existing (instant) rust hazard stays.* Options: keep it alongside damage, or
+   damage only. **Decided: keep it.** It carries the quick death of seedlings and young suckers
+   that the *R. rubescens* and *R. psidioides* data report; adults die mainly by damage. A species
+   that dies mainly by damage sets a low `age_floor`.
+3. *What fire does to damage.* Options: reset it for a top-killed plant that resprouts, or carry
+   it through as depleted reserves. **Decided: reset** (`damage_fire_reset: reset`, the default;
+   `keep` is available). The resprouting canopy is new; the existing resprout term carries its
+   extra risk ("resprouting gives no escape", *R. psidioides*).
+4. *Whether damage can recover.* Options: a recovery rate, or damage that only accumulates.
+   **Decided: include recovery** (`damage_recovery`, whose prior range must include 0). Evidence:
+   *A. beckleri* at Knorrit had seedlings without dieback after the last infection event, and
+   pressure varies between years.
+5. *Effects of damage on flowering and fruit.* Options: here, or in the fruit-infection note.
+   **Decided: the fruit-infection note.** D is kept as a column so that note can read it.
+
+Implementation (`R/mortality.R`, `R/fire.R`, `R/census.R`, `R/simulate.R`):
+- Each year, after fire and flowering and before mortality (`update_rust_damage()`):
+  D ← D (1 − `damage_recovery`); then D ← D + (1 − D) × gain, with
+  gain = `dose_response(rust_pressure × eff_susc, damage_gain_dose_response)`, capped at 1, and
+  eff_susc = (1 − resist) × microsite × that year's pressure. Deterministic: no random numbers.
+- Death risk `dose_response(D, damage_mortality_dose_response)`, combined as one more independent
+  risk with the existing union. The mortality draw is unchanged (one Bernoulli per plant).
+- Founders, seedlings and suckers start at D = 0; a run continued from an instant-mode state
+  starts every plant at 0.
+- Census adds `mean_damage` and `share_damaged` (mature plants with D ≥ 0.6,
+  `DAMAGE_REPORT_THRESHOLD`, a reporting setting) in damage mode only, for crown transparency and
+  dieback targets (transparency includes a healthy baseline of 0.30–0.35).
+[assumption] Damage gain does not depend on age or on D itself (damaged plants flushing more
+and so more exposed is not modelled; no data separate it). [open] The ~6-month lag at Olney is
+below the annual step; only the multi-year lag is represented. [open] Test against the Olney exclusion
+trial (Carnegie et al. 2016): canopy recovery of fungicide-treated trees is the best available
+evidence on `damage_recovery` (canopy tissue turnover with rust removed), and the untreated and
+partially treated trees test gain, lag and the damage death risk (PLAN Phase 5). All settings are Phase 4 priors,
+fitted in Phase 5 (targets: Table 10 conditional mortality, Olney 53% in < 4 yr, *R. psidioides*
+57% at 3.5 yr, crown transparency). Check (test, illustrative values): under constant pressure
+survivors' annual death rate stays ~11% in instant mode and climbs from 17% to 50–60% in damage
+mode. Tests: `tests/testthat/test-damage.R`.
+
+**T20. Olney exclusion trial as a validation of accumulating damage** [decided, 2026-11-21]
+Design note `docs/design_olney_validation.md`, approved with its recommendations. The Olney SF
+disease exclusion trial (Carnegie et al. 2016; *R. rubescens* only) separates the damage-mode
+processes (T19) that field mortality alone cannot: fungicide switches rust off, so treated trees
+show recovery alone, untreated trees the full chain, partially treated trees damage rebuilding
+from a near-healthy crown.
+Data (extracted 2026-11-21, `data/validation/`): crown transparency per arm and date, Aug 2011 –
+Oct 2014, digitised from the plotted means in Fig. 3 (± ~1 point); percentage dead per site for
+*R. rubescens* (43 sites, Table 2) and *R. psidioides* (18 sites, Table 4); summary and pointer
+rows in `data/rust_species_params.csv`, with healthy crown transparency (0.30–0.35 and 0.25–0.35).
+The existing Olney 53% row was corrected: it is a separate count of the stand (Table 2, "Olney
+SF 1"), not the trial trees. Reading of the treated arm: damage (baseline 0.30) fell from ~0.51 to
+~0.20 in 4 months and ~0.02 by mid 2013, an annual recovery share of ~0.8–0.95.
+
+Decisions required by the note, and what was decided:
+1. *How treatment arms are run.* Options: one run per arm with run-level protection, or one run
+   with a per-plant protection flag. **Decided: one run per arm**, each continued from the same
+   stand at the trial's start; the trial trees do not interact in any way that matters over three
+   years, and no new column is needed.
+2. *Yearly pressure across arms.* Options: the same series for all arms, or independent draws.
+   **Decided: the same series** (`annual_env_series`), plus the same seed per year, so arms differ
+   only by treatment (they shared the weather).
+3. *Time resolution.* Options: annual comparison, or a sub-annual step. **Decided: annual**, at the
+   trial's August values (model years start in August; the end of model year t is compared with
+   August t + 1). The ~6-month lag and seasonal dips are not targets.
+4. *Damage to crown transparency.* Options: T = b + (1 − b) D with b a prior, or b fixed at 0.30.
+   **Decided: b a prior in [0.30, 0.35]**; dead trees count as 1; the arm's value is the mean over
+   its trees.
+5. *R. psidioides recovery.* Options: its prior taken from the *R. rubescens* posterior, or a wide
+   independent prior. **Decided: from the R. rubescens posterior**, logged here as an
+   [assumption]: both are evergreen rainforest-margin Myrtaceae and similarly susceptible, and
+   *R. psidioides*' own data (nearly all trees near full damage) cannot identify recovery. Its gain
+   and damage death risk are fitted to its own survey and site data.
+6. *Order of work.* Options: build the hooks and runner now with toy tests, or wait for Phase 5.
+   **Decided: build now**; run the validation once the *R. rubescens* species file exists (Phase 4).
+
+Implementation:
+- `rust_protection` (runner setting): protected periods (start, end pairs, in model years). The
+  year's pressure is multiplied by the unprotected share of the year, in `draw_annual_env()`
+  after the draw (no extra random numbers), and the same factor scales the mean pressure in the
+  resprout delay. The note proposed applying it to damage gain and the instant hazard only;
+  scaling the year's pressure is simpler and also covers rust effects on flowering and
+  recruitment, as fungicide would.
+- `annual_env_series` (runner setting): a pressure per year, named by year, used instead of the
+  Beta draw (no rbeta). Both settings are set by runners only, not by config files, so they are
+  not in the schema (like `rust_site_z`); absent, runs are unchanged.
+- `runner/olney_validation.R`: stand simulated to the end of model year 2010 (one rust year), 20
+  living trees in a given age range drawn as the trial trees (10 untreated, 5 treated to Oct 2014,
+  5 treated to Jun 2013), each arm then continued year by year to 2013; outputs mean transparency
+  per arm and year, and stand mortality (untreated run) by the end of model year 2013 (target
+  53%). The trial trees' age range is an argument, because the age-height link is a species
+  prior; it goes into `species/r_rubescens_validation.yaml` (block `olney`) with the species file.
+[open] Ask the authors (NSW DPI) for tree-level data and the incidence, severity and flush
+series (Supplementary Fig. 1), which would allow a tree-level likelihood.
+Tests: `tests/testthat/test-olney.R`.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -1075,6 +1184,8 @@ Tests: `tests/testthat/test-rust-modes.R`.
 | Nov 2026 | D3 | Fire-only resprout window fixed at 2 years (was Poisson, mean 3), set before the Phase 2 fit |
 | 2026-11-20 | T16 | *Uromyrtus australis* added to the species set; needs the clonal stage before it runs |
 | 2026-11-21 | T17 | Clonal stage: ramets in genets, root suckering, rootstock survival; optional, off for M. nodosa |
+| 2026-11-21 | T20 | Olney exclusion trial as damage-mode validation: one run per arm, shared yearly pressures, annual comparison; R. psidioides recovery prior from R. rubescens |
+| 2026-11-21 | T19 | Accumulating rust damage: per-plant crown damage with recovery, death risk from damage, reset by fire; optional, off for M. nodosa |
 | 2026-11-21 | T18 | Rust anchor is a property of place (landscape file, fixed anchor cell); modes constant and sdm_gradient; species arrival year and ramp |
 | Nov 2026 | V6 | Phase 2: fit level and between-plot spread of post-fire mortality at seven Pegg plots, by interval |
 | 2026-11-19 | T1 | Six fixed-seed regression scenarios from `params.R` at test scale (density parameters x 0.03); references store their params |

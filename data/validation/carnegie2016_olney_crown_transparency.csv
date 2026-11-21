@@ -1,0 +1,60 @@
+# Rhodamnia rubescens, Olney State Forest NSW: disease exclusion trial (Carnegie et al. 2016 Biol Invasions 18:127-144, Fig. 3).
+# Mean crown transparency (%) per treatment, digitised from the plotted means in Fig. 3 (2026-11-21; values +/- ~1 percentage point, dates +/- ~0.5 month).
+# Trial: 20 trees 0.5-4 m, 10 sprayed monthly with triadimenol Aug 2011-Oct 2014, 10 unsprayed; in Jun 2013 five sprayed trees stopped (partially_treated).
+# Rust first detected at Olney Oct 2010. Dead trees scored 100%. Healthy understorey crown transparency ~30-35% (authors' estimate).
+# Treated trees rose to 44% in Aug 2014: possibly a lapse in control (the paper notes spray intervals longer than monthly failed; Supplementary Fig. 1).
+treatment,date,mean_crown_transparency_pct,n_trees
+untreated,2011-08,66.2,10
+untreated,2011-11,60.8,10
+untreated,2011-12,63.6,10
+untreated,2012-02,65.8,10
+untreated,2012-03,71.6,10
+untreated,2012-05,81.5,10
+untreated,2012-07,83.7,10
+untreated,2012-11,78.6,10
+untreated,2013-03,83.0,10
+untreated,2013-06,87.7,10
+untreated,2013-07,87.7,10
+untreated,2013-08,89.6,10
+untreated,2013-10,82.7,10
+untreated,2013-11,80.5,10
+untreated,2013-12,79.2,10
+untreated,2014-02,88.0,10
+untreated,2014-03,87.7,10
+untreated,2014-04,88.6,10
+untreated,2014-05,88.6,10
+untreated,2014-08,92.6,10
+untreated,2014-10,93.0,10
+treated,2011-08,65.7,10 to 2013-05; 5 from 2013-06
+treated,2011-11,53.2,10 to 2013-05; 5 from 2013-06
+treated,2011-12,43.7,10 to 2013-05; 5 from 2013-06
+treated,2012-02,36.7,10 to 2013-05; 5 from 2013-06
+treated,2012-03,36.7,10 to 2013-05; 5 from 2013-06
+treated,2012-05,38.8,10 to 2013-05; 5 from 2013-06
+treated,2012-07,36.3,10 to 2013-05; 5 from 2013-06
+treated,2012-11,32.3,10 to 2013-05; 5 from 2013-06
+treated,2013-03,32.9,10 to 2013-05; 5 from 2013-06
+treated,2013-06,31.3,10 to 2013-05; 5 from 2013-06
+treated,2013-07,30.4,10 to 2013-05; 5 from 2013-06
+treated,2013-08,34.2,10 to 2013-05; 5 from 2013-06
+treated,2013-10,30.5,10 to 2013-05; 5 from 2013-06
+treated,2013-11,31.4,10 to 2013-05; 5 from 2013-06
+treated,2013-12,30.5,10 to 2013-05; 5 from 2013-06
+treated,2014-02,31.4,10 to 2013-05; 5 from 2013-06
+treated,2014-03,31.3,10 to 2013-05; 5 from 2013-06
+treated,2014-04,31.4,10 to 2013-05; 5 from 2013-06
+treated,2014-05,35.4,10 to 2013-05; 5 from 2013-06
+treated,2014-08,44.2,10 to 2013-05; 5 from 2013-06
+treated,2014-10,36.3,10 to 2013-05; 5 from 2013-06
+partially_treated,2013-06,33.3,5
+partially_treated,2013-07,33.3,5
+partially_treated,2013-08,31.3,5
+partially_treated,2013-10,30.4,5
+partially_treated,2013-11,30.4,5
+partially_treated,2013-12,31.4,5
+partially_treated,2014-02,35.4,5
+partially_treated,2014-03,36.3,5
+partially_treated,2014-04,38.2,5
+partially_treated,2014-05,46.3,5
+partially_treated,2014-08,66.2,5
+partially_treated,2014-10,62.1,5
