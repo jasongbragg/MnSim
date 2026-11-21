@@ -31,6 +31,8 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
 - `tests/` — testthat tests; `tests/reference/` holds frozen M. nodosa outputs
 - `docs/methodological_notes.md` — running log of assumptions and decisions
 - `private/` — unpublished data (git-ignored)
+- `internal/` — planned updates not yet public, e.g. `internal/PLAN_internal.md` (git-ignored). Claude
+  may read and edit these, but never commit them or copy their content into tracked files
 
 ## Hard rules
 1. **Never read, copy, summarise or commit anything in `private/`.** It holds unpublished resistance
