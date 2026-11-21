@@ -1,10 +1,12 @@
 species,ibm_module,parameter,role,value,units,evidence_type,confidence,source,notes
 Melaleuca nodosa,rust_pressure,rust_anchor__site,parameter,Yarringully NR,,field_monitoring,high,docs/methodological_notes.md C2,Anchor site for rust pressure: Pegg et al. 2025 site
-Melaleuca nodosa,rust_pressure,rust_anchor__lon,parameter,153.21967,degrees E,field_monitoring,high,docs/methodological_notes.md C2,Reserve point location; the anchor cell is the occupied cell nearest it (cell 3623)
+Melaleuca nodosa,rust_pressure,rust_anchor__lon,parameter,153.21967,degrees E,field_monitoring,high,docs/methodological_notes.md C2,Reserve point location; the anchor cell is set by rust_anchor__cell_lon and rust_anchor__cell_lat (notes T18)
 Melaleuca nodosa,rust_pressure,rust_anchor__lat,parameter,-29.09357,degrees N,field_monitoring,high,docs/methodological_notes.md C2,As lon
 Melaleuca nodosa,rust_pressure,rust_anchor__mu,parameter,0.70,annual pathogen pressure (0-1),field_monitoring,medium,docs/methodological_notes.md C2,Mean annual pressure from field incidence at Yarringully. [open in C2] field-incidence source not yet cited
 Melaleuca nodosa,rust_pressure,rust_anchor__conc,parameter,20,alpha + beta,model_assumption,low,docs/methodological_notes.md C3,Year-to-year variability; not constrained by data; being fitted (V6)
 Melaleuca nodosa,rust_pressure,rust_anchor__cap,parameter,0.95,annual pathogen pressure (0-1),model_assumption,low,docs/methodological_notes.md C2,Cap on cell mean pressure; no cell currently exceeds the anchor
+Melaleuca nodosa,rust_pressure,rust_anchor__cell_lon,parameter,153.25,degrees E,model_choice,high,docs/methodological_notes.md C2; T18,Centre of the master-grid cell carrying the anchor level (cell 100933): the occupied M. nodosa cell nearest the reserve point; fixed so every species normalises to the same cell
+Melaleuca nodosa,rust_pressure,rust_anchor__cell_lat,parameter,-29.15,degrees N,model_choice,high,docs/methodological_notes.md C2; T18,As cell_lon
 Melaleuca nodosa,mortality,weibull_k,parameter,1,shape,model_assumption,low,docs/methodological_notes.md E1,Constant background hazard; age effects come from the senescence and juvenile terms
 Melaleuca nodosa,mortality,weibull_lambda,parameter,60,years,model_assumption,low,docs/methodological_notes.md E1,E1 states the value; no data or reason given
 Melaleuca nodosa,mortality,senescence_dose_response__max_effect,parameter,0.1,annual probability,model_assumption,low,prior: docs/methodological_notes.md T6,"PRIOR [0, 0.6]: Range from plant_ibm/parlib/ensemble/no_rust_no_fire/param_ranges.R: at most 60% annual mortality from senescence alone"

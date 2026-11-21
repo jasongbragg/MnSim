@@ -13,10 +13,10 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
 
 ## Repo layout
 - `plant_ibm/` — the IBM code
-- `species/` — one YAML parameter file per species (created in Phase 2/4): parameters, rust anchor,
-  assessment windows, range box, range-wide draws; `<sp>_validation.yaml` holds its validation set-up
+- `species/` — one YAML parameter file per species (created in Phase 2/4): parameters, rust-pressure
+  mode, assessment windows, range box, range-wide draws; `<sp>_validation.yaml` holds its validation set-up
 - `config/` — `schema.yaml` (every parameter and setting: layer, type, bounds), `landscape.yaml`
-  (shared landscape defaults and spatial settings), `assessment.yaml` (shared IUCN settings),
+  (shared landscape defaults, the rust anchor and spatial settings), `assessment.yaml` (shared IUCN settings),
   `run_defaults.yaml` (default species, run settings); loaded by `plant_ibm/R/species_config.R`
 - `plant_ibm/spatial/data/<sp>/` — per-species occurrence and site tables, fire checks
 - `plant_ibm/spatial/data/fire/` — fire cell-year tables shared by all species (`cells.csv` lists the
@@ -67,5 +67,6 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
   suppressed. Keep the flowering-only counting code as an alternative.
 
 ## Rust pressure
-Rust pressure for M. nodosa comes from the `mrsdm` SDM, normalised to the value at Yarringully NR.
-Keep that anchor. New species may use a different mode (see PLAN.md Phase 3).
+Rust pressure comes from the `mrsdm` SDM, normalised to the value in the Yarringully NR anchor cell.
+Keep that anchor. It is a property of place, shared by all species (`config/landscape.yaml`; notes
+T18). A species may choose a different mode (`constant`, `sdm_gradient`) and its own rust arrival year.

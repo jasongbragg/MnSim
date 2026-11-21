@@ -33,12 +33,37 @@
 # arrives, then one Beta(annual_env_alpha, annual_env_beta) draw per year,
 # independent between years. The place for year-to-year structure in rust
 # pressure (design_swappable_interfaces.md section 4.2; notes T12).
+# A species' rust_ramp_years (notes T18) scales the draw by
+# rust_ramp_factor(), with no extra random numbers, so runs without it are
+# unchanged draw for draw.
 draw_annual_env <- function(params, t) {
   if (t >= params$rust_start_year) {
-    rbeta(1L, params$annual_env_alpha, params$annual_env_beta)
+    x <- rbeta(1L, params$annual_env_alpha, params$annual_env_beta)
+    if (!is.null(params$rust_ramp_years)) x <- x * rust_ramp_factor(params, t)
+    x
   } else {
     0
   }
+}
+
+# Rust timing per species (docs/design_rust_pressure_modes.md section 3.3;
+# notes T18). rust_arrival_year delays the start of rust for the species: the
+# run's rust_start_year becomes the later of the two (so a counterfactual with
+# rust_start_year = Inf stays rust-free). Applied once at the start of a run,
+# so every rust term (hazards, flowering, recruitment, resprout delay, census)
+# uses the same start.
+apply_rust_timing <- function(params) {
+  if (!is.null(params$rust_arrival_year))
+    params$rust_start_year <- max(params$rust_start_year, params$rust_arrival_year)
+  params
+}
+
+# Share of full rust pressure in year t: rising linearly over rust_ramp_years
+# after the start (1/ramp in the first year, as fire_change_factor()), then 1.
+rust_ramp_factor <- function(params, t) {
+  ramp <- params$rust_ramp_years
+  if (is.null(ramp) || ramp <= 0 || t < params$rust_start_year) return(1)
+  min(1, (t - params$rust_start_year + 1) / ramp)
 }
 
 # Flowering status for the year, after fire: alive, not resprouting and old
@@ -72,6 +97,7 @@ is_clonal <- function(params) identical(params$clonal_mode, "genet")
 
 run_simulation <- function(params, init_state = NULL, year0 = 1L, verbose = FALSE) {
   set.seed(params$seed)
+  params <- apply_rust_timing(params)
   clonal <- is_clonal(params)
   genets <- NULL
 

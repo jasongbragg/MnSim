@@ -428,7 +428,7 @@ Values: P = `params.R` (working M. nodosa); U = `parlib/unittests/params.R`.
 | `rust_recruit_dose_response` | off | off | `R/recruitment.R:104,110` |
 | `resist_locus_effect`, `_dominance`, `_freq0` | 1, 1, 0 | 1, 1, 0.05 | `R/genetics.R:22-27,79-81` |
 | `archive_dead` | absent (on) | absent (on) | `R/simulate.R:46` |
-| `RUST_ANCHOR` (global, not in the list) | Yarringully, μ 0.70, conc 20, cap 0.95 | — | `params.R:24`; `spatial/rust_pressure.R`; `runner/site_params.R:25` |
+| `RUST_ANCHOR` (global, not in the list; `config/landscape.yaml`, T18) | Yarringully, μ 0.70, conc 20, cap 0.95, cell 153.25, −29.15 | — | `params.R:24`; `spatial/rust_pressure.R`; `runner/site_params.R:25` |
 
 ### 5.4 Constants in the code that are not parameters
 
@@ -538,10 +538,14 @@ the rust Beta parameters and the abundance weight.
   incrementally; the prior is fitted over each species' own cells (T13).
 - Rust: `rust_pressure.R`. A cell's mean pressure is
   `μ · SDM_cell / SDM_anchor-cell`, capped at 0.95, so the anchor cell
-  always gets μ = 0.70.
+  always gets μ = 0.70 (mode `sdm`); or μ everywhere (mode `constant`). The
+  anchor and its cell are shared by all species (`config/landscape.yaml`;
+  notes T18): a species that does not occupy the anchor cell normalises to
+  the SDM read from the raster for it.
 
-Specific to each species: its occurrence grid, anchor, site table and fire
-checks (`spatial/data/<sp>/`). Shared: the master grid and the fire tables.
+Specific to each species: its occurrence grid, rust mode, site table and fire
+checks (`spatial/data/<sp>/`). Shared: the master grid, the rust anchor and
+the fire tables.
 
 ---
 
@@ -571,12 +575,8 @@ PLAN Phase 3:
 
 Not present:
 
-- a clonal or root-sucker stage;
 - damage or defoliation history per plant (hazard is memoryless except for
   the resprout state);
-- a constant rust-pressure mode separate from the SDM site table (the place
-  for it exists: `RUST_PRESSURE_MODES` in `spatial/rust_pressure.R`, chosen
-  by the rust anchor's optional `mode`; notes T12);
 - an A3 window;
 - committee-style projection.
 
@@ -588,8 +588,9 @@ written into the params list, so existing species are unchanged.
 | Part | Registry | Chosen by | Options |
 |---|---|---|---|
 | fire response | `FIRE_RESPONSES` (`R/fire.R`) | `fire_extent_mode`; `fire_p_fimp == 0` → legacy | legacy, plant, stand |
-| cell rust pressure | `RUST_PRESSURE_MODES` (`spatial/rust_pressure.R`) | rust anchor `mode` (default `sdm`) | sdm |
-| yearly pathogen draw | `draw_annual_env()` (`R/simulate.R`) | (function only, no selector) | iid Beta |
+| cell rust pressure | `RUST_PRESSURE_MODES` (`spatial/rust_pressure.R`) | species `rust_anchor$mode` (default `sdm`); the anchor itself is in `config/landscape.yaml` (T18) | sdm, constant, sdm_gradient |
+| rust gradient | `apply_rust_gradient()` (`runner/site_params.R`) | `rust_gradient` (run setting, drawable; mode `sdm_gradient` only; T18) | |
+| yearly pathogen draw | `draw_annual_env()`, `apply_rust_timing()` (`R/simulate.R`) | species `rust_arrival_year`, `rust_ramp_years` (T18) | iid Beta, optional ramp |
 | fire exposure, fire change | `fire_prob_at()`, `fire_params_at()` (`R/fire.R`) | `fire_exposure` (species); `fire_change_*` (runner scenario; T15) | |
 | recruitment curve | `RECRUITMENT_CURVES` (`R/recruitment.R`) | `recruitment_curve` (default `bevholt`) | bevholt, ricker |
 | clonal stage | `R/clonal.R`, `is_clonal()` | `clonal_mode` (default `none`) and the sucker/rootstock settings (T17) | none, genet |

@@ -111,7 +111,8 @@ Two assumptions: (i) pressure is proportional to climatic suitability
 level for the whole range.
 Implementation: the anchor cell is the occupied cell nearest Yarringully
 (cell 3623, 153.25 E, 29.15 S; the reserve's point location falls in an
-unoccupied cell). Its SDM value is read from the raster every time, with the
+unoccupied cell). (Since T18 this cell is fixed in `config/landscape.yaml`,
+as `cell_lon`/`cell_lat`, for all species; its master-grid id is 100933.) Its SDM value is read from the raster every time, with the
 same extraction as every other cell (mean over the cell's land since Nov
 2026, B4), so it always gets exactly 0.70 whatever
 SDM is supplied. A new SDM therefore changes only the relative pattern;
@@ -1004,6 +1005,53 @@ maturity); U. australis quadrat data are by height class. Smoke runs (illustrati
 priors): a clonal-only run (150 genets) holds ~1,000 mature stems for 250 years and declines
 under rust; T_g ≈ 23 yr from sucker parents. Tests: `tests/testthat/test-clonal.R`.
 
+**T18. Rust-pressure modes; the anchor as a property of place; rust timing per species** [decided, 2026-11-21]
+Design note `docs/design_rust_pressure_modes.md`, approved with its recommendations (all five
+decisions). Needed by *R. psidioides* (no climate predictor of infection), *A. beckleri* (a
+possible north–south gradient, C4) and *U. australis* (rust first seen on it in 2018–19). All new
+settings are optional; M. nodosa is unchanged (its site table is byte-identical after rerunning
+the rust step; params, run IDs and the regression tests are unchanged).
+- **The anchor is a property of place** (decision 1). The `rust_anchor` block (site, level 0.70,
+  concentration 20, cap 0.95) moved from `species/m_nodosa.yaml` to `config/landscape.yaml`, with
+  the same values; they still come from the `rust_anchor__*` rows of `data/m_nodosa_params.csv`
+  (a test checks that they agree). A species file may set only the mode. Every species therefore
+  sees the same yearly pressure in a cell; species differ through their host terms
+  (`rust_dose_response`, `rust_pressure`, resistance), fitted in Phase 5.
+  [assumption] The 0.70 was inferred from M. nodosa incidence, so it mixes host and place.
+  Calling it place is a convention: other species' host terms are fitted on M. nodosa's scale.
+- **A fixed anchor cell** (found while building, not in the note). The anchor cell had been "the
+  occupied cell nearest the anchor site", which depends on the species. It is now a fixed
+  master-grid cell, `cell_lon`/`cell_lat` = 153.25, −29.15 (cell 100933, the cell M. nodosa has
+  always used; new CSV rows `rust_anchor__cell_lon`, `rust_anchor__cell_lat`). A species that
+  does not occupy it normalises to the SDM read from the raster for that cell, with the same
+  extraction, so a shared cell gets the same pressure whichever species it is computed for
+  (tested). Without the raster, such a species' table cannot be re-normalised (error).
+- **Modes** (decision 2; `RUST_PRESSURE_MODES`, chosen by `rust_anchor$mode`):
+  `sdm` (default, unchanged); `constant` (μ in every cell, SDM or not; `sdm_rel` kept for
+  reference); `sdm_gradient` (the `sdm` table, plus a per-run latitude shift).
+- **The gradient** (decision 3). `apply_rust_gradient()` (`runner/site_params.R`) shifts the
+  cell's logit mean pressure by g × (lat_anchor − lat) / 10, keeping the Beta concentration:
+  g is the change in logit pressure per 10° **south** of the anchor cell (g < 0: less rust to the
+  south; g = −1 roughly divides the odds by e ≈ 2.7 at 10° south). This corrects the sign in the
+  design note's formula, which with its example range U(−1, 0) would have raised pressure to the
+  south. The anchor cell's latitude keeps its mean exactly, so V4 and the Pegg calibration are
+  untouched. g = `rust_gradient`, an optional run setting (default 0, left out of the list, so
+  g = 0 gives the `sdm` run and its run ID exactly). It is drawn per run by listing it in a
+  species' `ensemble_draws` (the schema now allows drawing run settings marked `drawable`), or
+  fixed for every run with `run_range_ensemble(rust_gradient = g)`, which still makes the draw so
+  plans pair up. A non-zero gradient with any other mode is refused. The plan table gets a
+  `rust_gradient` column for `sdm_gradient` species only.
+- **Timing** (decisions 4, 5). Optional species settings `rust_arrival_year` (default −Inf) and
+  `rust_ramp_years` (default 0 = step). At the start of a run, `apply_rust_timing()` sets
+  `rust_start_year` to the later of the run's rust year and the species' arrival, so every rust
+  term (hazards, flowering, recruitment, resprout delay, the census's `rust_active`) starts
+  together, and a counterfactual with no rust stays rust-free. The ramp multiplies the year's
+  draw by min(1, (t − start + 1) / ramp), the same convention as `fire_change_ramp`, with no extra
+  random numbers. It also scales the mean pressure used for the resprout delay. The A4 window is
+  not moved.
+Not done: year-to-year structure, a new SDM, host susceptibility per species (Phase 4/5).
+Tests: `tests/testthat/test-rust-modes.R`.
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -1027,6 +1075,7 @@ under rust; T_g ≈ 23 yr from sucker parents. Tests: `tests/testthat/test-clona
 | Nov 2026 | D3 | Fire-only resprout window fixed at 2 years (was Poisson, mean 3), set before the Phase 2 fit |
 | 2026-11-20 | T16 | *Uromyrtus australis* added to the species set; needs the clonal stage before it runs |
 | 2026-11-21 | T17 | Clonal stage: ramets in genets, root suckering, rootstock survival; optional, off for M. nodosa |
+| 2026-11-21 | T18 | Rust anchor is a property of place (landscape file, fixed anchor cell); modes constant and sdm_gradient; species arrival year and ramp |
 | Nov 2026 | V6 | Phase 2: fit level and between-plot spread of post-fire mortality at seven Pegg plots, by interval |
 | 2026-11-19 | T1 | Six fixed-seed regression scenarios from `params.R` at test scale (density parameters x 0.03); references store their params |
 | 2026-11-19 | T2 | Second check: mature mortality, Pegg fraction dead and rust mortality over 20 seeds, tolerance 4 sd of the difference |

@@ -23,8 +23,10 @@
 # are found from this file's location); MNSIM_ROOT overrides the repo root.
 #
 # RUST_ANCHOR: the single place where the absolute level of rust pressure is
-# set (species/<sp>.yaml, rust_anchor; notes C2). M. nodosa: Yarringully NR, mean
-# annual pathogen pressure 0.70; each grid cell's mean pressure is
+# set, shared by all species (config/landscape.yaml, rust_anchor; notes C2,
+# T18): Yarringully NR, mean annual pathogen pressure 0.70 in the anchor cell
+# (cell_lon, cell_lat). With mode sdm (the default; a species file may choose
+# another) each grid cell's mean pressure is
 #   mu * (SDM_cell / SDM_anchor_cell), capped at 'cap'
 # (spatial/rust_pressure.R); 'conc' = alpha + beta of the annual Beta draw.
 

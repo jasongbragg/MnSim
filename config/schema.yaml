@@ -19,19 +19,33 @@
 #           (docs/design_swappable_interfaces.md section 2.1; notes T12)
 #   required_when  {field: value}: an optional field required when that field
 #           has that value, and refused otherwise (e.g. Ricker's parameters)
+#   drawable  true: a run setting that a species' ensemble_draws may draw per
+#           run (otherwise only numeric species parameters can be drawn)
 #
-# The species' rust anchor (RUST_ANCHOR in params.R) is described under rust_anchor.
+# The rust anchor (RUST_ANCHOR in params.R) is described under rust_anchor.
+# Rust pressure is a property of place, shared by all species
+# (docs/design_rust_pressure_modes.md; notes T18): the anchor's site, cell and
+# level are in config/landscape.yaml (layer landscape); a species file may only
+# choose how its cells' pressures are set (mode, layer species).
 
 rust_anchor:
-  site: {type: character}
-  lon:  {type: double, min: -180, max: 180}
-  lat:  {type: double, min: -90, max: 90}
-  mu:   {type: double, min: 0, max: 1}
-  conc: {type: double, min: 0}
-  cap:  {type: double, min: 0, max: 1}
+  site: {layer: landscape, type: character}
+  lon:  {layer: landscape, type: double, min: -180, max: 180}
+  lat:  {layer: landscape, type: double, min: -90, max: 90}
+  mu:   {layer: landscape, type: double, min: 0, max: 1}
+  conc: {layer: landscape, type: double, min: 0}
+  cap:  {layer: landscape, type: double, min: 0, max: 1}
+  # Centre of the master-grid cell that carries the anchor level: every
+  # species' SDM values are normalised to the SDM in this cell, occupied or not.
+  cell_lon: {layer: landscape, type: double, min: -180, max: 180}
+  cell_lat: {layer: landscape, type: double, min: -90, max: 90}
   # How each grid cell's mean annual pressure is set (spatial/rust_pressure.R,
-  # RUST_PRESSURE_MODES): "sdm" = mu x SDM_cell / SDM_anchor, capped (notes C2).
-  mode: {type: character, choices: [sdm], optional: true, default: sdm}
+  # RUST_PRESSURE_MODES):
+  #   sdm           mu x SDM_cell / SDM_anchor, capped (notes C2)
+  #   constant      mu in every cell
+  #   sdm_gradient  sdm, shifted on the logit scale by rust_gradient per 10
+  #                 degrees of latitude from the anchor cell (applied per run)
+  mode: {layer: species, type: character, choices: [sdm, constant, sdm_gradient], optional: true, default: sdm}
 
 params:
   N0:      {layer: run, type: double, min: 1}
@@ -120,6 +134,16 @@ params:
   annual_env_alpha: {layer: species, type: double, min: 0, derive: anchor_alpha}
   annual_env_beta:  {layer: species, type: double, min: 0, derive: anchor_beta}
   rust_site_sd:     {layer: species, type: double, min: 0}
+  # Rust timing per species (notes T18): no rust pressure before
+  # rust_arrival_year (calendar year; never earlier than the run's
+  # rust_start_year), then pressure rising linearly to full over
+  # rust_ramp_years (0 = step). Applied in draw_annual_env().
+  rust_arrival_year: {layer: species, type: double, optional: true, default: -.inf}
+  rust_ramp_years:   {layer: species, type: double, min: 0, optional: true, default: 0}
+  # North-south gradient for rust_anchor mode sdm_gradient (notes T18): change
+  # in logit mean pressure per 10 degrees of latitude from the anchor cell
+  # (positive = higher pressure to the south). Set by runners or drawn per run.
+  rust_gradient:     {layer: run, type: double, optional: true, default: 0, drawable: true}
 
   rust_dose_response:
     age_peak:     {layer: species, type: double, min: 0, max: 1}

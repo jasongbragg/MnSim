@@ -127,6 +127,36 @@ apply_rust_site_effect <- function(p, z) {
   p
 }
 
+# ---- North-south gradient in rust pressure (rust_anchor mode sdm_gradient) --
+# docs/design_rust_pressure_modes.md section 3.2; notes T18. Shifts the cell's
+# mean annual pressure on the logit scale by
+#   g x (lat_anchor - lat) / 10
+# so g is the change in logit pressure per 10 degrees SOUTH of the anchor cell
+# (g < 0: less rust to the south). The anchor cell's latitude keeps its mean
+# exactly; the Beta concentration is kept. g = 0 returns p unchanged (and
+# leaves rust_gradient out of the list, so run IDs equal those of mode sdm).
+apply_rust_gradient <- function(p, g, lat, lat_anchor) {
+  p$rust_gradient <- NULL
+  if (is.null(g) || g == 0) return(p)
+  stopifnot(is.numeric(g), length(g) == 1L, is.finite(g))
+  conc <- p$annual_env_alpha + p$annual_env_beta
+  mu   <- stats::plogis(stats::qlogis(p$annual_env_alpha / conc) + g * (lat_anchor - lat) / 10)
+  p$annual_env_alpha <- mu * conc
+  p$annual_env_beta  <- (1 - mu) * conc
+  p$rust_gradient    <- as.double(g)
+  p
+}
+
+# The gradient for one run: the runner's fixed value if given, else the run's
+# draw (draw_params() puts an ensemble_draws value of rust_gradient in p), else
+# none. Refused unless the species' rust mode is sdm_gradient.
+run_rust_gradient <- function(p, fixed = NULL, mode = "sdm") {
+  g <- if (!is.null(fixed)) fixed else p$rust_gradient
+  if (!is.null(g) && g != 0 && !identical(mode, "sdm_gradient"))
+    stop("rust_gradient needs the species' rust_anchor mode 'sdm_gradient' (mode is '", mode, "')")
+  g
+}
+
 # Set the Beta concentration (year-to-year variability) keeping the mean.
 set_rust_concentration <- function(p, conc) {
   mu <- p$annual_env_alpha / (p$annual_env_alpha + p$annual_env_beta)

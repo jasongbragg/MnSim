@@ -54,8 +54,8 @@ test_that("setting an optional field to its default gives the same list and run 
 
 test_that("the rust anchor's mode set to its default leaves the anchor unchanged", {
   set.seed(1)
-  root <- cfg_root(function(txt) append(txt, '  mode: {value: "sdm", prior: true, choices: [sdm], reason: "test"}',
-                                       after = match("rust_anchor:", txt)))
+  root <- cfg_root(function(txt) append(txt, c("rust_anchor:", '  mode: {value: "sdm", prior: true, choices: [sdm], reason: "test"}'),
+                                       after = match("params:", txt) - 1L))
   on.exit(unlink(root, recursive = TRUE))
   expect_identical(load_rust_anchor("m_nodosa", root = root), load_rust_anchor("m_nodosa", root = repo_root))
 })
@@ -177,9 +177,9 @@ test_that("cell_rust_pressure() defaults to the SDM mode", {
   set.seed(1)
   sites  <- data.frame(sdm_suitability = c(0.2, 0.5, 0.9))
   anchor <- list(site = "x", lon = 0, lat = 0, mu = 0.7, conc = 20, cap = 0.95)
-  expect_identical(cell_rust_pressure(sites, 2L, anchor), rust_pressure_from_sdm(sites$sdm_suitability, 2L, anchor))
-  expect_identical(cell_rust_pressure(sites, 2L, c(anchor, mode = "sdm")), cell_rust_pressure(sites, 2L, anchor))
-  expect_error(cell_rust_pressure(sites, 2L, c(anchor, mode = "flat")), "Unknown rust-pressure mode 'flat'")
+  expect_identical(cell_rust_pressure(sites, 0.5, anchor), rust_pressure_from_sdm(sites$sdm_suitability, 2L, anchor))
+  expect_identical(cell_rust_pressure(sites, 0.5, c(anchor, mode = "sdm")), cell_rust_pressure(sites, 0.5, anchor))
+  expect_error(cell_rust_pressure(sites, 0.5, c(anchor, mode = "flat")), "Unknown rust-pressure mode 'flat'")
 })
 
 test_that("draw_annual_env() is zero before rust and one Beta draw after", {

@@ -5,6 +5,23 @@
 # each grid cell's values from the site table (runner/site_params.R).
 # Each value needs a 'source' or must be a prior (prior: true, min, max, reason).
 
+# The rust anchor: where and at what level rust pressure is fixed, for every
+# species (docs/design_rust_pressure_modes.md; notes C2, T18). Moved here from
+# species/m_nodosa.yaml unchanged; the values are still those of the
+# rust_anchor__* rows of data/m_nodosa_params.csv (test-species-config.R
+# checks that they agree). The level was inferred from M. nodosa incidence,
+# so calling it a property of place is a convention: other species' host
+# terms are fitted on this scale (notes T18).
+rust_anchor:
+  site: {value: "Yarringully NR", source: "data/m_nodosa_params.csv rust_anchor__site (notes C2)"}
+  lon: {value: 153.21967, source: "data/m_nodosa_params.csv rust_anchor__lon (notes C2)"}
+  lat: {value: -29.09357, source: "data/m_nodosa_params.csv rust_anchor__lat (notes C2)"}
+  mu: {value: 0.70, source: "data/m_nodosa_params.csv rust_anchor__mu (notes C2)"}
+  conc: {value: 20, source: "data/m_nodosa_params.csv rust_anchor__conc (notes C3)"}
+  cap: {value: 0.95, source: "data/m_nodosa_params.csv rust_anchor__cap (notes C2)"}
+  cell_lon: {value: 153.25, source: "data/m_nodosa_params.csv rust_anchor__cell_lon: the M. nodosa cell nearest the reserve, which has always carried the anchor level (notes C2, T18)"}
+  cell_lat: {value: -29.15, source: "data/m_nodosa_params.csv rust_anchor__cell_lat (notes C2, T18)"}
+
 params:
   fire_prob_annual:
     value: 1/50

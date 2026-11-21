@@ -12,7 +12,8 @@
 # The SDM path is config/landscape.yaml (spatial$rust_sdm), or MN_SDM_TIFF.
 # If the file is missing, the existing sdm_suitability column is
 # re-normalised, which only refreshes the derived columns (useful after
-# changing the species' rust_anchor).
+# changing the rust anchor in config/landscape.yaml or the species' mode). A
+# species that does not occupy the anchor cell needs the raster.
 
 source("params.R")
 source("spatial/rust_pressure.R")

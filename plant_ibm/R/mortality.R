@@ -84,6 +84,7 @@ dose_response <- function(pressure, cfg) {
 rust_resprout_delay <- function(pop, idx, params, t) {
   if (length(idx) == 0L || t < params$rust_start_year) return(numeric(length(idx)))
   mu  <- params$annual_env_alpha / (params$annual_env_alpha + params$annual_env_beta)
+  if (!is.null(params$rust_ramp_years)) mu <- mu * rust_ramp_factor(params, t)   # notes T18
   eff <- (1 - pop$resist_score[idx]) * pop$env_susceptibility[idx] * mu
   dose_response(params$rust_pressure * eff, params$rust_dose_response$delay)
 }

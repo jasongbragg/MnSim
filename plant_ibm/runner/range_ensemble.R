@@ -22,6 +22,9 @@
 #   run_range_ensemble(300, "results/range_v1_suppress50/", fire_scale = 0.5)
 #   run_range_ensemble(300, "results/range_v1_fire2x/",                 # notes T15
 #                      fire_change = list(year = 2026, rate = 2, size = 1.5))
+#   # species with rust_anchor mode sdm_gradient (notes T18): a fixed gradient,
+#   # paired with the per-run draw or with no gradient (rust_gradient = 0)
+#   run_range_ensemble(300, "results/range_v1_grad/", rust_gradient = -0.5)
 #   R <- collect_range_ensemble("results/range_v1/")
 #   range_category_shares(R$runs)            # overall and by region
 #   plot_range_drivers(R, "results/range_v1/drivers.png")
@@ -81,17 +84,26 @@ fire_change_label <- function(fc) {
 }
 
 # The random draws (cell, seed, parameters) do not depend on fire_regime,
-# fire_scale or fire_change, so ensembles that differ only in those pair up
-# run by run.
+# fire_scale, fire_change or rust_gradient, so ensembles that differ only in
+# those pair up run by run.
+# rust_gradient (notes T18): for a species whose rust_anchor mode is
+# sdm_gradient, a fixed gradient for every run (overriding any per-run draw of
+# it in param_draws, which is still made so plans pair up); NULL = the draw,
+# or none. 'anchor' gives the mode and the anchor cell's latitude.
 plan_range_run <- function(i, sites, base, param_draws = DEFAULT_PARAM_DRAWS,
                            master_seed = 20261022L, fire_regime = "wild", fire_scale = 1,
-                           fire_change = NULL) {
+                           fire_change = NULL, rust_gradient = NULL,
+                           anchor = if (exists("RUST_ANCHOR")) RUST_ANCHOR else list()) {
   set.seed(master_seed + i)
   k  <- sample.int(nrow(sites), 1L, prob = sites$weight_n_raw)
   sd <- sample.int(99999L, 1L)
   dr <- draw_params(base, param_draws)
   p  <- build_site_params(dr$params, sites[k, ], fire_regime = fire_regime, fire_scale = fire_scale,
                           fire_change = fire_change)
+  mode <- if (is.null(anchor$mode)) "sdm" else anchor$mode
+  g  <- run_rust_gradient(p, rust_gradient, mode)
+  if (identical(mode, "sdm_gradient"))
+    p <- apply_rust_gradient(p, g, sites$lat_centre[k], anchor$cell_lat)
   p  <- apply_rust_site_effect(p, draw_rust_site_effect(p))   # no draw when rust_site_sd = 0
   p$seed <- sd
   row <- data.frame(run = i, cell_row = k, cell_id = sites$cell_id[k],
@@ -104,6 +116,7 @@ plan_range_run <- function(i, sites, base, param_draws = DEFAULT_PARAM_DRAWS,
                     site_fire_p_fimp = p$fire_p_fimp,
                     site_rust = p$annual_env_alpha / (p$annual_env_alpha + p$annual_env_beta),
                     run_id = iucn_run_id(p, ASSESS))
+  if (identical(mode, "sdm_gradient")) row$rust_gradient <- if (is.null(g)) 0 else g
   for (nm in names(dr$values)) row[[nm]] <- dr$values[[nm]]
   list(params = p, row = row)
 }
@@ -117,7 +130,8 @@ run_range_ensemble <- function(n_runs, results_dir,
                                sites       = load_range_sites(),
                                fire_regime = "wild",
                                fire_scale  = 1,
-                               fire_change = NULL) {
+                               fire_change = NULL,
+                               rust_gradient = NULL) {
   dir.create(file.path(results_dir, "range"), recursive = TRUE, showWarnings = FALSE)
   base$fire_years <- integer(0)
   message(sprintf(
@@ -126,7 +140,8 @@ run_range_ensemble <- function(n_runs, results_dir,
     fire_regime, fire_scale))
   plans <- lapply(seq_len(n_runs), plan_range_run, sites = sites, base = base,
                   param_draws = param_draws, master_seed = master_seed,
-                  fire_regime = fire_regime, fire_scale = fire_scale, fire_change = fire_change)
+                  fire_regime = fire_regime, fire_scale = fire_scale, fire_change = fire_change,
+                  rust_gradient = rust_gradient)
   plan  <- do.call(rbind, lapply(plans, `[[`, "row"))
   write.csv(plan, file.path(results_dir, "range_plan.csv"), row.names = FALSE)
 

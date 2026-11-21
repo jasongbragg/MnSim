@@ -4,8 +4,8 @@
 # and validates it (PLAN.md Phase 2; docs/methodological_notes.md T4, T7).
 #
 #   config/schema.yaml        every field: layer, type, bounds, order
-#   species/<sp>.yaml         species biology + rust anchor (layer "species")
-#   config/landscape.yaml     shared landscape defaults (layer "landscape")
+#   species/<sp>.yaml         species biology, rust-pressure mode (layer "species")
+#   config/landscape.yaml     shared landscape defaults and the rust anchor (layer "landscape")
 #   config/run_defaults.yaml  run settings (layer "run"), and the default species
 #   config/assessment.yaml    IUCN assessment settings (layer "assessment")
 #   species/<sp>_validation.yaml  validation set-up (layer V; validation_config())
@@ -241,8 +241,9 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
   if (is.null(species)) species <- default_species(root)
   schema <- read_config_yaml(file.path(root, "config", "schema.yaml"))
   sp     <- read_config_yaml(file.path(root, "species", paste0(species, ".yaml")))
+  land   <- read_config_yaml(file.path(root, "config", "landscape.yaml"))
   files  <- list(species   = sp$params,
-                 landscape = read_config_yaml(file.path(root, "config", "landscape.yaml"))$params,
+                 landscape = land$params,
                  run       = read_config_yaml(file.path(root, "config", "run_defaults.yaml"))$params)
   errs   <- character()
   err    <- function(where, msg) errs <<- c(errs, sprintf("%s: %s", where, msg))
@@ -328,12 +329,18 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
       err(paste(lf$path, collapse = "$"), "schema: an optional field needs a 'default' or 'required_when'")
 
   # --- Rust anchor -----------------------------------------------------------
+  # A property of place (notes T18): site, cell and level from the landscape
+  # file; the species file may only choose the mode.
   anchor <- list()
+  anchor_src <- list(species   = list(data = sp$rust_anchor,   file = paste0("species/", species, ".yaml")),
+                     landscape = list(data = land$rust_anchor, file = "config/landscape.yaml"))
   for (lf in schema_leaves(schema$rust_anchor)) {
-    where <- paste0("species/", species, ".yaml: rust_anchor$", paste(lf$path, collapse = "$"))
-    e <- cfg_get(sp$rust_anchor, lf$path)
+    src <- anchor_src[[lf$spec$layer]]
+    if (is.null(src)) { err(paste(c("rust_anchor", lf$path), collapse = "$"), "schema: bad layer"); next }
+    where <- paste0(src$file, ": rust_anchor$", paste(lf$path, collapse = "$"))
+    e <- cfg_get(src$data, lf$path)
     if (is.null(e)) { if (!isTRUE(lf$spec$optional)) err(where, "missing"); next }
-    v <- read_entry(e, lf$spec, where, paste(c("rust_anchor", lf$path), collapse = "__"), "species")
+    v <- read_entry(e, lf$spec, where, paste(c("rust_anchor", lf$path), collapse = "__"), lf$spec$layer)
     if (!is.null(v) && !is_default(v, lf$spec)) anchor <- cfg_set(anchor, lf$path, v)
   }
   anchor_ok <- all(c("mu", "conc") %in% names(anchor))
@@ -384,10 +391,17 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
             "not a field of this layer in config/schema.yaml")
     }
   }
-  for (p in config_paths(sp$rust_anchor, is_entry))
-    if (length(p) && !paste(p, collapse = "$") %in% vapply(schema_leaves(schema$rust_anchor),
-                                                          function(lf) paste(lf$path, collapse = "$"), ""))
-      err(paste0(fname[["species"]], ": rust_anchor$", paste(p, collapse = "$")), "not in config/schema.yaml")
+  for (layer in names(anchor_src)) {
+    ok <- vapply(Filter(function(lf) identical(lf$spec$layer, layer), schema_leaves(schema$rust_anchor)),
+                 function(lf) paste(lf$path, collapse = "$"), "")
+    for (p in config_paths(anchor_src[[layer]]$data, is_entry))
+      if (length(p) && !paste(p, collapse = "$") %in% ok)
+        err(paste0(anchor_src[[layer]]$file, ": rust_anchor$", paste(p, collapse = "$")),
+            if (layer == "species") "not a species setting: the rust anchor's site, cell and level are a property of place, set in config/landscape.yaml (notes T18)"
+            else "not a landscape field of rust_anchor in config/schema.yaml")
+  }
+  extra <- setdiff(names(land), c("rust_anchor", "params", "spatial"))
+  if (length(extra)) err("config/landscape.yaml", paste("unknown top-level keys:", paste(extra, collapse = ", ")))
   extra <- setdiff(names(sp), c("species", "rust_anchor", "params", "assessment", "spatial", "ensemble_draws"))
   if (length(extra)) err(fname[["species"]], paste("unknown top-level keys:", paste(extra, collapse = ", ")))
   if (is.null(sp$species) || !is.character(sp$species)) err(fname[["species"]], "needs 'species: <name>'")
@@ -433,8 +447,9 @@ species_config <- function(species = NULL, root = mnsim_root(), check_sources = 
     if (length(setdiff(names(d), draw_fields))) err(where, paste("unknown fields:", paste(setdiff(names(d), draw_fields), collapse = ", ")))
     path <- strsplit(d$param, "__", fixed = TRUE)[[1]]
     spec <- cfg_get(schema$params, path)
-    if (is.null(spec$type) || spec$type != "double" || !identical(spec$layer, "species")) {
-      err(where, sprintf("'%s' is not a numeric species parameter", d$param)); next
+    if (is.null(spec$type) || spec$type != "double" ||
+        !(identical(spec$layer, "species") || isTRUE(spec$drawable))) {
+      err(where, sprintf("'%s' is not a numeric species parameter or a drawable run setting", d$param)); next
     }
     lo <- config_number(d$min); hi <- config_number(d$max)
     if (is.na(lo) || is.na(hi) || lo > hi) { err(where, "needs numeric min <= max"); next }

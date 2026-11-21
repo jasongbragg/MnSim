@@ -1,6 +1,6 @@
 # species/m_nodosa.yaml
 #
-# Melaleuca nodosa: species biology and the rust anchor (PLAN.md Phase 2;
+# Melaleuca nodosa: species biology (PLAN.md Phase 2;
 # methodological notes T4, T6, T7). Generated on 2026-11-19 from
 # data/m_nodosa_params.csv, the source of every value here; edit both together
 # (test-species-config.R checks that they agree).
@@ -9,20 +9,15 @@
 # parameter, the path below joined with '__'), or is a prior (prior: true,
 # min/max or choices, reason), as CLAUDE.md rule 5 requires. Priors also cite
 # the CSV row that documents them.
-# {derived: rust_anchor}: computed from rust_anchor (alpha = mu x conc,
-# beta = (1 - mu) x conc), exactly as params.R did.
+# {derived: rust_anchor}: computed from the rust anchor in config/landscape.yaml
+# (alpha = mu x conc, beta = (1 - mu) x conc), exactly as params.R did.
 # Not here: landscape values (config/landscape.yaml) and run settings
 # (config/run_defaults.yaml). The schema is config/schema.yaml.
 
 species: "Melaleuca nodosa"
 
-rust_anchor:
-  site: {value: "Yarringully NR", cite: m_nodosa_params.csv}
-  lon: {value: 153.21967, cite: m_nodosa_params.csv}
-  lat: {value: -29.09357, cite: m_nodosa_params.csv}
-  mu: {value: 0.70, cite: m_nodosa_params.csv}
-  conc: {value: 20, cite: m_nodosa_params.csv}
-  cap: {value: 0.95, cite: m_nodosa_params.csv}
+# The rust anchor (site, level, anchor cell) is a property of place, in
+# config/landscape.yaml (notes T18). M. nodosa uses the default mode (sdm).
 
 params:
   weibull_k: {value: 1, cite: m_nodosa_params.csv}

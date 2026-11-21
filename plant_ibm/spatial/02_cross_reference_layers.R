@@ -27,7 +27,7 @@
 #
 # SDM CALIBRATION
 # ---------------
-# Anchor (RUST_ANCHOR, from the species file; for M. nodosa Yarringully NR,
+# Anchor (RUST_ANCHOR, from config/landscape.yaml, shared by all species: Yarringully NR,
 # mean pressure mu = 0.70).
 # annual_env_mean(cell) = mu * SDM_cell / SDM_anchor_cell, capped at 0.95,
 # with SDM_cell the mean of the raster over the cell's land (notes B4, C2),
@@ -61,7 +61,7 @@
 # spatial/fire/fire_config.R. NPWS shapefile path: NPWS_SHP there (or the
 # NPWS_SHP environment variable); needed only by spatial/fire/02_fire_cell_years.R.
 
-# Rust anchor (site, mu, conc, cap): RUST_ANCHOR, from the species file via params.R.
+# Rust anchor (site, mu, conc, cap, cell): RUST_ANCHOR, from config/landscape.yaml via params.R (notes T18).
 source("params.R")
 source("spatial/rust_pressure.R")
 source("spatial/fire/fire_config.R")   # also GRID_DEG, SPECIES_SPATIAL, SPECIES_GRID_CSV

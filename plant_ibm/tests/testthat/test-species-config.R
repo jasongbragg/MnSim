@@ -39,7 +39,7 @@ test_that("every M. nodosa CSV parameter row is used by the species or landscape
   sp   <- read_config_yaml(file.path(repo_root, "species", "m_nodosa.yaml"))
   land <- read_config_yaml(file.path(repo_root, "config", "landscape.yaml"))
   key  <- function(x, pre) vapply(config_paths(x, is_entry), function(p) paste(c(pre, p), collapse = "__"), "")
-  used <- c(key(sp$params, character()), key(sp$rust_anchor, "rust_anchor"), key(land$params, character()))
+  used <- c(key(sp$params, character()), key(land$rust_anchor, "rust_anchor"), key(land$params, character()))
   expect_identical(sort(setdiff(rows, used)), character(0))
   expect_identical(sort(setdiff(used, rows)), character(0))
 })
