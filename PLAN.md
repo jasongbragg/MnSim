@@ -144,8 +144,10 @@ For each item: design note in `docs/` → [you] approve → implement → add te
   Holds: each option is optional and off by default, and the reference tests passed after every addition (T17–T21).
 
 ## Phase 4 — Species parameter files  [agent, you set priors]
-- [ ] [agent] Write `scripts/csv_to_yaml.R`: turns `role == parameter` rows into `species/<sp>.yaml`, each value carrying its CSV row reference
-- [ ] [agent] List every gap (value NA, or low confidence) per species in `docs/parameter_gaps.md`
+- [x] [agent] Write `scripts/csv_to_yaml.R`: turns `role == parameter` rows into `species/<sp>.yaml`, each value carrying its CSV row reference
+  Done 2026-11-22 (notes T22). Only rows named after model fields fill a species file; literature rows are evidence (`data/param_evidence_map.csv`). Rebuilds M. nodosa's params exactly.
+- [x] [agent] List every gap (value NA, or low confidence) per species in `docs/parameter_gaps.md`
+  Done 2026-11-22: all needed fields are gaps for all six species; suggested modes per species (section 2) to decide first.
 - [ ] [you] Set prior ranges for the gaps, at minimum generation length, age at first reproduction and longevity, with a reason for each
 - [ ] [agent] Build `species/r_rubescens.yaml`, then `species/r_psidioides.yaml`; the loader validates both
 - [ ] [agent] Smoke test: each species runs 50 years without errors and gives plausible output

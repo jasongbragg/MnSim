@@ -1217,6 +1217,35 @@ Implementation:
   species uses them) would differ, through site pressure and mother weights.
 Tests: `tests/testthat/test-fruit.R`.
 
+**T22. Species files built from the CSV; literature evidence kept apart from model fields** [decided, 2026-11-22]
+PLAN.md Phase 4. `scripts/csv_to_yaml.R <species>` writes `species/<sp>.yaml` from the species'
+rows in `data/rust_species_params.csv`, so the CSV stays the single source (CLAUDE.md rule 5), as
+for *M. nodosa*. Structural choices made in building it (no design note: tooling, not model
+structure):
+- *A model field is filled only by a row named after it* (schema path joined with `__`, role
+  `parameter`): a cited value, a prior (`PRIOR [min, max]: reason` in the notes, as in
+  `data/m_nodosa_params.csv`), or `derived` from the anchor. Settings outside params use rows
+  named `rust_anchor__mode`, `assessment__<field>` and `spatial__range_box__<field>` (cited as
+  `cite` + `row`).
+- *Literature rows under other names are evidence, not fields.* Most literature values (longevity,
+  generation length, seed fill, susceptibility class) do not map one to one onto a model field;
+  generation length is not a parameter at all (T_g is inferred, A3). `data/param_evidence_map.csv`
+  links each literature parameter name to the fields it bears on. Turning evidence into a field
+  row (a prior range and its reason) is the user's judgement, recorded in the row; the script never
+  does it.
+- *Modes decide which fields are needed* (schema `required_when`); optional fields with a default
+  are written only when they have a row.
+- *A species with any gap is not written*; the script lists the gaps. `--gaps` regenerates the
+  table part of `docs/parameter_gaps.md` (between markers; the rest is hand-written).
+- *Range-wide draws* (`ensemble_draws`) are not generated; they are set when a species' range runs
+  are planned.
+- Prior bounds are copied from the note's text, so exact forms such as `1/3` survive.
+Check: rebuilding *M. nodosa*'s params and rust anchor from its CSV gives an identical parameter
+list and prior table (`tests/testthat/test-csv-to-yaml.R`). Its `species/m_nodosa.yaml` is not
+regenerated: its assessment and spatial blocks cite methodological notes, not CSV rows.
+State on 2026-11-22: none of the six species has a field row, so all needed fields are gaps
+(`docs/parameter_gaps.md`, with suggested modes per species for the user to decide).
+
 ## Decision log
 
 | Date | ID | Decision |
@@ -1260,3 +1289,4 @@ Tests: `tests/testthat/test-fruit.R`.
 | 2026-11-20 | T14 | Error found and corrected: NSW cell-year tables were shifted by one cell after a zero-land cell (234/256 NSW cells held another cell's record); tables, site table and fire checks rebuilt; D2/D4 still hold; range, Pegg-site and V4 runs to redo |
 | 2026-11-20 | T15 | Species `fire_exposure` (optional, habitat share of cell fire rate); fire-change scenario (from a year: rate and fire size multiplied, optional ramp), set by runners, paired with baseline |
 | 2026-11-21 | T21 | Rust suppression of flowering and fruit: site pressure in both hooks; mothers weighted by fruit success; optional flowering driver `damage` (crown damage D); census columns; mature count unchanged, a prospective "will never reproduce" test left for later |
+| 2026-11-22 | T22 | Species files generated from the CSV by `scripts/csv_to_yaml.R`; only rows named after model fields fill them; literature rows are evidence linked by `data/param_evidence_map.csv`; gaps in `docs/parameter_gaps.md` |

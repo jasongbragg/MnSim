@@ -28,6 +28,8 @@ The work plan, with checklists, is in `PLAN.md`. Work on one phase at a time and
 - `data/m_nodosa_params.csv` — the same columns for *M. nodosa*, whose values come mostly from this
   project's own calibration and assumptions (sources cite `docs/methodological_notes.md` entries).
   Extra `evidence_type` labels: calibration | model_assumption | model_choice.
+- `scripts/csv_to_yaml.R` — builds `species/<sp>.yaml` from rows named after model fields; `--gaps`
+  refreshes `docs/parameter_gaps.md`. `data/param_evidence_map.csv` links literature rows to fields (notes T22)
 - `tests/` — testthat tests; `tests/reference/` holds frozen M. nodosa outputs
 - `docs/methodological_notes.md` — running log of assumptions and decisions
 - `private/` — unpublished data (git-ignored)
